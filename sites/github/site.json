@@ -1,0 +1,12 @@
+{
+  "id": "github",
+  "name": "GitHub",
+  "engine": "github",
+  "matches": [
+    "https://github.com/*",
+    "https://skills.github.com/*",
+    "https://gist.github.com/*",
+    "https://education.github.com/*",
+    "https://www.githubstatus.com/*"
+  ]
+}

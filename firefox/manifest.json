@@ -1,0 +1,142 @@
+{
+  "manifest_version": 3,
+  "name": "网站翻译插件",
+  "version": "0.3.0",
+  "description": "使用本地词库翻译已适配的网站界面，支持按网站独立开关与持续扩展。",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab",
+    "nativeMessaging"
+  ],
+  "host_permissions": [
+    "https://docker.com/*",
+    "https://www.docker.com/*",
+    "https://app.docker.com/*",
+    "https://hub.docker.com/*",
+    "https://github.com/*",
+    "https://skills.github.com/*",
+    "https://gist.github.com/*",
+    "https://education.github.com/*",
+    "https://www.githubstatus.com/*",
+    "https://tailscale.com/*",
+    "https://www.tailscale.com/*",
+    "https://login.tailscale.com/*",
+    "https://console.tailscale.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "scripts": [
+      "sites/catalog.js",
+      "managed/tldts.js",
+      "managed/core.js",
+      "managed/providers.js",
+      "managed/background.js"
+    ]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "website-translator@local.invalid",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "action": {
+    "default_title": "网站翻译插件",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://docker.com/*",
+        "https://www.docker.com/*"
+      ],
+      "js": [
+        "managed/core.js",
+        "managed/text-provenance.js",
+        "managed/content.js",
+        "sites/catalog.js",
+        "sites/preferences.js",
+        "sites/browser-translation-guard.js",
+        "sites/docker.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://app.docker.com/*",
+        "https://hub.docker.com/*"
+      ],
+      "js": [
+        "managed/core.js",
+        "managed/text-provenance.js",
+        "managed/content.js",
+        "sites/catalog.js",
+        "sites/preferences.js",
+        "sites/browser-translation-guard.js",
+        "sites/docker-hub.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://github.com/*",
+        "https://skills.github.com/*",
+        "https://gist.github.com/*",
+        "https://education.github.com/*",
+        "https://www.githubstatus.com/*"
+      ],
+      "js": [
+        "managed/core.js",
+        "managed/text-provenance.js",
+        "managed/content.js",
+        "sites/catalog.js",
+        "sites/preferences.js",
+        "sites/browser-translation-guard.js",
+        "locals.js",
+        "content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://tailscale.com/*",
+        "https://www.tailscale.com/*",
+        "https://login.tailscale.com/*",
+        "https://console.tailscale.com/*"
+      ],
+      "js": [
+        "managed/core.js",
+        "managed/text-provenance.js",
+        "managed/content.js",
+        "sites/catalog.js",
+        "sites/preferences.js",
+        "sites/browser-translation-guard.js",
+        "sites/tailscale.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "options_page": "managed/managed.html"
+}

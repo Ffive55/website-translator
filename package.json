@@ -1,0 +1,43 @@
+{
+  "name": "website-translator",
+  "displayName": "网站翻译插件",
+  "version": "0.3.6",
+  "private": true,
+  "description": "支持按需 AI 添加更新、本地词库、网站管理及本地连接程序的网站翻译插件",
+  "license": "GPL-3.0-or-later",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "scripts": {
+    "build:icons": "node script/build-icons.js",
+    "build": "node script/build.js --browser edge && node script/build-edge-helper.js",
+    "site:add": "node script/add-site.js",
+    "test:sites": "node --test tests/sites.test.cjs",
+    "upstream:check": "node script/sync-upstream.js --check",
+    "upstream:update": "node script/sync-upstream.js --apply",
+    "upstream:resolve": "node script/sync-upstream.js --resolve",
+    "test:updater": "node --test tests/upstream.test.cjs",
+    "package": "node script/build.js --check && node script/package.js",
+    "test": "node script/test-edge.js",
+    "test:browser": "node script/test-managed-browser.cjs",
+    "prepare:github": "node script/prepare-github.js"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "fflate": "^0.8.3",
+    "jsdom": "^30.1.3",
+    "playwright": "^1.64.1"
+  },
+  "dependencies": {
+    "jose": "^6.2.14",
+    "tldts": "^7.4.19"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ffive55/website-translator.git"
+  },
+  "homepage": "https://github.com/Ffive55/website-translator",
+  "bugs": {
+    "url": "https://github.com/Ffive55/website-translator/issues"
+  }
+}

@@ -36,6 +36,17 @@
       }
     },
     {
+      "group": "openrouter.ai",
+      "manifest": {
+        "path": "dictionaries/openrouter.ai/manifest.json",
+        "bytes": 668,
+        "sha256": "2865356d2cd680e3da6a7ba859cc375094170a00b15cb2e315349ecbd4b03019"
+      },
+      "languages": {
+        "zh-Hans": "9437ee0c888d6459e64cc709a7d52083f6bed45ad8a560f701f56a5152152eb5"
+      }
+    },
+    {
       "group": "tailscale.com",
       "manifest": {
         "path": "dictionaries/tailscale.com/manifest.json",

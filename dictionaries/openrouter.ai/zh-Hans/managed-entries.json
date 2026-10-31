@@ -36911,6 +36911,1840 @@
         "targetLanguage": "zh-Hans",
         "translation": null
       }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ori",
+        "context": "nav/button/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ori",
+        "context": "nav/a/button",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Dashboard",
+        "context": "nav/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "仪表板",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "The Unified Interface For Every Model",
+        "context": "main/h1/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "所有模型的统一接口",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Better",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "更优",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "prices",
+        "context": "main/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "价格",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": ", better",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "，更优",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "uptime",
+        "context": "main/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "正常运行时间",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": ", no subscriptions.",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "，无需订阅。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Get API Key",
+        "context": "main/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "获取 API 密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Discover Models",
+        "context": "main/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "探索模型",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "700T+",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "700T+",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Monthly Tokens",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "月度 Token",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10M+",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "10M+",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Global Users",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "全球用户",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "80+",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "80+",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Providers",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "提供商",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "600+",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "600+",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Models",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "模型",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Text, Images, Videos, and Audio",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "文本、图像、视频和音频",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Generate anything through a single, unified interface. All major models in one place.",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "通过单一统一接口生成任何内容。所有主流模型汇聚一处。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Browse all",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "浏览全部",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "anthropic/claude-opus-5.5",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Model routing visualization",
+        "context": "main/title/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "模型路由可视化",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Higher Availability",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "更高可用性",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Reliable AI models via our distributed infrastructure. Fall back to other providers when one goes down.",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "通过我们的分布式基础设施提供可靠的 AI 模型。当某个提供商宕机时，可回退至其他提供商。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Learn more",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "了解更多",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Price and Performance",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "价格与性能",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Keep costs in check without sacrificing speed. OpenRouter runs at the edge for minimal latency between your users and their inference.",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "在不牺牲速度的前提下控制成本。OpenRouter 在边缘运行，将用户与推理之间的延迟降至最低。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Data policy visualization",
+        "context": "main/title/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "数据策略可视化",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Custom Data Policies",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "自定义数据策略",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Protect your organization with fine grained data policies. Ensure prompts only go to the models and providers you trust.",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "通过精细的数据策略保护您的组织。确保提示词仅发送至您信任的模型和提供商。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "View docs",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "查看文档",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Featured Models",
+        "context": "main/h2/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "精选模型",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": " active models on",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": " 个活跃模型，来自",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": " providers",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": " 个提供商",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "View all",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "查看全部",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Gemini 4 Argon",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "by ",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "来自 ",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "google",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Tokens",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "Token",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "1.1T",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "1.1T",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Weekly Trend",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "周趋势",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "-1%",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "-1%",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "GPT-6.1 Sol",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "openai",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "3.8T",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "3.8T",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "+31%",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "+31%",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Claude Opus 5.5",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "anthropic",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "7.5T",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "7.5T",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "-18%",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "-18%",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Featured Agents",
+        "context": "main/h2/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "精选智能体",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "250k+ apps using OpenRouter with 4.2M+ users globally",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "250k+ 个应用使用 OpenRouter，全球用户超过 4.2M+",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Replit",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "The easiest way to go from idea to app",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "从想法到应用的最简途径",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Hermes Agent",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "An autonomous agent that grows with you",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "一个与你共同成长的自主智能体",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Cline",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "The open-source AI coding agent",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "开源 AI 编程智能体",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "How it works",
+        "context": "main/h2/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "工作原理",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "1",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "1",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Signup",
+        "context": "main/h3/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "注册",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Create an account to get started. You can set up an org for your team later.",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "创建账户即可开始使用。您可以稍后为团队创建组织。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Google",
+        "context": "main/title/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "GitHub",
+        "context": "main/title/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "MetaMask",
+        "context": "main/title/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "2",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "2",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Buy credits",
+        "context": "main/h3/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "购买额度",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Credits can be used with any model or provider.",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "额度可用于任何模型或提供商。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Apr 1",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "4月1日",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "$99",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "$99",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Mar 30",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "3月30日",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "$10",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "$10",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "3",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "3",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Get your API key",
+        "context": "main/h3/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "获取您的 API 密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Create an API key and start making requests.",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "创建 API 密钥并开始发起请求。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Fully OpenAI compatible",
+        "context": "main/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "完全兼容 OpenAI",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": ".",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "OPENROUTER_API_KEY",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "••••••••••••••••",
+        "context": "main/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Recent Blog Posts",
+        "context": "main/h2/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "最新博客文章",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Open-Weight vs Closed-Weight Models: What's the Difference?",
+        "context": "main/h3/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "开放权重与闭源权重模型：有何区别？",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "An open-weight model publishes its trained weights, so anyone can run, fine-tune or serve it. A closed-weight model is only available from its maker. We used a year of OpenRouter usage data, our price catalog and benchmark scores to show what that difference changes for cost, providers and quality.",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "开放权重模型会公开其训练权重，因此任何人都可以运行、微调或部署它。闭源权重模型仅能由其制造商提供。我们使用一年的 OpenRouter 使用数据、价格目录和基准测试分数，展示这一差异在成本、提供商和质量方面带来的变化。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "October 31, 2026",
+        "context": "main/time/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "2026年10月31日",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "New",
+        "context": "main/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "新",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "How to Build Your Own Always-On AI Agent",
+        "context": "main/h3/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "如何构建你自己的常驻 AI 智能体",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "An always-on AI agent wakes up on a schedule, checks something with tools, and reports or acts without you asking. This tutorial builds one in TypeScript with the OpenRouter Agent SDK that watches Hacker News, remembers what it has seen across restarts, stops any run at five cents, and waits for your approval before it posts.",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "常驻 AI 智能体按计划唤醒，使用工具检查某些内容，并在无人要求的情况下进行报告或采取行动。本教程使用 TypeScript 和 OpenRouter Agent SDK 构建一个智能体，它监视 Hacker News，跨重启记住已看过的内容，在五次运行后停止，并在发布前等待你的批准。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Claude Opus vs Sonnet vs Haiku: Which Should You Use?",
+        "context": "main/h3/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "Claude Opus vs Sonnet vs Haiku：你应该用哪个？",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Use Claude Sonnet 5.5 as your default, Haiku 5.5 for high-volume and sub-agent work, and Opus 5.5 for long tasks where a mistake is costly. We compared the three on price, benchmarks, 11 coding tasks with hidden tests and a Claude Code bug fix. All three passed everything, so the difference was cost.",
+        "context": "main/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "将 Claude Sonnet 5.5 作为默认选择，Haiku 5.5 用于高容量和子智能体工作，Opus 5.5 用于错误代价高昂的长任务。我们从价格、基准测试、11 项带隐藏测试的编程任务以及一个 Claude Code bug 修复方面对三者进行了比较。三者全部通过，因此差异在于成本。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "October 30, 2026",
+        "context": "main/time/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "2026年10月30日",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "© 2026 OpenRouter, Inc",
+        "context": "footer/div/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "© 2026 OpenRouter, Inc",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ori",
+        "context": "footer/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Works With OR",
+        "context": "footer/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "兼容 OR",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Discord",
+        "context": "footer/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "GitHub",
+        "context": "footer/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "LinkedIn",
+        "context": "footer/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "X",
+        "context": "footer/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "YouTube",
+        "context": "footer/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Join the OpenRouter newsletter",
+        "context": "form/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "加入 OpenRouter 新闻通讯",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Model usage data, product updates, and research reports. One email each week.",
+        "context": "form/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "模型使用数据、产品更新和研究报告。每周一封邮件。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Subscribe",
+        "context": "form/span/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "订阅",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "By subscribing you agree to receive the OpenRouter newsletter: model usage data, product updates, and research reports, about one email a week. Unsubscribe anytime via the link in every email. See our ",
+        "context": "form/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "订阅即表示您同意接收 OpenRouter 新闻通讯：模型使用数据、产品更新和研究报告，每周约一封邮件。可随时通过每封邮件中的链接退订。请参阅我们的 ",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Privacy Policy",
+        "context": "form/a/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "隐私政策",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": ".",
+        "context": "form/p/text",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "OpenRouter",
+        "context": "nav/svg/@aria-label",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "OpenRouter",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "microsoft",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "nvidia",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "meta-llama",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "google",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "amazon",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "deepseek",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "qwen",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "moonshotai",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "minimax",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "z-ai",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "mistralai",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "anthropic",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "openai",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "google ai studio",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "x-ai",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "cohere",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "huggingface",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "perplexity",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "nousresearch",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "together",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "morph",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "inflection",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "liquid",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "inception",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "arcee-ai",
+        "context": "main/div/@title",
+        "path": "/",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
     }
   ],
   "adapter": null

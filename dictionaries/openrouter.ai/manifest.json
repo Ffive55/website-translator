@@ -4,7 +4,7 @@
   "group": "openrouter.ai",
   "languages": {
     "zh-Hans": {
-      "revision": "9437ee0c888d6459e64cc709a7d52083f6bed45ad8a560f701f56a5152152eb5",
+      "revision": "fa80f815ac4b3d629010ae8ffb73ae115fcea97b8aa22795f2beca0f3304d52c",
       "origins": [
         "https://openrouter.ai"
       ],
@@ -12,8 +12,8 @@
         {
           "id": "managed-entries",
           "path": "dictionaries/openrouter.ai/zh-Hans/managed-entries.json",
-          "sha256": "48bc34973984bad629e45c1758a33d7a414f0709dd90949f597934fc62371f98",
-          "bytes": 1002389,
+          "sha256": "593ca8823520ff15789763b10d7e2d7bdc0d1ac6028973d47c7c07a5c933a3cc",
+          "bytes": 1053415,
           "kind": "entries",
           "origins": [
             "https://openrouter.ai"

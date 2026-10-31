@@ -40,10 +40,10 @@
       "manifest": {
         "path": "dictionaries/openrouter.ai/manifest.json",
         "bytes": 668,
-        "sha256": "2865356d2cd680e3da6a7ba859cc375094170a00b15cb2e315349ecbd4b03019"
+        "sha256": "bf979ee48d7c3a5bafc293df2784d047020591544dc8ea6c8e687ccbad6288e8"
       },
       "languages": {
-        "zh-Hans": "9437ee0c888d6459e64cc709a7d52083f6bed45ad8a560f701f56a5152152eb5"
+        "zh-Hans": "fa80f815ac4b3d629010ae8ffb73ae115fcea97b8aa22795f2beca0f3304d52c"
       }
     },
     {

@@ -1,1 +1,1 @@
-importScripts('../sites/catalog.js','tldts.js','core.js','dictionary-core.js','dictionary-adapters.js','dictionary-errors.js','dictionary-repository.js','dictionary-migration.js','dictionary-store.js','dictionary-publish.js','dictionary-runtime.js','providers.js','batching.js','background.js');
+importScripts('../sites/catalog.js','tldts.js','core.js','dictionary-core.js','dictionary-adapters.js','dictionary-errors.js','dictionary-repository.js','dictionary-store.js','dictionary-publish.js','dictionary-runtime.js','providers.js','batching.js','background.js');

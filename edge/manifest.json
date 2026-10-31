@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "网站翻译插件",
-  "version": "0.3.16",
+  "version": "0.3.18",
   "description": "使用本地词库翻译已适配的网站界面，支持按网站独立开关与持续扩展。",
   "icons": {
     "16": "assets/icons/icon16.png",

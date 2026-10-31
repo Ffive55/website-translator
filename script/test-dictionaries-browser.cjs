@@ -69,20 +69,11 @@ async function main() {
       revision = state.revision;
       await store.setContext({ ...setup, installations: [] }); await rejects(() => store.install(initial, revision), '删除网站后旧下载不能复活安装记录');
       check(!await chrome.permissions.contains({ origins: [origin + '/*'] }), '缓存与恢复不会自行授予网站权限');
-      const prepared = await C.dictionaryMigration.prepare(before.wt_database, {}, tldts.getDomain);
-      const staged1 = await store.stageLegacy(prepared), staged2 = await store.stageLegacy(prepared);
-      check(staged1.sourceSha256 === staged2.sourceSha256 && staged1.runtimeSwitched === false, '本机迁移备份幂等暂存且不切换真实工作数据');
-      const imported=await C.dictionaryStore.open({...options,name:'wt-import-test'}),importContext=await imported.setContext(setup);
-      await imported.install(initial,importContext.revision);await imported.edit(repository,group,'zh-Hans',row('备份独有','BackupOnly'),importContext.revision);
-      const backup=await imported.exportData();await imported.edit(repository,group,'zh-Hans',row('当前独有','CurrentOnly'),importContext.revision);
-      await imported.importData(backup,'import-fixture');let importedState=await imported.read(repository,group,'zh-Hans');
-      check(Object.keys(importedState.local).length===2,'备份与当前本机增量合并后两方都保留待上传状态');const importRevision=importedState.revision;
-      await imported.importData(backup,'import-fixture');check((await imported.read(repository,group,'zh-Hans')).revision===importRevision,'中断后相同导入 ID 不重复应用 IndexedDB');
-      const fresh=await candidate('新远端');fresh.commit='d'.repeat(40);await imported.install(fresh,importContext.revision);const beforeOld=await imported.read(repository,group,'zh-Hans');
-      await rejects(()=>imported.importData(backup,'older-backup'),'旧备份不能覆盖已安装的新远端基线');check(C.canonical(await imported.read(repository,group,'zh-Hans'))===C.canonical(beforeOld),'拒绝导入后原词库及本地修改逐字不变');
-      const otherRepository={...repository,repo:'another-dictionary'},otherContext=await imported.setContext({...setup,repository:otherRepository});await imported.edit(otherRepository,group,'zh-Hans',row('另一仓库本地'),otherContext.revision);await imported.resetLocal(origin,otherRepository,'1:false');
-      check(C.canonical(await imported.read(repository,group,'zh-Hans'))===C.canonical(beforeOld),'删除另一仓库的网站不清空当前仓库的本地修改');check((await imported.exportArchives()).some(a=>Object.keys(a.local).length===1),'移除网站的未上传修改保留在可导出归档');
-      const invalidBackup=structuredClone(backup);invalidBackup[0].group='other.example';await rejects(()=>imported.importData(invalidBackup,'wrong-scope'),'备份文件与分组范围不符时拒绝导入');imported.close();
+      const otherRepository={...repository,repo:'another-dictionary'};
+      await store.setContext(setup);const beforeOther=await store.read(repository,group,'zh-Hans');
+      const otherContext=await store.setContext({...setup,repository:otherRepository});await store.edit(otherRepository,group,'zh-Hans',row('另一仓库本地'),otherContext.revision);await store.resetLocal(origin,otherRepository,'1:false');
+      check(C.canonical(await store.read(repository,group,'zh-Hans'))===C.canonical(beforeOther),'移除另一仓库的网站不修改当前仓库词库');
+      check(store.importData===undefined&&store.stageLegacy===undefined&&store.exportData===undefined,'旧文件导入、迁移和备份接口已删除');
       const largeContext = await store.setContext({ repository, targetLanguage: 'zh-Hans', installations: [{ origin: 'https://github.com', generation: 1 }] });
       const large = { schemaVersion: 1, repository, commit: 'b'.repeat(40), group: 'github.com', targetLanguage: 'zh-Hans', installedOrigins: ['https://github.com'], missing: [],
         revision: await D.digest({ group: 'github.com', language: 'zh-Hans', origins: ['https://github.com'], files: [description] }), files: [{ description, raw: githubRaw, pack: JSON.parse(githubRaw) }] };
@@ -94,7 +85,7 @@ async function main() {
       const usage = await navigator.storage.estimate(); store.close();
       return { checks, count: checks.length, usage: usage.usage, quota: usage.quota, browser: navigator.userAgent };
     }, { githubRaw, description });
-    assert.equal(result.count, 25); await fs.writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2));
+    assert.equal(result.count, 19); await fs.writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2));
     console.log(JSON.stringify(result, null, 2));
   } finally { await context.close(); }
 }

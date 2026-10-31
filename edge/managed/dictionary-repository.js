@@ -101,7 +101,19 @@
       return { schemaVersion: D.VERSION, repository: config, commit: pin.commit, group, targetLanguage: language,
         installedOrigins: [...installedOrigins], revision: selected.revision, missing: selected.missing, files };
     }
-    return Object.freeze({ readIndex, check, downloadGroup, manifest });
+    async function catalog(language, query = '') {
+      C.assert(C.language(language) === language && typeof query === 'string' && query.length <= 200, '词库搜索条件无效');
+      const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean), pin = await readIndex(true), rows = [];
+      // Search metadata only. Package bodies are fetched only after the user downloads one.
+      for (const description of pin.index.groups) {
+        if (!description.languages[language]) continue;
+        const data = (await manifest(pin, description.group)).languages[language];
+        const text = `${description.group} ${data.origins.join(' ')} ${language}`.toLowerCase();
+        if (words.every(word => text.includes(word))) rows.push({ group: description.group, origins: [...data.origins] });
+      }
+      return { repository: config, targetLanguage: language, rows };
+    }
+    return Object.freeze({ readIndex, check, downloadGroup, manifest, catalog });
   }
   const api = Object.freeze({ configuration, create });
   if (typeof module !== 'undefined') module.exports = api;

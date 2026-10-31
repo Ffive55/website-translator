@@ -11,7 +11,7 @@ async function buildNativeBundle(root){
   fs.mkdirSync(path.dirname(cached),{recursive:true});if(!fs.existsSync(cached))fs.writeFileSync(cached,bytes);
   const archive=unzipSync(bytes),prefix=`node-v${NODE_VERSION}-win-x64/`,files={};
   for(const [from,to] of [['node.exe','runtime/node.exe'],['LICENSE','runtime/LICENSE.txt']]){if(!archive[prefix+from])throw new Error(`Missing Node ${from}`);files[to]=archive[prefix+from];}
-  for(const name of ['host.cjs','oauth.cjs','sync.cjs','install.ps1','secure-store.ps1']){
+  for(const name of ['host.cjs','oauth.cjs','install.ps1','secure-store.ps1']){
     const data=fs.readFileSync(path.join(root,'native',name));files['native/'+name]=name.endsWith('.ps1')?Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),Buffer.from(data.toString('utf8').replace(/^\ufeff/,''))]):data;
   }
   for(const name of ['LICENSE','THIRD_PARTY_NOTICES.md','extension/managed-core.js','extension/managed-batching.js'])files[name]=fs.readFileSync(path.join(root,name));

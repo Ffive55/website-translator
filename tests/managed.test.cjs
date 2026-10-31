@@ -3,7 +3,6 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {JSDOM}=require('jsdom');
 const C=require('../extension/managed-core');
-const {exchange,acknowledge,envelope,verify,immutable,confirmDirectory}=require('../native/sync.cjs');
 const {readSSE}=require('../native/oauth.cjs');
 const {encode}=require('../native/host.cjs');
 const {OAuth}=require('../native/oauth.cjs');
@@ -53,22 +52,9 @@ test('协议拒绝凭据、非法字段和无效语言',()=>{
   const a=builder();assert.throws(()=>C.validateOp(a('create',{...sitePayload,apiKey:'secret'})));
   assert.throws(()=>C.validateOp(a('setting',{key:'apiKey',value:'secret'})));
   assert.throws(()=>C.language('not a language'));
-  assert.throws(()=>verify({...envelope({a:1}),data:{a:2}}));
 });
 async function temp(t){const root=path.join(__dirname,'../.cache/test-native',randomUUID());await fs.promises.mkdir(root,{recursive:true});t.after(()=>{assert.ok(path.resolve(root).startsWith(path.resolve(__dirname,'../.cache/test-native')+path.sep));fs.rmSync(root,{recursive:true,force:true});});return root;}
-test('文件同步两设备往返、不可变校验、冲突副本幂等、坏文件和对端确认',async t=>{
-  const root=await temp(t),a=builder(),create=a('create',sitePayload),edit=a('entry',entry(),[create.opId]);
-  const deviceB=randomUUID();
-  const first=await exchange({directory:root,deviceId:create.deviceId,ops:[create,edit]});assert.equal(first.ops.length,2);
-  await fs.promises.copyFile(path.join(root,'changes',`${edit.opId}.json`),path.join(root,'changes','conflict-copy.json'));
-  await fs.promises.writeFile(path.join(root,'changes','broken.json'),'{');
-  const second=await exchange({directory:root,deviceId:deviceB,ops:[]});assert.equal(second.ops.length,2);assert.equal(second.invalid,1);
-  assert.equal((await acknowledge({directory:root,deviceId:create.deviceId,applied:[create.opId,edit.opId]})).peerConfirmed,false);
-  await acknowledge({directory:root,deviceId:deviceB,applied:[create.opId,edit.opId]});
-  assert.equal((await acknowledge({directory:root,deviceId:create.deviceId,applied:[create.opId,edit.opId]})).peerConfirmed,true);
-  await assert.rejects(()=>immutable(path.join(root,'changes',`${edit.opId}.json`),{...edit,seq:99}),/冲突/);
-  await assert.rejects(()=>exchange({directory:path.join(root,'missing'),deviceId:deviceB,ops:[]}),/不存在/);
-});
+
 test('SSE 跨块与 CRLF 解码，未完成或失败不接受；native 帧长度使用 UTF-8 字节',async()=>{
   const stream=async function*(s){const bytes=Buffer.from(s);for(let i=0;i<bytes.length;i+=3)yield bytes.subarray(i,i+3);};
   const event='data: {"type":"response.output_text.delta","delta":"译文"}\r\n\r\n';
@@ -125,7 +111,7 @@ async function worker(t,fetcher,native,overrides={}){
   const local={},synced={readme_openai_api_key:'old-secret'},listeners=[],changed=[],activeTimers=new Set();
   const event=()=>({addListener:()=>{}});
   const area=(db,name)=>({get:async keys=>{if(keys===null)return {...db};if(typeof keys==='string')return {[keys]:db[keys]};if(Array.isArray(keys))return Object.fromEntries(keys.map(k=>[k,db[k]]));return {...keys,...db};},set:async values=>{Object.assign(db,structuredClone(values));changed.forEach(fn=>fn(Object.fromEntries(Object.entries(values).map(([k,v])=>[k,{newValue:v}])),name));},remove:async keys=>[].concat(keys).forEach(k=>delete db[k]),setAccessLevel:async()=>{}});
-  const chrome={runtime:{id:'test',getURL:p=>'chrome-extension://test/'+p,getPlatformInfo:async()=>({}),sendNativeMessage:async(_host,m)=>({ok:true,result:m.action==='confirm-directory'?{writable:true,directory:m.directory || 'fixture'}:await native(m)}),onStartup:event(),onMessage:{addListener:fn=>listeners.push(fn)}},storage:{local:area(local,'local'),sync:area(synced,'sync'),onChanged:{addListener:fn=>changed.push(fn)}},permissions:{contains:async()=>true,onAdded:event(),onRemoved:event()},scripting:{getRegisteredContentScripts:async()=>[],registerContentScripts:async()=>{},executeScript:async()=>[]},tabs:{get:async()=>({id:1,url:origin+'/settings'}),query:async()=>[],sendMessage:async()=>({origin,items:[{id:'t0',sourceText:'Save {count}',context:'main/button/text',path:'/settings'}]})}};
+  const chrome={runtime:{id:'test',getURL:p=>'chrome-extension://test/'+p,getPlatformInfo:async()=>({}),sendNativeMessage:async(_host,m)=>({ok:true,result:await native(m)}),onStartup:event(),onMessage:{addListener:fn=>listeners.push(fn)}},storage:{local:area(local,'local'),sync:area(synced,'sync'),onChanged:{addListener:fn=>changed.push(fn)}},permissions:{contains:async()=>true,onAdded:event(),onRemoved:event()},scripting:{getRegisteredContentScripts:async()=>[],registerContentScripts:async()=>{},executeScript:async()=>[]},tabs:{get:async()=>({id:1,url:origin+'/settings'}),query:async()=>[],sendMessage:async()=>({origin,items:[{id:'t0',sourceText:'Save {count}',context:'main/button/text',path:'/settings'}]})}};
   const alarms=new Map(),alarmListeners=[];chrome.alarms={get:async n=>alarms.get(n),create:async(n,v)=>alarms.set(n,v),clear:async n=>alarms.delete(n),onAlarm:{addListener:f=>alarmListeners.push(f)}};
   const menus=new Map(),menuListeners=[];chrome.contextMenus={create:async item=>menus.set(item.id,item),remove:async id=>menus.delete(id),onClicked:{addListener:f=>menuListeners.push(f)}};
   const context=vm.createContext({console,chrome,WTCore:C,WTBatch:require('../extension/managed-batching'),WTProviders:require('../extension/managed-providers'),tldts:require('tldts'),SUPPORTED_SITES:[],crypto:require('node:crypto').webcrypto,URL,AbortSignal,TextDecoder,structuredClone,setTimeout,clearTimeout,fetch:fetcher,setInterval:(f,m)=>{const id=setInterval(f,m);activeTimers.add(id);return id;},clearInterval:id=>{clearInterval(id);activeTimers.delete(id);},...overrides});
@@ -143,6 +129,40 @@ test('后台 API 添加保存、本地凭据迁移；内容脚本不能启动 AI
   const state=(await w.request('state')).result;assert.equal(Object.values(state.wt_tasks)[0].status,'completed');assert.equal(Object.keys(state.sites[origin].entries).length,1);
   assert.ok(!C.canonical(w.local.wt_database).includes('secret'));
 });
+test('当前后台拒绝旧目录同步入口，保留旧设置和备份且不调用本地文件写入',async t=>{
+  let calls=0;const w=await worker(t,undefined,()=>{calls++;throw Error('不应调用');});
+  w.local.wt_sync={enabled:true,directory:'old-fixture',confirmedAt:123};w.local.wt_sync_status={saved:true,marker:'retained'};
+  const before=structuredClone(w.local.wt_sync);
+  for(const [type,data] of [['sync',{}],['config',{sync:{enabled:true,directory:'new-fixture'}}],['native',{action:'sync'}]]){const result=await w.request(type,data);assert.equal(result.ok,false);}
+  assert.equal(calls,0);assert.deepEqual(w.local.wt_sync,before);assert.equal(w.local.wt_sync_status.marker,'retained');assert.equal(w.alarms.size,0);
+  await w.request('config',{prompt:'新的提示词'});assert.equal(w.local.wt_prompt,'新的提示词');
+});
+test('弹窗摘要仅返回当前网址计数，不携带词条、采集正文、其他任务或服务凭据',async t=>{
+  const w=await worker(t,async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify([{id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''}])}}]})));
+  await w.request('config',{ai:{provider:'api',model:'fixture',endpoint:'https://api.example.com/v1/chat/completions',apiKey:'popup-must-not-receive-secret'}});await w.request('start',{tabId:1});await until(()=>Object.values(w.local.wt_tasks).some(t=>t.status==='completed'));
+  w.local.wt_tasks.other={id:'other',siteId:'https://other.test',status:'failed',updatedAt:999};
+  w.local.wt_capture={status:'collecting',group:'example.com',pages:[origin+'/settings'],items:Array(1000).fill({sourceText:'capture-private-body'})};
+  const result=await w.request('popup-state',{origin});assert.equal(result.ok,true);const state=result.result;
+  assert.deepEqual(Object.keys(state.sites),[origin]);assert.equal(state.sites[origin].entries,undefined);assert.equal(state.wt_tasks.other,undefined);assert.equal(state.wt_capture.itemCount,1000);assert.equal(state.wt_capture.items,undefined);assert.equal(state.wt_ai,undefined);assert.equal(state.wt_ai_profiles,undefined);
+  assert.ok(!JSON.stringify(state).includes('popup-must-not-receive-secret'));assert.ok(!JSON.stringify(state).includes('capture-private-body'));
+  assert.equal((await w.request('popup-state',{origin},{id:'test',tab:{id:1},url:origin})).ok,false);
+});
+test('保存失败仍回滚到已提交词库，重试后词条完整且不重写旧同步状态',async t=>{
+  const w=await worker(t,async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify([{id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''}])}}]})));
+  await w.request('config',{ai:{provider:'api',model:'fixture',endpoint:'https://api.example.com/v1/chat/completions',apiKey:'fixture'}});await w.request('start',{tabId:1});await until(()=>Object.values(w.local.wt_tasks).some(t=>t.status==='completed'));
+  const before=structuredClone(w.local.wt_database),set=w.chrome.storage.local.set.bind(w.chrome.storage.local);let fail=true;w.local.wt_sync_status={marker:'retained'};
+  w.chrome.storage.local.set=async values=>{if(fail&&values.wt_database){fail=false;throw Error('fixture save interrupted');}return set(values);};
+  const payload={...entry(),sourceText:'Save retry fixture',translation:'重试保存'};
+  assert.equal((await w.request('change',{siteId:origin,kind:'entry',payload})).ok,false);assert.equal((await w.request('state')).result.sites[origin].entries[C.entryKey(payload)],undefined);assert.deepEqual(w.local.wt_database,before);
+  assert.equal((await w.request('change',{siteId:origin,kind:'entry',payload})).ok,true);assert.equal(w.local.wt_database.seq,before.seq+1);assert.equal(w.local.wt_sync_status.marker,'retained');
+});
+test('词条及设置变化不反复拆装相同内容脚本，域名范围变化才更新注册',async t=>{
+  const w=await worker(t,async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify([{id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''}])}}]})));
+  let scripts=[],adds=0,removes=0;w.chrome.scripting.getRegisteredContentScripts=async()=>structuredClone(scripts);w.chrome.scripting.registerContentScripts=async rows=>{adds++;scripts=structuredClone(rows);};w.chrome.scripting.unregisterContentScripts=async()=>{removes++;scripts=[];};
+  await w.request('config',{ai:{provider:'api',model:'fixture',endpoint:'https://api.example.com/v1/chat/completions',apiKey:'fixture'}});await w.request('start',{tabId:1});await until(()=>Object.values(w.local.wt_tasks).some(t=>t.status==='completed'));
+  assert.equal(adds,1);await Promise.all([w.request('change',{siteId:origin,kind:'entry',payload:entry()}),w.request('change',{siteId:origin,kind:'setting',payload:{key:'enabled',value:false}})]);assert.equal(adds,1);assert.equal(removes,0);
+  await w.request('group-change',{group:'example.com',action:'delete'});assert.equal(removes,1);assert.equal(scripts.length,0);
+});
 test('删除/停用期间迟到结果被拒绝，不恢复网站、不写入词条',async t=>{
   let deliver;const w=await worker(t,()=>new Promise(r=>deliver=r));
   await w.request('config',{ai:{provider:'api',model:'test',endpoint:'https://api.example.com/v1/chat/completions',apiKey:'secret'}});
@@ -151,33 +171,14 @@ test('删除/停用期间迟到结果被拒绝，不恢复网站、不写入词�
   deliver(new Response(JSON.stringify({choices:[{message:{content:JSON.stringify([{id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''}])}}]})));await pause(120);
   const state=(await w.request('state')).result;assert.equal(state.sites[origin].deleted,true);assert.equal(Object.keys(state.sites[origin].entries).length,0);assert.equal(Object.values(state.wt_tasks)[0].status,'failed');
 });
-test('同步中文大词条按 UTF-8 字节读取；总量超限明确失败且不截断',async t=>{
-  const root=await temp(t),a=builder(),create=a('create',sitePayload);
-  const large=a('entry',{...entry(),sourceText:'原'.repeat(4000),translation:'译'.repeat(8000)},[create.opId]);
-  const result=await exchange({directory:root,deviceId:create.deviceId,ops:[create,large]});assert.equal(result.ops.length,2);
-  assert.ok(Buffer.byteLength(C.canonical(large))>30000,'确实覆盖原 30KB 读取上限');
-  const many=Array.from({length:40},(_,i)=>a('entry',{...entry(),sourceText:`Label ${i}`,translation:'译'.repeat(8000)},[create.opId]));
-  await assert.rejects(()=>exchange({directory:root,deviceId:create.deviceId,ops:[create,large,...many]}),/UTF-8/);
-  const names=await fs.promises.readdir(path.join(root,'changes'));assert.equal(names.filter(n=>n.endsWith('.json')).length,42);
-});
-test('不把损坏确认或本机确认当成对端确认；依赖缺失不被快照吞掉',async t=>{
-  const root=await temp(t),a=builder(),create=a('create',sitePayload),edit=a('entry',entry(),[create.opId]);
-  const state=await exchange({directory:root,deviceId:create.deviceId,ops:[edit]});assert.equal(state.pending,1);
-  await immutable(path.join(root,'acks','bad.json'),{schemaVersion:1,applied:[edit.opId]});
-  assert.equal((await acknowledge({directory:root,deviceId:create.deviceId,applied:[edit.opId]})).peerConfirmed,false);
-  const full=await exchange({directory:root,deviceId:create.deviceId,ops:[create,edit]});assert.equal(full.pending,0);assert.equal(full.ops.length,2);
-});
+
+
 test('跨代次复活必须依赖前代删除；无网站依赖的记录不记为已合并',()=>{
   const a=builder();assert.throws(()=>C.materialize([a('create',sitePayload,[],2)]),/删除依赖/);
   assert.throws(()=>C.materialize([a('entry',entry())]),/创建依赖/);
   assert.throws(()=>C.validateOp(a('setting',{key:'targetLanguage',value:'EN-us'})),/规范/);
 });
-test('同一 opId 的内容冲突不能被坏文件计数掩盖',async t=>{
-  const root=await temp(t),a=builder(),create=a('create',sitePayload);
-  await exchange({directory:root,deviceId:create.deviceId,ops:[create]});
-  await immutable(path.join(root,'changes','conflict.json'),{...create,payload:{...sitePayload,name:'different'}});
-  await assert.rejects(()=>exchange({directory:root,deviceId:randomUUID(),ops:[]}),/opId 冲突/);
-});
+
 async function until(fn){for(let i=0;i<600;i++){if(fn())return;await pause(10);}assert.fail('等待测试条件超时');}
 
 test('跨页采集本机去重、页面不得调用 AI，完成才发送并使用全局语言和自定义提示词',async t=>{
@@ -249,92 +250,18 @@ test('合并服务后台使用原生机器翻译协议并保留各服务配置',
     if(provider==='azure')assert.match(sent.url,/api-version=3.0/);
   }
 });
-async function seededWorker(t,native){
-  const w=await worker(t,async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify([{id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''}])}}]})),native);
-  await w.request('config',{ai:{provider:'api',model:'test',endpoint:'https://api.example.com/v1/chat/completions',apiKey:'fixture'}});await w.request('start',{tabId:1});
-  await until(()=>Object.values(w.local.wt_tasks).some(t=>t.status==='completed'));return w;
-}
-test('同步进行中的本地修改排入下一轮；旧对端确认立即失效',async t=>{
-  let unblock,round=0;
-  const w=await seededWorker(t,async m=>{
-    if(m.action==='ack')return {peerConfirmed:true};round++;
-    if(round===1)await new Promise(r=>unblock=r);
-    return {ops:m.ops,invalid:0,directory:'fixture'};
-  });
-  await w.request('config',{sync:{enabled:true,directory:'fixture'}});await until(()=>!!unblock);
-  await w.request('change',{siteId:origin,kind:'setting',payload:{key:'targetLanguage',value:'ja'}});assert.equal(w.local.wt_sync_status.peerConfirmed,false);
-  unblock();await until(()=>round>=2 && w.local.wt_sync_status.pendingLocal===false);
-  assert.equal(round,2);assert.equal(w.local.wt_sync_status.peerConfirmed,true);assert.equal(w.local.wt_sync_status.exported,w.local.wt_database.ops.length);
-});
-test('关闭同步后迟到导入不得落地或写确认，旧路径结果不显示成功',async t=>{
-  let unblock,ack=0;const remote=builder();
-  const w=await seededWorker(t,async m=>{if(m.action==='ack'){ack++;return {peerConfirmed:true};}await new Promise(r=>unblock=r);return {ops:[...m.ops,remote('delete',{},[m.ops.at(-1).opId])],invalid:0,directory:'old'};});
-  await w.request('config',{sync:{enabled:true,directory:'old'}});await until(()=>!!unblock);
-  await w.request('config',{sync:{enabled:false,directory:'new'}});unblock();await pause(100);assert.equal(w.local.wt_sync.directory,'new');assert.equal(w.local.wt_sync_status.error,undefined);
-  assert.equal((await w.request('state')).result.sites[origin].deleted,false);assert.equal(ack,0);assert.equal(w.local.wt_sync_status.peerConfirmed,false);
-});
-test('对端确认写失败仍先应用导入的删除并通知已打开页面',async t=>{
-  const remote=builder();let applied=false;
-  const w=await seededWorker(t,async m=>{if(m.action==='ack')throw new Error('ack write failed');return {ops:[...m.ops,remote('delete',{},[m.ops.at(-1).opId])],invalid:0,directory:'fixture'};});
-  w.chrome.tabs.query=async()=>[{id:1,url:origin+'/settings'}];w.chrome.tabs.sendMessage=async(_id,m)=>{if(m.type==='wt:apply' && m.site.deleted)applied=true;};
-  await w.request('config',{sync:{enabled:true,directory:'fixture'}});await until(()=>!!w.local.wt_sync_status.error);
-  assert.equal(applied,true);assert.equal((await w.request('state')).result.sites[origin].deleted,true);assert.match(w.local.wt_sync_status.error,/ack write failed/);
-  assert.equal(w.local.wt_sync_status.directorySaved,true,'确认失败不能谎报已经写入的文件未保存');
-});
 
-test('启用时自动创建词库目录并验证读写；失败不启用，提示词独立保存',async t=>{
-  const root=await temp(t);assert.equal((await confirmDirectory(root)).writable,true);
-  assert.ok(!(await fs.promises.readdir(root)).some(n=>n.startsWith('check-')));
-  const created=path.join(root,'new','dictionary');assert.equal((await confirmDirectory(created)).writable,true);assert.ok(fs.existsSync(path.join(created,'changes')));
-  const blocked=path.join(root,'existing-file');fs.writeFileSync(blocked,'fixture');
-  await assert.rejects(()=>confirmDirectory(path.join(blocked,'dictionary')));
-  const w=await worker(t);w.chrome.runtime.sendNativeMessage=async(_host,m)=>({ok:true,result:await confirmDirectory(m.directory)});
-  assert.equal((await w.request('config',{sync:{enabled:true,directory:path.join(blocked,'dictionary')}})).ok,false);
-  assert.equal(w.local.wt_sync,undefined);
-  await w.request('config',{prompt:'独立提示词'});assert.equal(w.local.wt_prompt,'独立提示词');
-  await w.request('config',{ai:{provider:'deepl',endpoint:'https://api-free.deepl.com/v2/translate',apiKey:'synthetic',model:''}});
-  assert.equal(w.local.wt_prompt,'独立提示词');assert.ok(!C.canonical(w.local.wt_database).includes('独立提示词'));
-});
 
-test('默认路径只在已有 OneDrive 根目录内自动创建，未配置时不创建替代根目录',async t=>{
-  const root=await temp(t),os=require('node:os'),original=os.homedir;os.homedir=()=>root;
-  try {
-    await assert.rejects(()=>confirmDirectory(''),/未找到本机 OneDrive/);assert.equal(fs.existsSync(path.join(root,'OneDrive')),false);
-    await fs.promises.mkdir(path.join(root,'OneDrive'));const result=await confirmDirectory('');assert.equal(result.directory,path.join(root,'OneDrive','文档','website-translator'));assert.equal(result.writable,true);
-  }finally{os.homedir=original;}
-});
 
-test('已确认目录：翻译未结束就写入成功批次，人工修改随后自动落盘',async t=>{
-  const root=await temp(t);let releaseSecond,requests=0,firstSize=0;
-  const scanItems=Array.from({length:60},(_,i)=>({id:'t'+i,sourceText:'Label '+i+' 界面说明'.repeat(600),context:'nav/button/text',path:'/settings'}));
-  const w=await worker(t,async(_url,init)=>{
-    const {inputs}=JSON.parse(JSON.parse(init.body).messages[1].content);
-    if(++requests===1)firstSize=inputs.length;if(requests===2)await new Promise(resolve=>releaseSecond=resolve);
-    return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(inputs.map(i=>({id:i.id,action:'translate',category:'ui',translation:'译文',reason:''})))}}]}));
-  });
-  w.chrome.runtime.sendNativeMessage=async(_host,m)=>({ok:true,result:m.action==='confirm-directory'?await confirmDirectory(m.directory):m.action==='sync'?await exchange(m):await acknowledge(m)});
-  w.chrome.tabs.sendMessage=async()=>({origin,items:scanItems});
-  await w.request('config',{ai:{provider:'api',model:'fixture',apiKey:'synthetic-secret',endpoint:'https://api.example.com/v1/chat/completions'},sync:{enabled:true,directory:root}});
-  assert.ok(w.local.wt_sync.confirmedAt);await w.request('start',{tabId:1});await until(()=>!!releaseSecond);
-  await until(()=>w.local.wt_sync_status.directorySaved && w.local.wt_sync_status.exported>=firstSize+1);
-  assert.equal(Object.values(w.local.wt_tasks)[0].status,'running');
-  const readChanges=async()=>Promise.all((await fs.promises.readdir(path.join(root,'changes'))).filter(n=>n.endsWith('.json')).map(async n=>verify(JSON.parse(await fs.promises.readFile(path.join(root,'changes',n),'utf8')))));
-  const written=(await readChanges()).filter(o=>o.kind==='entry').length;assert.ok(written>=firstSize && written<scanItems.length,'独立批次可以在另一批仍等待时先保存');
-  releaseSecond();await until(()=>Object.values(w.local.wt_tasks)[0].status==='completed' && w.local.wt_sync_status.directorySaved);
-  const manual={sourceText:scanItems[0].sourceText,context:'nav/button/text',path:'/settings',targetLanguage:'zh-Hans',sourceLanguage:null,action:'translate',category:'ui',origin:'manual',translation:'人工修正'};
-  await w.request('change',{siteId:origin,kind:'entry',payload:manual});await until(()=>w.local.wt_sync_status.directorySaved && w.local.wt_sync_status.exported===w.local.wt_database.ops.length);
-  const changes=await readChanges();assert.ok(changes.some(o=>o.payload.translation==='人工修正'));assert.ok(!C.canonical(changes).includes('synthetic-secret'));assert.equal(w.local.wt_sync_status.peerConfirmed,false);
-});
 
-test('文件写失败保留词库，浏览器闹钟自动重试；暂停后不继续写',async t=>{
-  const root=await temp(t);let failing=true,syncs=0;
-  const w=await seededWorker(t,async m=>{if(m.action==='ack')return {peerConfirmed:false};syncs++;if(failing)throw new Error('fixture disk unavailable');return exchange(m);});
-  await w.request('config',{sync:{enabled:true,directory:root}});await until(()=>!!w.local.wt_sync_status.error);
-  assert.equal(w.local.wt_sync_status.directorySaved,false);assert.ok(w.local.wt_database.ops.length);assert.ok(w.alarms.has('wt-sync-retry'));
-  failing=false;w.alarmListeners.forEach(fn=>fn({name:'wt-sync-retry'}));await until(()=>w.local.wt_sync_status.directorySaved);await until(()=>!w.alarms.has('wt-sync-retry'));assert.ok(syncs>=2);
-  await w.request('config',{sync:{enabled:false,directory:root}});const before=syncs;
-  await w.request('change',{siteId:origin,kind:'setting',payload:{key:'enabled',value:false}});w.alarmListeners.forEach(fn=>fn({name:'wt-sync-retry'}));await pause(80);assert.equal(syncs,before);
-});
+
+
+
+
+
+
+
+
 
 test('本地主机授权拒绝明确显示当前扩展 ID 和重注册方法',async t=>{
   const w=await worker(t);w.chrome.runtime.sendNativeMessage=async()=>{throw new Error('Access to the specified native messaging host is forbidden.');};

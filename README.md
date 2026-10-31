@@ -2,17 +2,21 @@
 
 # 网站翻译插件
 
-website-translator 是使用本地词库并支持按需翻译的网站界面扩展。当前版本 **v0.3.16（GitHub 词库运行时预览）**，当前构建和浏览器验证范围为 **Windows + Microsoft Edge**。
+website-translator 是使用本地词库并支持按需翻译的网站界面扩展。当前版本 **v0.3.18（GitHub 词库运行时预览）**，当前构建和浏览器验证范围为 **Windows + Microsoft Edge**。
 
 本项目从 [Ffive55/fixed-site-translator](https://github.com/Ffive55/fixed-site-translator) v3.3.0 独立派生，保留 [MaydayV/github-chinese](https://github.com/MaydayV/github-chinese) 的 GitHub 引擎及 [maboloshi/github-chinese](https://github.com/maboloshi/github-chinese) 与社区的词库贡献。来源提交与文件基线见 [source-baseline.json](docs/source-baseline.json)。本项目不是上游作者、GitHub 或各网站的官方产品。
 
-源码仓库：[Ffive55/website-translator](https://github.com/Ffive55/website-translator)，当前设置为私有，需要仓库访问权限。本版本尚未发布 Release 或浏览器商店安装包。源码保留 chrome/、edge/、firefox/ 三端工程结构，**本版本只有 edge/ 已更新并完成浏览器模拟验证**，不要直接加载旧 Chrome/Firefox 目录并当作 v0.3.16。
+源码仓库：[Ffive55/website-translator](https://github.com/Ffive55/website-translator)，当前设置为私有，需要仓库访问权限。本版本尚未发布 Release 或浏览器商店安装包。源码保留 chrome/、edge/、firefox/ 三端工程结构，**本版本只有 edge/ 已更新并完成浏览器模拟验证**，不要直接加载旧 Chrome/Firefox 目录并当作 v0.3.18。
 
-当前 Edge 已接通词库迁移、GitHub 下载、主域名检查/全部更新、上传预览及 Git 原子提交、浏览器设置与网址清单恢复。插件保留执行引擎，词库从当前仓库 dictionaries 目录下载。初始词库已发布到 main（提交 5c4b8f57d6f655692e8b95e9fc6f001211469bb0）。使用时在词库上传页配置本设备的仓库读取凭据，再检查更新。离线已有本地词库继续可用。详见 [实施进度](docs/GitHub词库迁移实施计划.md) 和 [统一协议](docs/GitHub词库协议.md)。
+当前 Edge 已接通本机词库、GitHub 下载、主域名检查/全部更新、直接上传及 Git 原子提交、浏览器设置与网址清单恢复。插件保留执行引擎，词库从当前仓库 dictionaries 目录下载。初始词库已发布到 main（提交 5c4b8f57d6f655692e8b95e9fc6f001211469bb0）。使用时在 GitHub 仓库页配置本设备的仓库读取凭据，再检查更新。离线已有本地词库继续可用。详见 [实施进度](docs/GitHub词库迁移实施计划.md) 和 [统一协议](docs/GitHub词库协议.md)。
 
-v0.3.15 修复带旧数据重新加载的长等待：设置入口无需等迁移结束，后台分组批量迁移并显示进度；备份导入保留双方待上传修改、拒绝旧基线覆盖新版，中断可在重新加载后继续。GitHub 授权和限流错误独立处理，不阻塞本机界面。详见 [修复记录](docs/v0.3.15启动与数据完整性修复.md)。
+v0.3.15 曾修复带旧数据重新加载的长等待：设置入口无需等迁移结束，后台分组批量迁移并显示进度；备份导入保留双方待上传修改、拒绝旧基线覆盖新版，中断可在重新加载后继续。GitHub 授权和限流错误独立处理，不阻塞本机界面。详见 [修复记录](docs/v0.3.15启动与数据完整性修复.md)。
 
-v0.3.16 明确区分保存仓库地址与配置 Token：未配置时为匿名请求。限流等待在本机持久保存，重启或重复保存相同凭据不会清除。可在词库上传页通过“创建 GitHub Token”入口创建仅授权当前仓库的令牌；下载用 Contents read，上传用 write。
+v0.3.16 明确区分保存仓库地址与配置 Token：未配置时为匿名请求。限流等待在本机持久保存，重启或重复保存相同凭据不会清除。可在 GitHub 仓库页通过“创建 GitHub Token”入口创建仅授权当前仓库的令牌；下载用 Contents read，上传用 write。
+
+v0.3.17 将词库搜索下载放到网站管理底部，上传移至主域名行和顶部，可直接上传或上传全部。弹窗自动检测当前网页，按需提供下载、更新和本地修改上传，并可单独启停当前网址；检测复用缓存，任务进度轮询不会重复请求 GitHub。v0.3.18 已移除旧迁移备份与导入入口。
+
+v0.3.18 弹窗保持原有宽度，使用自适应高度及简短任务摘要，底部按钮完整可见；改为读取当前网址的轻量状态并按本机变更刷新。旧 OneDrive 自动保存与原生目录写入接口已移除，旧文件格式校验、迁移转换、备份导入和相关恢复入口已一并删除；现有本机词库及正常 GitHub 同步继续使用。
 
 ## 能做什么
 
@@ -74,9 +78,9 @@ ChatGPT 订阅连接需要本地连接程序，GitHub 词库功能不需要。�
 
 订阅模式提供官方授权流程、模型读取和思考强度选择；**代码与模拟协议测试通过不代表真实订阅账号已通过推理验收**。验证边界和操作步骤见 [订阅与同步实测清单](docs/订阅与同步实测清单.md)。
 
-设置 → 词库上传：保存仓库、分支及本设备 Token；检查和下载需 Contents 读取权限，上传需写入权限。先在网站管理添加网址，再检查/下载；上传前审阅具体路径、源文和译文。旧 OneDrive 文件可在迁移区域选择 changes/snapshots JSON 导入，原文件不会被清理。API Key 存在本机，订阅令牌仍由 Windows DPAPI 保护。
+设置 → GitHub 仓库：保存仓库、分支及本设备 Token；检查和下载需 Contents 读取权限，上传需写入权限。网站管理底部可按主域名或网址搜索当前语言词库，留空搜索全部未完整下载的主域名。每个主域名仅显示一条结果，点击下载将一次安装该主域名及全部已发布子域名，保留已有启停和本地修改。分组有本地修改时显示上传，顶部显示上传全部；点击后直接执行三方合并与安全发布，遇到冲突保留双方内容并在分组内处理。检查更新结果使用短暂悬浮提示。当前不再提供旧文件格式校验、迁移或备份导入；本机已有词库和 GitHub 下载缓存继续使用。API Key 存在本机，订阅令牌仍由 Windows DPAPI 保护。
 
-解压加载跨设备前，在迁移区域导出备份并下载固定身份 manifest.json，替换 edge/manifest.json 后重新加载，再导入备份。此操作会改变未固定的 ID，订阅本地主机需重新授权；固定后的同一清单用于新设备。默认构建保留现有 key，不擅自改变已安装扩展身份。实际浏览器账号双设备同步仍需验收。
+新设备需使用同一扩展身份并开启浏览器扩展同步，在本设备单独配置 GitHub Token；收到安装清单后从 GitHub 下载对应词库。默认构建保留现有 manifest key，不更改已安装插件身份；不再提供旧备份导入或固定身份迁移工具。实际浏览器账号双设备同步仍需验收。
 
 ## 开发与验证
 
@@ -94,7 +98,7 @@ npm run test:dictionaries:browser
 | extension/ | 采集、来源追踪、任务、服务、设置和协议 |
 | chrome/src/ | 保留的 GitHub 专用引擎源码 |
 | sites/ | 网站配置、界面词库 |
-| dictionaries/ | 统一协议的迁移候选数据，尚未作为正常运行时下载源 |
+| dictionaries/ | 按主域名和目标语言发布的 GitHub 词库、清单及索引 |
 | edge/ | 当前可加载构建；local-helper 为忽略的生成目录 |
 | chrome/、firefox/ | 其他浏览器工程结构，当前未同步版本 |
 | native/ | Windows 本地连接程序源码 |

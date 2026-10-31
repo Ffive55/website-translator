@@ -120,18 +120,7 @@
         await request(store('staging').put(stage, key)); return { installed: false, conflicts: stage.comparison.conflicts };
       });
     }
-    async function stageLegacy(prepared) {
-      const M = typeof module !== 'undefined' ? require('./dictionary-migration.js') : C.dictionaryMigration;
-      C.assert(M, '迁移验证器不可用');
-      C.assert(prepared?.status === 'prepared', '旧数据迁移状态无效');
-      await M.verifyPrepared(prepared, prepared.backup, prepared.preferences, getDomain);
-      return transaction(['staging'], 'readwrite', async store => {
-        const existing = await request(store('staging').get('legacy'));
-        C.assert(!existing || existing.sourceSha256 === prepared.sourceSha256, '旧数据已变化，保留现有备份，请重新准备迁移');
-        if (!existing) await request(store('staging').put(prepared, 'legacy'));
-        return { staged: true, sourceSha256: prepared.sourceSha256, runtimeSwitched: false };
-      });
-    }
+
     async function resetLocal(origin,repository,archiveId='removed') {
       D.origin(origin);
       return transaction(['groups','staging','meta'], 'readwrite', async store=>{
@@ -142,38 +131,8 @@
         }
       });
     }
-    async function exportData() { return transaction(['groups'],'readonly',store=>request(store('groups').getAll())); }
-    async function exportArchives(){return transaction(['meta'],'readonly',async store=>{const keys=await request(store('meta').getAllKeys()),rows=[];for(const key of keys)if(typeof key==='string'&&key.startsWith('archive:'))rows.push(await request(store('meta').get(key)));return rows;});}
-    async function importData(groups,importId,archives=[]) {
-      C.assert(Array.isArray(groups)&&groups.length<=1000&&D.bytes(groups)<=64*1024*1024,'备份词库容量无效');
-      for(const state of groups){
-        C.assert(state&&Number.isSafeInteger(state.revision)&&state.revision>=0,'备份修订号无效');C.assert(state.contentRevision===undefined||/^[a-f0-9]{64}$/.test(state.contentRevision),'备份内容修订无效');C.assert(state.commit===undefined||/^[a-f0-9]{40}$/.test(state.commit),'备份提交无效');
-        R.configuration(state.repository);D.groupId(state.group);C.assert(C.language(state.targetLanguage)===state.targetLanguage&&Array.isArray(state.files),'备份词库范围无效');
-        C.assert(Array.isArray(state.installedOrigins)&&state.installedOrigins.every(o=>D.groupFor(o,getDomain)===state.group),'备份网址范围无效');
-        for(const file of state.files){D.validatePackage(file.pack,{getDomain,policy});D.path(file.description.path,state.group,state.targetLanguage);C.assert(file.pack.group===state.group&&file.pack.targetLanguage===state.targetLanguage&&file.description.kind===file.pack.kind&&C.canonical(file.description.origins)===C.canonical(file.pack.origins),'备份词库包与分组不匹配');}
-        if(state.files.length){const files=state.files.map(f=>f.description),origins=[...new Set(files.flatMap(f=>f.origins))];await D.validateManifest({schemaVersion:1,minReaderVersion:1,group:state.group,languages:{[state.targetLanguage]:{origins,files,revision:await D.digest({origins,files})}}},getDomain);C.assert(state.contentRevision===await D.digest({group:state.group,language:state.targetLanguage,origins:[...state.installedOrigins].sort(),files}),'备份词库修订不匹配');}
-        for(const rows of [state.baseline,state.local,state.synthetic||{}]){C.assert(rows&&typeof rows==='object'&&!Array.isArray(rows)&&Object.keys(rows).length<=D.limits.entries,'备份记录无效');for(const [key,row] of Object.entries(rows)){
-          const [site,path,context,sourceText,targetLanguage]=JSON.parse(key);
-          const valid=row || {site,entry:{sourceText,path,context,targetLanguage,sourceLanguage:null,origin:'manual',category:'uncertain',action:'skip',translation:null}};
-          D.validateRecord(valid,state.installedOrigins.length?state.installedOrigins:[site],state.targetLanguage);C.assert(D.entryIdentity(valid)===key&&D.groupFor(site,getDomain)===state.group,'备份词条身份无效');
-        }}
-      }
-      C.assert(Array.isArray(archives)&&archives.length<=1000,'归档备份无效');
-      for(const archive of archives){R.configuration(archive.repository);C.assert(D.groupFor(archive.origin,getDomain)&&C.language(archive.language)===archive.language&&archive.local&&typeof archive.local==='object','归档词条无效');for(const [key,row] of Object.entries(archive.local)){const [site,path,context,sourceText,targetLanguage]=JSON.parse(key);const value=row||{site,entry:{path,context,sourceText,targetLanguage,sourceLanguage:null,origin:'manual',category:'uncertain',action:'skip',translation:null}};D.validateRecord(value,[archive.origin],archive.language);C.assert(D.entryIdentity(value)===key,'归档身份无效');}}
-      return transaction(['groups','staging','meta'],'readwrite',async store=>{
-        if(importId&&await request(store('meta').get('import:'+importId)))return;
-        for(let state of groups){const key=keyFor(state.repository,state.group,state.targetLanguage),old=await request(store('groups').get(key));
-          // Import is explicit. Existing local edits are merged and conflicts are not discarded.
-          C.assert(!await request(store('staging').get(key)),'本机存在待解决候选，请先解决后导入');
-          if(old){C.assert(!old.contentRevision||old.contentRevision===state.contentRevision,'备份与本机远端基线不同，未覆盖当前新版词库');for(const [id,row] of Object.entries(old.baseline))if(Object.hasOwn(state.baseline,id))C.assert(C.canonical(row)===C.canonical(state.baseline[id]),'备份基线不同，未覆盖当前词库');const baseline={...state.baseline,...old.baseline};const result=D.mergeRecords(baseline,old.local,state.local);C.assert(result.canInstall,'备份与本机修改冲突，请先解决后导入');state=structuredClone(state);state.baseline=baseline;state.synthetic={...state.synthetic,...old.synthetic};if(old.contentRevision)state.files=old.files;state.local=Object.fromEntries(Object.entries(result.merged).filter(([id,row])=>C.canonical(row)!==C.canonical(state.baseline[id])));}
-          state.revision=(old?.revision||state.revision||0)+1;await request(store('groups').put(state,key));await request(store('staging').delete(key));
-        }
-        for(const [index,archive] of archives.entries())await request(store('meta').put(archive,'archive:import:'+importId+':'+index));
-        if(importId)await request(store('meta').put(true,'import:'+importId));
-      });
-    }
-    async function importApplied(id){return transaction(['meta'],'readonly',store=>request(store('meta').get('import:'+id)));}
-    return Object.freeze({ setContext, read, edit, editBatch, install, beginDownload, pending, resolve, stageLegacy, resetLocal, exportData, exportArchives, importData, importApplied, close: () => db.close() });
+
+    return Object.freeze({ setContext, read, edit, editBatch, install, beginDownload, pending, resolve, resetLocal, close: () => db.close() });
   }
   const api = Object.freeze({ open });
   if (typeof module !== 'undefined') module.exports = api;

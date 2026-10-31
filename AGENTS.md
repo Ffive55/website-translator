@@ -6,9 +6,9 @@
 
 项目显示名称为“网站翻译插件”，仓库名为 `website-translator`。本项目从 `fixed-site-translator` v3.3.0 独立复制，后者是基于 MaydayV/github-chinese 的多网站翻译扩展。不得修改、移动、清理或把构建结果写回原 `fixed-site-translator` 目录。来源提交见 `docs/source-baseline.json`。
 
-当前 v0.3.16 为 GitHub 词库运行时开发预览，新增实现及验证边界见 `docs/实现与验收.md`；启动和数据修复见 `docs/v0.3.15启动与数据完整性修复.md`；迁移进度见 `docs/GitHub词库迁移实施计划.md`，统一协议见 `docs/GitHub词库协议.md`。不要把自动化协议测试当成真实订阅账号或双设备验收。
+当前 v0.3.18 为 GitHub 词库运行时开发预览，新增实现及验证边界见 `docs/实现与验收.md`；启动和数据修复见 `docs/v0.3.15启动与数据完整性修复.md`；迁移进度见 `docs/GitHub词库迁移实施计划.md`，统一协议见 `docs/GitHub词库协议.md`。不要把自动化协议测试当成真实订阅账号或双设备验收。
 
-当前 Edge 使用 GitHub 集中词库、浏览器非敏感设置和安装清单同步；不分发或加载旧 locals.js 和网站翻译数据。旧 OneDrive 自动交换和管理入口已退出，下文相关要求仅适用于历史迁移/回退及旧版本。初始词库已于 2026-10-31 发布到 main（5c4b8f57d6f655692e8b95e9fc6f001211469bb0）；每台设备独立配置私有仓库读取凭据。后续远端写入仍须用户明确要求。
+当前 Edge 使用 GitHub 集中词库、浏览器非敏感设置和安装清单同步；不分发或加载旧 locals.js 和网站翻译数据。旧 OneDrive 交换、旧格式校验和迁移导入已删除；下文旧 OneDrive 设计仅用于历史记录，不是当前支持功能。初始词库已于 2026-10-31 发布到 main（5c4b8f57d6f655692e8b95e9fc6f001211469bb0）；每台设备独立配置私有仓库读取凭据。后续远端写入仍须用户明确要求。
 
 保留 GitHub 专用引擎，通过 `sites/<id>/site.json` 和 `extension/` 扩展新网站。不要将整个上游仓库覆盖到此项目。
 
@@ -45,7 +45,7 @@
 - `extension/managed-batching.js` 统一可配置输入 token 预算（默认 200K）、按文本量分批及全局有限并发规则，不预扣预计输出；可恢复任务输入仅保存在本机。`managed-background.js` 按批校验后单写者提交，保留已完成词条。
 - `extension/managed-providers.js` 统一维护服务目录、机器翻译协议和语言映射；旧 GitHub 正文/摘要/增强功能不得重新接回。目标语言在 `wt_preferences` 全局设置；公共界面按网站、原文、上下文、目标语言复用，不能跨语种混用。
 - `extension/text-provenance.js` 在扩展隔离环境中交接文本原文与实际译文写入。内置引擎及增量引擎改写文本必须走该层，不得从任意 MutationObserver 事件或语言字符推断“这是插件译文”。网站再次改写后应采集其最新原文；相关回归在 `tests/text-provenance.test.cjs`。
-- `native/` 是 Windows Native Messaging 连接程序：`oauth.cjs` 负责官方 PKCE/OIDC 和订阅响应流，`secure-store.ps1` 通过 Windows DPAPI 保护令牌，`sync.cjs` 只交换白名单数据。安装脚本由用户按需运行；开发和测试不得安装到用户注册表或访问真实令牌。
+- `native/` 是 Windows Native Messaging 连接程序：`oauth.cjs` 负责官方 PKCE/OIDC 和订阅响应流，`secure-store.ps1` 通过 Windows DPAPI 保护令牌，旧目录同步、旧文件格式校验及迁移导入已删除，当前原生入口不提供目录确认、交换或确认写入。安装脚本由用户按需运行；开发和测试不得安装到用户注册表或访问真实令牌。
 - `*/managed/` 由 `script/build-sites.js` 生成，不直接编辑。新增协议回归在 `tests/managed.test.cjs`；浏览器烟测使用独立 `.cache` 配置，不复用个人浏览器。
 - 通用逻辑修改 `extension/`；网站配置和词库修改 `sites/`。
 - GitHub 核心代码修改 `chrome/src/`，运行 `npm run build` 生成三端 content.js。

@@ -1,7 +1,7 @@
 {
   "name": "website-translator",
   "displayName": "网站翻译插件",
-  "version": "0.3.16",
+  "version": "0.3.18",
   "private": true,
   "description": "支持按需 AI 添加更新、本地词库、网站管理及本地连接程序的网站翻译插件",
   "license": "GPL-3.0-or-later",
@@ -25,8 +25,9 @@
     "test:dictionaries": "node --test tests/dictionary*.test.cjs",
     "test:dictionaries:browser": "node script/test-dictionaries-browser.cjs",
     "test:dictionaries:runtime": "node script/test-dictionary-runtime.cjs",
-    "test:migration:startup": "node script/test-migration-startup.cjs",
-    "test:github:limits": "node script/test-rate-limit-runtime.cjs"
+    "test:github:limits": "node script/test-rate-limit-runtime.cjs",
+    "test:popup": "node script/test-popup-layout.cjs",
+    "test:startup": "node script/test-local-startup.cjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

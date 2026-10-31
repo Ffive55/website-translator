@@ -15,7 +15,7 @@
     const records = D.recordsMap((remote?.files || []).flatMap(f => f.pack.records));
     for(const [id,row] of Object.entries(state?.synthetic || {}))if(!Object.hasOwn(records,id))records[id]=D.staticEntry(remote?.files,row);
     const comparison = D.mergeRecords(state?.baseline || {}, state?.local || {}, records);
-    C.assert(comparison.canInstall, '远端已有不同修改，请先检查更新并解决冲突');
+    if (!comparison.canInstall) throw Object.assign(new Error('远端已有不同修改，请先检查更新并解决冲突'), { kind: 'dictionary-conflict' });
     const changes = Object.entries(comparison.pending).map(([key, value]) => ({ key, before: records[key] ?? null, after: value }));
     if (!changes.length) return { empty: true, pin };
     const rows = Object.entries(comparison.merged).map(([key, value]) => {
@@ -53,16 +53,16 @@
       return ['ahead', 'identical'].includes(comparison.status);
     }
     async function publish(draft) {
-      C.assert(draft && /^[a-f0-9]{40}$/.test(draft.parent) && Object.keys(draft.files).length === 3, '上传预览无效');
+      C.assert(draft && /^[a-f0-9]{40}$/.test(draft.parent) && Object.keys(draft.files).length === 3, '上传准备数据无效');
       for (const [path, raw] of Object.entries(draft.files)) { C.assert(path === 'dictionaries/index.json' || D.path(path, draft.group, path.endsWith('/manifest.json') ? null : draft.language), '上传越界'); C.assert(typeof raw === 'string' && D.bytes(raw) <= D.limits.packageBytes, '上传内容过大'); }
-      const head = await api(refPath); C.assert(head.object.sha === draft.parent, '远端已更新，请重新预览合并');
+      const head = await api(refPath); C.assert(head.object.sha === draft.parent, '远端已更新，请重新点击上传合并');
       const parent = await api('/git/commits/' + draft.parent);
       const tree = await api('/git/trees', 'POST', { base_tree: parent.tree.sha, tree: Object.entries(draft.files).map(([path, content]) => ({ path, mode: '100644', type: 'blob', content })) });
       const commit = await api('/git/commits', 'POST', { message: `Update dictionary ${draft.group} ${draft.language}`, tree: tree.sha, parents: [draft.parent] });
       const saved = { repository: config, parent: draft.parent, commit: commit.sha, group: draft.group, language: draft.language };
       await journal(saved); // Persist identity before the only branch mutation; retry confirms rather than re-publishes.
       await beforeCommit();
-      const latest=await api(refPath);C.assert(latest.object.sha===draft.parent,'发布准备期间远端已变化，请重新预览合并');
+      const latest=await api(refPath);C.assert(latest.object.sha===draft.parent,'发布准备期间远端已变化，请重新点击上传合并');
       try { await api(refPath, 'PATCH', { sha: commit.sha, force: false }); }
       catch (error) { if (!await confirm(saved).catch(() => false)) throw error; }
       C.assert(await confirm(saved), '发布结果尚未确认，本地修改保留，请核查上次上传'); return saved;

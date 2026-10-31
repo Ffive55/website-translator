@@ -14,6 +14,7 @@ async function main(){
   const anonymous=await rpc('configure',{repository,token:''});check(anonymous.result.includes('尚未配置 GitHub Token'),'空 Token 保存明确说明匿名模式，不假称凭据已保存');
   const failed=await rpc('check');check(!failed.ok&&failed.error.includes('匿名请求')&&failed.error.includes('60/小时'),'限流提示包含匿名方式和真实配额');
   await rpc('check');check(await worker.evaluate(()=>__requests)===1,'同一线程重复检查不消耗新请求');
+  await rpc('page-status',{origin:'https://example.com'});await rpc('catalog',{query:''});await rpc('download-group',{group:'example.com'});check(await worker.evaluate(()=>__requests)===1,'弹窗检测、词库搜索与合并下载共用限流等待，不发出额外请求');
   const nextWorker=context.waitForEvent('serviceworker',{timeout:15000});await worker.evaluate(()=>chrome.runtime.reload()).catch(()=>{});worker=await nextWorker;ui=await context.newPage();await ui.goto(`chrome-extension://${id}/managed/managed.html`);await ui.evaluate(()=>chrome.runtime.sendMessage({type:'wt:state'}));
   const blocked=await rpc('check');check(!blocked.ok&&await worker.evaluate(()=>__requests)===0,'线程重启后手动检查继续遵守持久化等待时间');
   await rpc('configure',{repository,token:''});await rpc('check');check(await worker.evaluate(()=>__requests)===0,'重复保存同一访问方式不会清除限流等待');

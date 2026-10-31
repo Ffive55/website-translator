@@ -3,6 +3,9 @@ const fs=require('node:fs'),path=require('node:path');
 const {buildNativeBundle,installer}=require('./build-native-bundle');
 async function main(){
   const root=path.resolve(__dirname,'..'),files=await buildNativeBundle(root);
+  // Remove only this obsolete generated module; keep user installation and credentials untouched.
+  const obsolete=path.join(root,'edge','local-helper','native','sync.cjs');
+  if(fs.existsSync(obsolete))fs.unlinkSync(obsolete);
   for(const [name,data] of Object.entries({...files,'Install.cmd':installer('edge')})){
     const destination=path.join(root,'edge','local-helper',name);
     // A running native host can lock node.exe; identical runtime files need no rewrite.

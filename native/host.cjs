@@ -2,7 +2,6 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { OAuth } = require('./oauth.cjs');
-const { exchange, acknowledge, confirmDirectory } = require('./sync.cjs');
 function encode(message) {
   const data=Buffer.from(JSON.stringify(message));if(data.length>1000000)throw new Error('本地响应超过消息上限');
   const header=Buffer.alloc(4);header.writeUInt32LE(data.length);return Buffer.concat([header,data]);
@@ -23,9 +22,6 @@ async function main(){
       case 'logout':return oauth.logout();
       case 'models':return oauth.models();
       case 'translate':return oauth.translate(message.model,message.payload,message.prompt,message.reasoningEffort,message.timeoutMinutes,message.inputContextK);
-      case 'sync':return exchange(message);
-      case 'confirm-directory':return confirmDirectory(message.directory);
-      case 'ack':return acknowledge(message);
       default:throw new Error('未知本地操作');
     }
   }

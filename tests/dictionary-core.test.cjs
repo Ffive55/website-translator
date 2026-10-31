@@ -2,20 +2,37 @@
 const test = require('node:test'), assert = require('node:assert/strict');
 const { getDomain } = require('tldts');
 const C = require('../extension/managed-core.js'), D = require('../extension/dictionary-core.js');
-const R = require('../extension/dictionary-repository.js'), M = require('../extension/dictionary-migration.js');
+const R = require('../extension/dictionary-repository.js');
 const repository = { owner: 'Ffive55', repo: 'website-translator', branch: 'main' };
 const address = 'https://example.com', device = '11111111-1111-4111-8111-111111111111', otherDevice = '22222222-2222-4222-8222-222222222222';
 const entry = (translation = '保存', language = 'zh-Hans', sourceText = 'Save') => ({ sourceText, context: 'main/button/text', path: '/settings', sourceLanguage: null, targetLanguage: language, category: 'ui', action: 'translate', translation, origin: 'manual', userSelected: true });
 const row = (...args) => ({ site: address, entry: entry(...args) });
 const pack = (records = [row()], language = 'zh-Hans') => ({ schemaVersion: 1, minReaderVersion: 1, group: 'example.com', targetLanguage: language, origins: [address], kind: 'entries', records, adapter: null });
 const description = async (data, id = 'example.com') => { const raw = JSON.stringify(data); return { id, path: `dictionaries/${data.group}/${data.targetLanguage}/${id}.json`, sha256: await D.digest(raw), bytes: D.bytes(raw), kind: data.kind, origins: data.origins, requires: [] }; };
-async function fixture() {
-  const data = pack(), raw = JSON.stringify(data), file = await description(data);
-  const content = { origins: [address], files: [file] }, revision = await D.digest(content);
+async function fixture(origins=[address]) {
+  const data = {...pack(),origins}, raw = JSON.stringify(data), file = await description(data);
+  const content = { origins, files: [file] }, revision = await D.digest(content);
   const manifest = { schemaVersion: 1, minReaderVersion: 1, group: 'example.com', languages: { 'zh-Hans': { revision, ...content } } }, manifestRaw = JSON.stringify(manifest);
   const index = { schemaVersion: 1, minReaderVersion: 1, groups: [{ group: 'example.com', manifest: { path: 'dictionaries/example.com/manifest.json', bytes: D.bytes(manifestRaw), sha256: await D.digest(manifestRaw) }, languages: { 'zh-Hans': revision } }] };
   return { data, raw, file, manifest, manifestRaw, index };
 }
+
+test('词库目录按语言和网址关键词检索，空条件列出全部且不下载正文', async () => {
+  const allOrigins=[address,'https://app.example.com'],f=await fixture(allOrigins),calls=[],commit='c'.repeat(40);
+  const client=R.create({repository,policy:{},getDomain,fetch:async url=>{
+    calls.push(url);
+    return new Response(url.includes('/git/ref/')?JSON.stringify({ref:'refs/heads/main',object:{sha:commit,type:'commit'}}):url.includes('index.json')?JSON.stringify(f.index):url.includes('manifest.json')?f.manifestRaw:f.raw);
+  }});
+  assert.deepEqual((await client.catalog('zh-Hans','')).rows,[{group:'example.com',origins:allOrigins}]);
+  assert.equal((await client.catalog('zh-Hans','HTTPS://EXAMPLE.COM')).rows.length,1);
+  assert.deepEqual((await client.catalog('zh-Hans','app.example.com')).rows[0].origins,allOrigins);
+  assert.equal((await client.catalog('zh-Hans','example missing')).rows.length,0);
+  assert.equal((await client.catalog('ja','')).rows.length,0);
+  assert.equal(calls.some(url=>url.includes('/zh-Hans/')),false);
+  const pin=await client.readIndex(),downloaded=await client.downloadGroup(pin,'example.com','zh-Hans',allOrigins);
+  assert.deepEqual(downloaded.installedOrigins,allOrigins);assert.equal(downloaded.files.length,1);assert.equal(calls.filter(url=>url.includes('/zh-Hans/')).length,1,'同组共享词库只下载一次');
+  await assert.rejects(()=>client.catalog('zh-Hans','x'.repeat(201)),/搜索条件/);
+});
 
 test('协议区分 BCP 47 语言、完整 origin、公共托管租户及特殊网址文件身份', () => {
   assert.equal(D.groupFor('https://console.example.co.uk', getDomain), 'example.co.uk');
@@ -112,29 +129,7 @@ test('同步分片按 UTF-8 配额校验，延迟空值不删除、混代分片�
   const incomplete = structuredClone(values); delete incomplete.wt_install_1; await assert.rejects(() => D.unpackSync(incomplete));
   await assert.rejects(() => D.packSync(Array.from({ length: 400 }, (_, i) => ({ ...rows[0], id: `https://s${i}.example.com`, value: '名'.repeat(300) }))), /配额/);
 });
-test('本机迁移是幂等纯转换，保留人工、手动标记、多语言、跳过和并发候选，无可靠基线均待上传', async () => {
-  let seq = 0; const ops = [], add = (kind, payload, deps = []) => { const op = { schemaVersion: 1, deviceId: device, seq: ++seq, opId: `${device}-${seq}`, siteId: address, generation: 1, kind, payload, deps }; ops.push(op); return op; };
-  const create = add('create', { origin: address, name: 'Example', group: 'wrong-legacy-group', builtinId: null });
-  const a = add('entry', entry(), [create.opId]); add('entry', entry('另一人工译文'), [create.opId]); add('entry', entry('保存する', 'ja'), [create.opId]);
-  add('setting', { key: 'enabled', value: false }, [create.opId]); add('setting', { key: 'excludedPaths', value: ['/private'] }, [create.opId]);
-  const skip = { ...entry(null, 'zh-Hans', 'Maybe'), category: 'uncertain', action: 'skip', translation: null }; add('entry', skip, [create.opId]);
-  const database = { schemaVersion: 1, deviceId: device, seq, ops }, before = C.canonical(database), preferences = { targetLanguage: 'ja', requestTimeoutMinutes: 3, apiKey: 'must-not-export' };
-  const staged = await M.prepare(database, preferences, getDomain); assert.equal(C.canonical(database), before);
-  assert.deepEqual(await M.prepare(database, preferences, getDomain), staged); await M.verifyPrepared(staged, database, preferences, getDomain);
-  assert.equal(staged.installations[0].enabled, false); assert.equal(staged.installations[0].group, 'example.com'); assert.equal(staged.groups.length, 2);
-  const chinese = staged.groups.find(g => g.targetLanguage === 'zh-Hans'); assert.equal(chinese.baselineConfirmed, false); assert.equal(Object.keys(chinese.baseline).length, 0);
-  assert.equal(Object.values(chinese.local).filter(r => r.entry.action === 'skip').length, 1); assert.equal(Object.values(chinese.conflicts)[0].length, 2);
-  assert.ok(Object.values(chinese.conflicts)[0].some(c => c.opId === a.opId)); assert.equal(JSON.stringify(staged).includes('must-not-export'), false);
-  const changed = structuredClone(staged); changed.groups[0].baselineConfirmed = true; await assert.rejects(() => M.verifyPrepared(changed, database, preferences, getDomain));
-});
-test('本机迁移保留已删网站、旧代次和缺依赖历史，非法输入不会部分转换', async () => {
-  const create = { schemaVersion: 1, deviceId: device, seq: 1, opId: `${device}-1`, siteId: address, generation: 1, kind: 'create', payload: { origin: address, name: 'Example', group: 'example.com', builtinId: null }, deps: [] };
-  const remove = { ...create, seq: 2, opId: `${device}-2`, kind: 'delete', payload: {}, deps: [create.opId] };
-  const pending = { ...create, seq: 3, opId: `${device}-3`, kind: 'entry', payload: entry(), deps: [`${otherDevice}-1`] };
-  const database = { schemaVersion: 1, deviceId: device, seq: 3, ops: [create, remove, pending] };
-  const prepared = await M.prepare(database, {}, getDomain); assert.equal(prepared.installations[0].deleted, true); assert.deepEqual(prepared.pendingOperationIds, [pending.opId]); assert.deepEqual(prepared.backup.ops, database.ops);
-  await assert.rejects(() => M.prepare({ ...database, token: 'fixture' }, {}, getDomain));
-});
+
 test('只读仓库固定同一提交，检查不下载词库，不使用 AI，下载保留精确安装范围', async () => {
   const f = await fixture(), commit = 'a'.repeat(40), calls = [];
   const fetch = async (url, options) => {

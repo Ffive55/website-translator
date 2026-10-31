@@ -2020,8 +2020,8 @@
         {
           "id": "managed-entries",
           "path": "dictionaries/openrouter.ai/zh-Hans/managed-entries.json",
-          "sha256": "593ca8823520ff15789763b10d7e2d7bdc0d1ac6028973d47c7c07a5c933a3cc",
-          "bytes": 1053415,
+          "sha256": "cd84e178feefc5b5cc0be0cc3cb9fc1d3460dc0742c00d2083fcea1407f6b0fe",
+          "bytes": 1116702,
           "kind": "entries",
           "origins": [
             "https://openrouter.ai"
@@ -2029,7 +2029,7 @@
           "requires": []
         }
       ],
-      "revision": "fa80f815ac4b3d629010ae8ffb73ae115fcea97b8aa22795f2beca0f3304d52c"
+      "revision": "7a00f10bac057f40bae080a3bfc6d1720580e074ae23ddbb0fc77e00da955cf0"
     },
     {
       "group": "tailscale.com",

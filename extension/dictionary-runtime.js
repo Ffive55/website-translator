@@ -6,7 +6,7 @@
     let store, policy, context, config, client, active = false, applying = false, userChanged = false, timer, queue = Promise.resolve();
     const cache = new Map();let cacheEpoch=0;
     const invalidateCache=()=>{cacheEpoch++;cache.clear();};
-    let clientIdentity, accessKey, mirrorSignature, mirrorQueue=Promise.resolve(), starting=true, importing=false, startup={phase:'正在读取本机词库',done:0,total:0};
+    let clientIdentity, accessKey, mirrorSignature, contextStamp, mirrorQueue=Promise.resolve(), starting=true, startup={phase:'正在读取本机词库',done:0,total:0};
     const yieldUI=()=>new Promise(resolve=>setTimeout(resolve,0));
     const serial = fn => { const next = queue.then(fn); queue = next.catch(() => {}); return next; };
     const local = keys => chrome.storage.local.get(keys);
@@ -18,7 +18,8 @@
       if (!config || C.canonical(next) !== C.canonical(config)) { config = next; invalidateCache(); }
       const identity=C.canonical([config,wt_repository_token]);
       if(clientIdentity!==identity){client = R.create({ repository: config, token: wt_repository_token, policy, getDomain: tldts.getDomain });accessKey=wt_repository_token?await D.digest(wt_repository_token):'anonymous';clientIdentity=identity;}
-      context = await store.setContext({ repository: config, targetLanguage: await language(), installations: Object.values(hooks.view().sites).filter(s => !s.deleted).map(s => ({ origin: s.origin, generation: s.generation })) });
+      const nextContext={ repository: config, targetLanguage: await language(), installations: Object.values(hooks.view().sites).filter(s => !s.deleted).map(s => ({ origin: s.origin, generation: s.generation })) },stamp=C.canonical(nextContext);
+      if(stamp!==contextStamp){context=await store.setContext(nextContext);contextStamp=stamp;}
       return context;
     }
     async function stateFor(group, lang = context.targetLanguage) {
@@ -55,7 +56,7 @@
       for(const [group,rows] of batches){
         await store.editBatch(mirrorRepository,group,mirrorContext.targetLanguage,rows,mirrorContext.revision);
         for(const [key,stamp] of marksForGroup.get(group))marks[key]=stamp;
-        done+=rows.length;startup={phase:'正在保存迁移词库',done,total};await status({startup});await yieldUI();
+        done+=rows.length;startup={phase:'正在保存本机词库',done,total};await status({startup});await yieldUI();
       }
       await chrome.storage.local.set({wt_dictionary_mirror:mirrors,wt_dictionary_generations:generations});invalidateCache();
       mirrorSignature=signature;
@@ -107,7 +108,7 @@
     async function restore() {
       const {wt_repository_status:net={}}=await local('wt_repository_status');if(net.needsAuthorization||net.networkRetryAt>Date.now())return;
       if (!context.installations.length) return;
-      if(!await chrome.permissions.contains({origins:['https://api.github.com/*']})) { await status({error:'请在词库上传页授予 GitHub 连接权限后恢复词库'}); return; }
+      if(!await chrome.permissions.contains({origins:['https://api.github.com/*']})) { await status({error:'请在 GitHub 仓库页授予 GitHub 连接权限后恢复词库'}); return; }
       const wanted=new Map();for(const s of context.installations){const g=D.groupFor(s.origin,tldts.getDomain);if(!wanted.has(g))wanted.set(g,[]);wanted.get(g).push(s.origin);}
       let pin;
       for(const [group,origins] of wanted) {
@@ -117,6 +118,7 @@
       }
     }
     async function networkError(error){await status({error:error.message,httpStatus:error.status||null,networkKind:error.kind||null,networkError:error.message,networkRetryAt:error.retryAt||Date.now()+60000,networkAccessKey:accessKey,requestAuthenticated:error.authenticated??accessKey!=='anonymous',rateLimit:error.rateLimit||null,needsAuthorization:['authorization','not-found'].includes(error.kind),requestId:error.requestId||null});}
+    async function networkReady(extra={}){await status({error:null,networkKind:null,networkError:null,networkRetryAt:0,needsAuthorization:false,...extra});}
     async function requireNetworkBudget(){const {wt_repository_status:net={}}=await local('wt_repository_status');if(net.networkKind==='rate-limit'&&net.networkRetryAt>Date.now()&&(!net.networkAccessKey||net.networkAccessKey===accessKey)){const error=new Error(net.networkError||net.error||'GitHub 限流等待尚未结束');Object.assign(error,{kind:'rate-limit',status:net.httpStatus||403,retryAt:net.networkRetryAt,authenticated:net.requestAuthenticated,rateLimit:net.rateLimit});throw error;}}
 
     async function check() {
@@ -125,7 +127,14 @@
       const installed=[];for(const [group,origins] of groups)installed.push({group,origins,revision:(await stateFor(group))?.contentRevision});
       const result=await client.check(installed,lang);
       await chrome.storage.local.set({wt_dictionary_check:{language:lang,context:context.identity,checkedAt:Date.now(),groups:result.groups.map(({files,...g})=>g)}});
-      await status({error:null,needsAuthorization:false,networkRetryAt:0}); return '已检查 '+groups.size+' 个主域名';
+      await networkReady();
+      const updates=result.groups.filter(g=>g.hasUpdate).length,failed=result.groups.filter(g=>g.status==='failed');
+      return {message:'已检查，'+updates+' 个主域名有更新'+(failed.length?'；'+failed.map(g=>g.group+'：'+g.error).join('；'):''),error:failed.length>0};
+    }
+    async function markCheckedCurrent(group,revision,missing=[]) {
+      const {wt_dictionary_check:checked}=await local('wt_dictionary_check');if(checked?.context!==context.identity)return;
+      const next={...checked,groups:checked.groups.map(item=>{if(item.group!==group)return item;const {error,...rest}=item;return {...rest,status:'available',revision,missing,hasUpdate:false};})};
+      if(C.canonical(next)!==C.canonical(checked))await chrome.storage.local.set({wt_dictionary_check:next});
     }
     async function updateGroup(group,pinned) {
       await mirror();await requireNetworkBudget();const ctx=context,repo={...config},origins=ctx.installations.filter(s=>D.groupFor(s.origin,tldts.getDomain)===group).map(s=>s.origin);
@@ -135,22 +144,24 @@
       try {
         const pin=pinned||await client.readIndex(true),candidate=await client.downloadGroup(pin,group,ctx.targetLanguage,origins);
         await refreshContext();const result=await store.install(candidate,ctx.revision,ticket);invalidateCache();
-        await status({busy:null,error:null});await hooks.broadcast();if(result.installed)for(const tab of await chrome.tabs.query({})){if(origins.some(o=>tab.url?.startsWith(o+'/')))chrome.tabs.sendMessage(tab.id,{type:'wt:dictionary-refresh',revision:candidate.revision}).catch(()=>{});}return result.installed?'已更新 '+group:'存在冲突，请在该分组处理';
+        if(result.installed)await markCheckedCurrent(group,candidate.revision,candidate.missing);
+        await networkReady({busy:null});await hooks.broadcast();if(result.installed)for(const tab of await chrome.tabs.query({})){if(origins.some(o=>tab.url?.startsWith(o+'/')))chrome.tabs.sendMessage(tab.id,{type:'wt:dictionary-refresh',revision:candidate.revision}).catch(()=>{});}return result.installed?'已更新 '+group:'存在冲突，请在该分组处理';
       }catch(e){await status({busy:null});await networkError(e);throw e;}
     }
-    async function summary() {
-      if(!active||starting||importing)return {ready:false,starting,status:{...(await local('wt_repository_status')).wt_repository_status,startup}};
-      const {wt_dictionary_check,wt_repository_status,wt_migration,wt_repository_token}=await local(['wt_dictionary_check','wt_repository_status','wt_migration','wt_repository_token']);
-      const groups={};
-      for(const s of context.installations){const group=D.groupFor(s.origin,tldts.getDomain);if(groups[group])continue;const state=await stateFor(group),stage=await store.pending(config,group,context.targetLanguage);
-        groups[group]={pending:Object.keys(state?.local || {}).length,conflicts:stage?.comparison.conflicts || [],installed:!!state?.contentRevision,missing:state?.missing||[]};
+    async function summary({origin,compact=false}={}) {
+      if(!active||starting)return {ready:false,starting,status:{...(await local('wt_repository_status')).wt_repository_status,startup}};
+      const {wt_dictionary_check,wt_repository_status,wt_repository_token}=await local(['wt_dictionary_check','wt_repository_status','wt_repository_token']);
+      const groups={};if(compact)await mirror();
+      const wanted=compact&&origin?D.groupFor(origin,tldts.getDomain):null;
+      for(const s of context.installations){const group=D.groupFor(s.origin,tldts.getDomain);if(groups[group] || compact&&group!==wanted)continue;const state=await stateFor(group),stage=compact?null:await store.pending(config,group,context.targetLanguage);
+        const pendingOrigins={};for(const key of Object.keys(state?.local || {})){const rowOrigin=JSON.parse(key)[0];if(compact&&rowOrigin!==origin)continue;pendingOrigins[rowOrigin]=(pendingOrigins[rowOrigin]||0)+1;}
+        groups[group]={pending:compact?pendingOrigins[origin]||0:Object.keys(state?.local || {}).length,pendingOrigins,contentRevision:state?.contentRevision||null,conflicts:stage?.comparison.conflicts || [],installed:!!state?.contentRevision,missing:state?.missing||[],downloadedOrigins:context.installations.filter(s=>(!compact||s.origin===origin)&&D.groupFor(s.origin,tldts.getDomain)===group&&state?.files.some(f=>f.pack.origins.includes(s.origin))).map(s=>s.origin)};
       }
-      return {ready:true,repository:config,hasToken:!!wt_repository_token,groups,check:wt_dictionary_check?.context===context.identity?wt_dictionary_check:null,status:wt_repository_status,migration:wt_migration};
+      return {ready:true,repository:config,hasToken:!!wt_repository_token,groups,check:!compact&&wt_dictionary_check?.context===context.identity?wt_dictionary_check:null,status:wt_repository_status};
     }
-    async function enrich(site) {
-      if(!active || starting || importing || !site || site.deleted)return site;
-      if(starting||importing)return {...site,dictionaryAvailable:false};
-      await mirror();const lang=await language(),state=await stateFor(site.group,lang);if(!state)return {...site,dictionaryAvailable:false};
+    async function enrich(site,prepared=false) {
+      if(!active || starting || !site || site.deleted)return site;
+      if(!prepared)await mirror();const lang=context.targetLanguage,state=await stateFor(site.group,lang);if(!state)return {...site,dictionaryAvailable:false};
       const entries={...site.entries};
       for(const [key,row] of Object.entries({...state.baseline,...state.local})) {
         const identity=JSON.parse(key);if(identity[0]!==site.origin)continue;
@@ -158,6 +169,7 @@
       }
       return {...site,entries,dictionaryAvailable:state.files.some(f=>f.pack.origins.includes(site.origin))};
     }
+    async function enrichMany(sites){if(!active||starting)return sites;await mirror();const result={};for(const [id,site] of Object.entries(sites))result[id]=await enrich(site,true);return result;}
     async function adapter(url) {
       const site=hooks.view().sites[new URL(url).origin],lang=await language();
       if(!active || !site || site.deleted || !site.enabled || lang!=='zh-Hans' || site.excludedPaths.some(p=>new URL(url).pathname.startsWith(p)) || (await chrome.storage.sync.get('enable_extension')).enable_extension===false)return null;
@@ -173,101 +185,119 @@
       invalidateCache();if(!waiting)clientIdentity=null;await refreshContext();if(!waiting)await status({error:null,networkKind:null,networkError:null,rateLimit:null,needsAuthorization:false,networkRetryAt:0});scheduleRecovery(true);
       return currentToken?'仓库设置及本设备凭据已保存；连接结果见下方状态':'仓库地址已保存；尚未配置 GitHub Token，当前为匿名访问';
     }
-    async function preview(group) {
+    async function catalog(query) {
+      await mirror();await requireNetworkBudget();const repository={...config},targetLanguage=context.targetLanguage;
+      const result=await client.catalog(targetLanguage,query);await refreshContext();
+      C.assert(C.canonical(config)===C.canonical(repository)&&context.targetLanguage===targetLanguage,'搜索期间仓库或目标语言已改变，请重新搜索');
+      const rows=[];
+      for(const row of result.rows){const state=await stateFor(row.group),missing=row.origins.filter(origin=>{const site=hooks.view().sites[origin];return !site||site.deleted||!state?.files.some(f=>f.pack.origins.includes(origin));});if(missing.length)rows.push({...row,missing});}
+      await networkReady();return {...result,rows};
+    }
+    async function downloadPublishedGroup(group){
+      D.groupId(group);await mirror();await requireNetworkBudget();const initial=context,repo={...config},language=initial.targetLanguage;
+      const ticket=await store.beginDownload(repo,group,language,initial.revision);await status({busy:group,error:null});
+      try{
+        const pin=await client.readIndex(true),manifest=await client.manifest(pin,group),published=manifest?.languages[language]?.origins;
+        C.assert(published?.length,'GitHub 暂无此主域名的当前语言词库');
+        C.assert(new Set([...initial.installations.map(site=>site.origin),...published]).size<=D.limits.origins,'已添加网址数量超过上限，请先移除不用的网站');
+        const origins=[...new Set([...published,...initial.installations.filter(site=>D.groupFor(site.origin,tldts.getDomain)===group).map(site=>site.origin)])].sort();
+        // Validate every unique package before adding any of the group's URLs.
+        const candidate=await client.downloadGroup(pin,group,language,origins);await refreshContext();C.assert(context.identity===initial.identity,'下载期间网站、仓库或语言已改变，请重新下载');
+        await hooks.installOrigins(published,language,initial.installations);await mirror();const expected=context.revision;
+        const result=await store.install(candidate,expected,ticket);invalidateCache();if(result.installed)await markCheckedCurrent(group,candidate.revision,candidate.missing);
+        await networkReady({busy:null});await hooks.broadcast();
+        if(result.installed)for(const tab of await chrome.tabs.query({}))if(origins.some(origin=>tab.url?.startsWith(origin+'/')))chrome.tabs.sendMessage(tab.id,{type:'wt:dictionary-refresh',revision:candidate.revision}).catch(()=>{});
+        return result.installed?'已下载 '+group+' 词库（含全部已发布子域名）':'存在冲突，请在 '+group+' 分组处理，原有词库及本地修改保留';
+      }catch(error){await status({busy:null});await networkError(error);throw error;}
+    }
+    async function pageStatus(origin) {
+      D.origin(origin);await mirror();await requireNetworkBudget();
+      C.assert(await chrome.permissions.contains({origins:['https://api.github.com/*']}),'请在 GitHub 仓库页授予连接权限');
+      const ctx=context,repo={...config},group=D.groupFor(origin,tldts.getDomain),language=ctx.targetLanguage,state=await stateFor(group),site=hooks.view().sites[origin];
+      const pin=await client.readIndex(),manifest=await client.manifest(pin,group),data=manifest?.languages[language];
+      const available=!!data?.origins.includes(origin),installed=!!site&&!site.deleted&&!!state?.files.some(f=>f.pack.origins.includes(origin));
+      const origins=ctx.installations.filter(s=>D.groupFor(s.origin,tldts.getDomain)===group).map(s=>s.origin),files=data?D.selectFiles(manifest,language,origins):[];
+      const revision=await D.digest({group,language,origins:[...origins].sort(),files});
+      await refreshContext();C.assert(context.identity===ctx.identity,'当前网站或语言已改变，请重新检测词库');
+      await networkReady();
+      return {repository:repo,targetLanguage:language,origin,group,origins:data?.origins || [],available,installed,hasUpdate:available&&installed&&revision!==state.contentRevision};
+    }
+    async function prepareUpload(group, allowEmpty=false) {
       await mirror();await requireNetworkBudget();const ctx=context,state=await stateFor(group),origins=ctx.installations.filter(s=>D.groupFor(s.origin,tldts.getDomain)===group).map(s=>s.origin);
       C.assert(origins.length,'网站已移除');C.assert(!(await store.pending(config,group,ctx.targetLanguage))?.comparison.conflicts.length,'请先解决词库冲突');
       C.assert(!origins.some(origin=>Object.values(hooks.view().sites[origin]?.conflicts||{}).some(rows=>rows[0]?.targetLanguage===ctx.targetLanguage)), '旧本机词条有并发候选，请先保存人工译文解决冲突');
       const draft=await C.dictionaryPublish.prepare(client,config,state,origins,ctx.targetLanguage,tldts.getDomain,policy);
+      if(draft.empty&&allowEmpty)return {empty:true};
       C.assert(!draft.empty,'没有需要上传的修改');
       draft.context=ctx.identity;draft.repository=config;draft.id=crypto.randomUUID();await chrome.storage.local.set({wt_dictionary_upload:draft});
       return {id:draft.id,group,changes:draft.changes};
     }
-    async function publish(id) {
+    async function publishPrepared(id) {
       await mirror();await requireNetworkBudget();const {wt_dictionary_upload:draft,wt_repository_token:token,wt_dictionary_publication:previous}=await local(['wt_dictionary_upload','wt_repository_token','wt_dictionary_publication']);
-      C.assert(draft?.id===id && draft.context===context.identity,'预览已失效，请重新预览');
-      const state=await stateFor(draft.group);C.assert((state?.revision || 0)===draft.expectedRevision,'预览后本地有修改，请重新预览');
-      const publisher=C.dictionaryPublish.create({repository:config,token,beforeCommit:async()=>{await mirror();C.assert(context.identity===draft.context,'上传准备期间网站或语言已改变，请重新预览');C.assert(((await stateFor(draft.group))?.revision||0)===draft.expectedRevision,'上传准备期间本地有新修改，未发布，请重新预览');},journal:saved=>chrome.storage.local.set({wt_dictionary_publication:{...saved,draftId:id}})});
+      C.assert(draft?.id===id && draft.context===context.identity,'上传准备已失效，请重新点击上传');
+      const state=await stateFor(draft.group);C.assert((state?.revision || 0)===draft.expectedRevision,'准备后本地有修改，请重新点击上传');
+      const publisher=C.dictionaryPublish.create({repository:config,token,beforeCommit:async()=>{await mirror();C.assert(context.identity===draft.context,'上传准备期间网站或语言已改变，请重新点击上传');C.assert(((await stateFor(draft.group))?.revision||0)===draft.expectedRevision,'上传准备期间本地有新修改，未发布，请重新点击上传');},journal:saved=>chrome.storage.local.set({wt_dictionary_publication:{...saved,draftId:id}})});
       const saved=previous?.draftId===id && await publisher.confirm(previous)?previous:await publisher.publish(draft);
       await updateGroup(draft.group);await chrome.storage.local.remove('wt_dictionary_upload');await status({lastUpload:saved.commit});return '上传成功：'+saved.commit;
     }
-    async function importFile(input,recovering=false){
-      let value=input;
-      if(value?.checksum){C.assert(value.schemaVersion===1&&Object.keys(value).sort().join(',')==='checksum,data,schemaVersion'&&await D.digest(value.data)===value.checksum,'旧文件校验失败');value=value.data;}
-      C.assert(value&&D.bytes(value)<=128*1024*1024,'备份格式或大小无效');
-      const settings=value.settingsRecords?D.mergeSync(value.settingsRecords):null,repository=value.repository?R.configuration(value.repository):null,prompt=value.prompt===undefined?null:C.validatePrompt(value.prompt);
-      if(value.mirror){const metadata=value.mirror;C.assert(typeof metadata==='object'&&!Array.isArray(metadata),'备份迁移标记无效');const maps=metadata.version===2?Object.values(metadata.repositories||{}):[metadata];C.assert(metadata.version!==2||metadata.repositories&&typeof metadata.repositories==='object'&&!Array.isArray(metadata.repositories),'备份仓库标记无效');for(const map of maps){C.assert(map&&typeof map==='object'&&!Array.isArray(map)&&Object.keys(map).length<=50000,'备份迁移标记无效');for(const [id,stamp] of Object.entries(map)){const identity=JSON.parse(id);C.assert(Array.isArray(identity)&&identity.length===5&&typeof stamp==='string'&&stamp.length<=2048,'备份迁移标记无效');D.origin(identity[0]);C.assert(C.language(identity[4])===identity[4],'备份迁移语言无效');}}}
-      if(settings)for(const row of settings)if(row.field==='aiSettings'||row.field.startsWith('aiProfile:'))C.assert(Object.hasOwn(WTProviders.catalog,row.value.provider),'备份包含当前版本不支持的翻译服务');
-      const prepared=value.database?await C.dictionaryMigration.prepare(value.database,value.preferences||{},tldts.getDomain):null;
-      const ops=prepared?.backup.ops || (Array.isArray(value.ops)?value.ops:value.opId?[value]:null);
-      C.assert(ops&&ops.length<=50000,'请选择受支持的备份、changes 或 snapshots 文件');
-      const all=new Map(hooks.database().ops.map(op=>[op.opId,op]));for(const op of ops){C.validateOp(op);C.assert(!all.has(op.opId)||C.canonical(all.get(op.opId))===C.canonical(op),'备份与本机记录冲突');all.set(op.opId,op);}C.materialize([...all.values()]);
-      importing=true;
-      try{
-        await hooks.withWriter(async()=>{
-          const {wt_dictionary_import:previous}=await local('wt_dictionary_import');
-          C.assert(!previous||recovering,'已有未完成导入，请先继续该导入');
-          const journalId=previous?.id||crypto.randomUUID();
-          if(!previous){const old=await local(['wt_dictionary_mirror','wt_prompt']);await chrome.storage.local.set({wt_dictionary_import:{schemaVersion:1,id:journalId,value,at:Date.now(),before:{database:structuredClone(hooks.database()),preferences:await hooks.preferences(),layers:await store.exportData(),archives:await store.exportArchives(),mirror:old.wt_dictionary_mirror,repository:config,prompt:old.wt_prompt}}});}
-          // The journal precedes both storage engines. On interruption the same
-          // validated union is resumed; originals are never replaced by a snapshot.
-          if(value.layers||value.archives)await store.importData(value.layers||[],journalId,value.archives||[]);
-          await hooks.importOpsDirect(ops);const {wt_dictionary_import:progress}=await local('wt_dictionary_import');await chrome.storage.local.set({wt_dictionary_import:{...progress,phase:'database-applied'}});
-          if(prepared)await hooks.restorePreferences(prepared.preferences);
-          if(value.mirror)await chrome.storage.local.set({wt_dictionary_mirror:value.mirror});const meta=(await local('wt_dictionary_generations')).wt_dictionary_generations;const generations=meta?.version===2?meta:{version:2,repositories:{}};generations.repositories[C.canonical(repository||config)]=Object.fromEntries(Object.values(hooks.view().sites).map(site=>[site.origin,site.generation+':'+site.deleted]));await chrome.storage.local.set({wt_dictionary_generations:generations});
-          if(settings){await hooks.applySyncDirect(settings);await chrome.storage.local.set({wt_install_records:settings,wt_install_observed:Object.fromEntries(settings.map(row=>[D.syncIdentity(row),C.canonical(row.value)]))});}
-          if(repository)await chrome.storage.local.set({wt_repository:repository});if(prompt!==null)await chrome.storage.local.set({wt_prompt:prompt});
-          await chrome.storage.local.remove(['wt_dictionary_import','wt_dictionary_check']);
-        });
-        importing=false;mirrorSignature=null;invalidateCache();await mirror();changed();await status({importPending:false,error:null});await hooks.broadcast();return '旧数据已导入，原始记录保留';
-      }catch(error){await status({importPending:true,error:'导入尚未完成，导入前备份已保留：'+error.message});throw error;}
+    async function upload(group) {
+      const {wt_repository_token:token}=await local('wt_repository_token');C.assert(token,'请先在 GitHub 仓库页配置本设备的写入凭据');
+      try {
+        const draft=await prepareUpload(group,true);
+        if(draft.empty){await updateGroup(group);return group+' 的本地修改已在 GitHub，已同步本机基线';}
+        await publishPrepared(draft.id);return '已上传 '+group;
+      } catch(error) {
+        if(error.kind==='dictionary-conflict'){
+          await updateGroup(group);
+          throw new Error(group+' 的本地与远端修改存在冲突，已保留双方内容；请展开该分组处理后再上传');
+        }
+        throw error;
+      }
     }
+    async function uploadAll() {
+      await mirror();const expectedContext=context.identity,info=await summary(),groups=Object.entries(info.groups).filter(([,data])=>data.pending).map(([group])=>group),done=[],failed=[];
+      for(let i=0;i<groups.length;i++){
+        await mirror();if(context.identity!==expectedContext){failed.push('上传期间网站、仓库或目标语言已改变，剩余 '+(groups.length-i)+' 个主域名尚未上传');break;}
+        try{await upload(groups[i]);done.push(groups[i]);}
+        catch(error){failed.push(groups[i]+'：'+error.message);if(['rate-limit','network','authorization','not-found'].includes(error.kind)){await networkError(error);if(i+1<groups.length)failed.push('其余 '+(groups.length-i-1)+' 个主域名尚未上传');break;}}
+      }
+      return {message:(done.length?'已上传 '+done.length+' 个主域名（'+done.join('、')+'）':'没有完成上传')+(failed.length?'；'+failed.join('；'):groups.length?'':'，没有本地修改'),error:failed.length>0};
+    }
+
     async function handle(message) {
-      if(message.action==='startup')return summary();
-      if(message.action==='backup'&&importing){const {wt_dictionary_import:journal}=await local('wt_dictionary_import');if(journal?.before)return journal.before;}
-      if(message.action==='backup'&&(!active||starting))return {database:structuredClone(hooks.database()),preferences:await hooks.preferences()};
-      const {wt_dictionary_import:pendingImport}=await local('wt_dictionary_import');if(pendingImport&&!['import-resume','import-before','import-cancel','backup'].includes(message.action))throw new Error('存在未完成导入，请先继续导入或导出导入前备份');
       return serial(async()=>{
         if(message.action==='configure')return configure(message);
         if(message.action==='check')return check();
+        if(message.action==='catalog')return catalog(message.query||'');
+        if(message.action==='download-group')return downloadPublishedGroup(message.group);
+        if(message.action==='page-status')return pageStatus(message.origin);
         if(message.action==='update')return updateGroup(message.group);
         if(message.action==='all'){const info=await summary(),results=[];for(const g of info.check?.groups || [])if(g.hasUpdate)try{results.push(await updateGroup(g.group));}catch(e){results.push(g.group+'：'+e.message);}await check();return results.join('；') || '没有待更新词库';}
-        if(message.action==='preview')return preview(message.group);
-        if(message.action==='publish')return publish(message.id);
-        if(message.action==='resolve'){await mirror();const result=await store.resolve(config,message.group,context.targetLanguage,message.key,message.choice,message.edited,context.revision);invalidateCache();await hooks.broadcast();if(result.installed)for(const tab of await chrome.tabs.query({})){try{if(D.groupFor(new URL(tab.url).origin,tldts.getDomain)===message.group)chrome.tabs.sendMessage(tab.id,{type:'wt:dictionary-refresh',revision:(await stateFor(message.group)).contentRevision}).catch(()=>{});}catch{}}return result.installed?'冲突已解决，词库已更新':'已处理，请继续解决剩余冲突';}
+        if(message.action==='upload')return upload(message.group);
+        if(message.action==='upload-all')return uploadAll();
+        if(message.action==='resolve'){await mirror();const result=await store.resolve(config,message.group,context.targetLanguage,message.key,message.choice,message.edited,context.revision);invalidateCache();if(result.installed){const current=await stateFor(message.group);await markCheckedCurrent(message.group,current.contentRevision,current.missing);}await hooks.broadcast();if(result.installed)for(const tab of await chrome.tabs.query({})){try{if(D.groupFor(new URL(tab.url).origin,tldts.getDomain)===message.group)chrome.tabs.sendMessage(tab.id,{type:'wt:dictionary-refresh',revision:(await stateFor(message.group)).contentRevision}).catch(()=>{});}catch{}}return result.installed?'冲突已解决，词库已更新':'已处理，请继续解决剩余冲突';}
         if(message.action==='delete-entry'){await mirror();await store.edit(config,message.group,context.targetLanguage,{...message.row,deleted:true},context.revision);invalidateCache();await hooks.broadcast();return '词条已标记删除，上传后同步到 GitHub';}
-        if(message.action==='import-files'){C.assert(Array.isArray(message.values)&&message.values.length<=20000,'文件数量无效');const ops=[];for(let value of message.values){if(value?.checksum){C.assert(value.schemaVersion===1&&await D.digest(value.data)===value.checksum,'旧文件校验失败');value=value.data;}const rows=Array.isArray(value?.ops)?value.ops:value?.opId?[value]:null;C.assert(rows,'多个文件只支持 changes/snapshots，完整备份请单独选择');ops.push(...rows);}return importFile({ops});}
-        if(message.action==='import-file')return importFile(message.value);
-        if(message.action==='import-legacy')return importFile({ops:message.ops});
-        if(message.action==='import-resume'){const {wt_dictionary_import:journal}=await local('wt_dictionary_import');C.assert(journal,'没有待恢复导入');const result=await importFile(journal.value,true);if(!active)await start();return result;}
-        if(message.action==='import-cancel'){const {wt_dictionary_import:journal}=await local('wt_dictionary_import');C.assert(journal&&!journal.phase&&!await store.importApplied(journal.id)&&C.canonical(hooks.database())===C.canonical(journal.before.database),'导入已有部分写入，请继续恢复或导出导入前备份');await chrome.storage.local.remove('wt_dictionary_import');importing=false;await status({importPending:false,error:null});if(!active)await start();return '未写入的导入已取消';}
-        if(message.action==='restart')return start();
-        if(message.action==='import-before'){const {wt_dictionary_import:journal}=await local('wt_dictionary_import');C.assert(journal?.before,'没有导入前备份');return journal.before;}
-        if(message.action==='backup'){await mirror();const {wt_dictionary_mirror:savedMirror,wt_prompt:prompt}=await local(['wt_dictionary_mirror','wt_prompt']);return {database:structuredClone(hooks.database()),preferences:await hooks.preferences(),layers:await store.exportData(),archives:await store.exportArchives(),mirror:savedMirror,repository:config,settingsRecords:await captureSettings(),prompt};}
         if(message.action==='restore')return restore();
         if(message.action==='sync')return sync(true);
         throw new Error('未知词库操作');
       }).catch(async error=>{if(error.status||['rate-limit','network','authorization','not-found'].includes(error.kind))await networkError(error);throw error;});
     }
     let recoveryQueued=false,recoveryAgain=false,recoveryReceive=false;
-    function scheduleRecovery(receive){recoveryReceive ||= receive;if(importing){recoveryAgain=true;return;}if(recoveryQueued){recoveryAgain=true;return;}recoveryQueued=true;serial(async()=>{const incoming=recoveryReceive;recoveryReceive=false;await sync(incoming);if(!incoming)await restore();}).catch(e=>status({syncError:e.message})).finally(()=>{recoveryQueued=false;if(recoveryAgain){recoveryAgain=false;scheduleRecovery(recoveryReceive);}});}
+    function scheduleRecovery(receive){recoveryReceive ||= receive;if(recoveryQueued){recoveryAgain=true;return;}recoveryQueued=true;serial(async()=>{const incoming=recoveryReceive;recoveryReceive=false;await sync(incoming);if(!incoming)await restore();}).catch(e=>status({syncError:e.message})).finally(()=>{recoveryQueued=false;if(recoveryAgain){recoveryAgain=false;scheduleRecovery(recoveryReceive);}});}
     function changed(){if(!active || applying)return;userChanged=true;invalidateCache();clearTimeout(timer);timer=setTimeout(()=>scheduleRecovery(false),500);}
     async function start() {
-      starting=true;startup={phase:'正在验证旧数据',done:0,total:hooks.database().ops.length};await status({startup});await yieldUI();
+      starting=true;startup={phase:'正在加载本机词库',done:0,total:hooks.database().ops.length};await status({startup});await yieldUI();
       try {
       policy=await(await fetch(chrome.runtime.getURL('managed/dictionary-policy.json'))).json();
-      store?.close();store=await C.dictionaryStore.open({getDomain:tldts.getDomain,policy});await refreshContext();
-      const {wt_migration}=await local('wt_migration');
-      if(!wt_migration){const prepared=await C.dictionaryMigration.prepare(hooks.database(),await hooks.preferences(),tldts.getDomain);await store.stageLegacy(prepared);
-        await chrome.storage.local.set({wt_dictionary_backup:{database:structuredClone(hooks.database()),preferences:await hooks.preferences()},wt_migration:{version:1,status:'prepared',at:Date.now(),sourceSha256:prepared.sourceSha256},wt_sync:{enabled:false}});}
-      const {wt_dictionary_import:journal}=await local('wt_dictionary_import');if(journal)await importFile(journal.value,true);
-      await mirror();active=true;starting=false;startup={phase:'本机词库已就绪',done:1,total:1};const {wt_migration:migration={}}=await local('wt_migration');await chrome.storage.local.set({wt_migration:{...migration,status:'active'}});await status({startup,error:null});await hooks.broadcast();
+      store?.close();contextStamp=null;store=await C.dictionaryStore.open({getDomain:tldts.getDomain,policy});await refreshContext();
+      await mirror();active=true;starting=false;startup={phase:'本机词库已就绪',done:1,total:1};await status({startup,error:null});await hooks.broadcast();
       await chrome.alarms.clear('wt-sync-retry');chrome.alarms.create('wt-dictionary-recover',{periodInMinutes:2});
       scheduleRecovery(true);
-      }catch(error){starting=false;active=false;startup={phase:'迁移未完成，原数据保留',error:error.message};await status({startup,error:error.message});throw error;}
+      }catch(error){starting=false;active=false;startup={phase:'本机词库初始化未完成',error:error.message};await status({startup,error:error.message});throw error;}
     }
     chrome.storage.onChanged.addListener((changes,area)=>{if(!active)return;if(area==='sync' && Object.keys(changes).some(k=>k.startsWith('wt_install_')))scheduleRecovery(true);else if(area==='sync' && changes.enable_extension)changed();});
     chrome.alarms.onAlarm.addListener(alarm=>{if(alarm.name==='wt-dictionary-recover')scheduleRecovery(true);});
-    return {start,changed,summary,enrich,adapter,handle,active:()=>active&&!starting&&!importing};
+    return {start,changed,summary,enrich,enrichMany,adapter,handle,active:()=>active&&!starting};
   }
   globalThis.WTDictionaryRuntime={create};
 })();

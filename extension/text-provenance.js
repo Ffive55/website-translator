@@ -20,7 +20,7 @@
     }
   }
   const observer = new MutationObserver(mutations => invalidate(mutations));
-  observer.observe(document, { subtree: true, characterData: true, characterDataOldValue: true, attributes: true, attributeOldValue: true, attributeFilter: ['placeholder','aria-label','title'] });
+  observer.observe(document, { subtree: true, characterData: true, characterDataOldValue: true, attributes: true, attributeOldValue: true, attributeFilter: ['placeholder','aria-label','title','label'] });
   function readAttribute(node, attribute) {
     invalidate(observer.takeRecords());
     const record = attributes.get(node)?.get(attribute), value = node.getAttribute(attribute);

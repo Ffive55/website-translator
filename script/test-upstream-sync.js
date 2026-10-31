@@ -98,7 +98,7 @@ assert.ok(
 // —— 三端共享文件保持一致 ——
 for (const file of ['locals.js', 'content.js']) {
   const base = read('chrome', file);
-  for (const browser of BROWSERS.slice(1)) {
+  for (const browser of BROWSERS.slice(1).filter(b=>b!=='edge')) {
     assert.strictEqual(read(browser, file), base, `${browser}/${file} 应与 chrome 版本一致`);
   }
 }

@@ -24,7 +24,8 @@ async function main(){
   const manifest=JSON.parse(await fs.readFile(path.join(fixture,'manifest.json'),'utf8'));manifest.host_permissions.push('http://127.0.0.1/*');await fs.writeFile(path.join(fixture,'manifest.json'),JSON.stringify(manifest));
   // Fixture-only hook invokes the registered browser menu handler after a real page contextmenu event.
   const workerFile=path.join(fixture,'managed/worker.js');
-  await fs.writeFile(workerFile,"globalThis.__selectionHandlers=[]; const originalMenuListener=chrome.contextMenus.onClicked.addListener.bind(chrome.contextMenus.onClicked); chrome.contextMenus.onClicked.addListener=fn=>{__selectionHandlers.push(fn);originalMenuListener(fn);};\n"+await fs.readFile(workerFile,'utf8'));
+  const dictionaryMock=require('./dictionary-browser-fixture.cjs');
+  await fs.writeFile(workerFile,dictionaryMock.readOnlyMock(await dictionaryMock.readFiles(ROOT))+"globalThis.__selectionHandlers=[]; const originalMenuListener=chrome.contextMenus.onClicked.addListener.bind(chrome.contextMenus.onClicked); chrome.contextMenus.onClicked.addListener=fn=>{__selectionHandlers.push(fn);originalMenuListener(fn);};\n"+await fs.readFile(workerFile,'utf8'));
   let context;
   try{
     context=await chromium.launchPersistentContext(path.join(output,`profile-${Date.now()}`),{channel:'msedge',headless:true,args:[`--disable-extensions-except=${fixture}`,`--load-extension=${fixture}`],viewport:{width:1280,height:900}});
@@ -37,6 +38,8 @@ async function main(){
     await ui.goto(`chrome-extension://${id}/managed/managed.html`);
     console.log('[browser] management page loaded');
     console.log('[browser] initial state', await ui.locator('#message').textContent());
+    await ui.evaluate(async()=>{await chrome.runtime.sendMessage({type:'wt:state'});for(const origin of ['https://tailscale.com','https://www.tailscale.com','https://login.tailscale.com','https://console.tailscale.com','https://github.com','https://www.githubstatus.com'])await chrome.runtime.sendMessage({type:'wt:install',origin});for(const group of ['tailscale.com','github.com','githubstatus.com']){const result=await chrome.runtime.sendMessage({type:'wt:dictionary-action',action:'update',group});if(!result.ok)throw Error(result.error);}});
+    await ui.reload();
     try { await ui.waitForFunction(()=>document.querySelectorAll('.site').length>0); }
     catch(e) {
       console.log('[browser] errors',errors);
@@ -48,12 +51,14 @@ async function main(){
     await ui.getByRole('tab',{name:'AI 翻译',exact:true}).click();
     await ui.locator('#endpoint').fill(origin+'/v1/chat/completions');await ui.locator('#apiKey').fill('fixture-key');await ui.locator('#model').fill('fixture-model');await ui.getByRole('button',{name:'保存 AI 设置',exact:true}).click();
     await ui.waitForFunction(()=>document.querySelector('#message').textContent==='已保存');
+    const toast=ui.locator('#message'),toastBox=await toast.boundingBox();assert.ok(toastBox && toastBox.y<80);assert.ok(Math.abs(toastBox.x+toastBox.width/2-640)<2,'保存提示应在视口上方居中');assert.equal(await toast.evaluate(el=>getComputedStyle(el).position),'fixed');
+    await ui.screenshot({path:path.join(output,'save-toast.png')});await toast.waitFor({state:'hidden',timeout:5000});
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/settings');
     const tabId=await worker.evaluate(async origin=>(await chrome.tabs.query({})).find(t=>t.url?.startsWith(origin)).id,origin);
     const rpc=(type,data)=>ui.evaluate(async({type,data})=>chrome.runtime.sendMessage({type:'wt:'+type,...data}),{type,data});
     const waitState=async predicate=>{for(let i=0;i<300;i++){const r=await rpc('state');if(r.ok && predicate(r.result))return r.result;await new Promise(resolve=>setTimeout(resolve,50));}throw new Error('等待后台状态超时');};
     assert.equal((await rpc('start',{tabId})).ok,true);
-    await page.waitForFunction(()=>document.querySelector('button').textContent==='保存更改');
+    await page.waitForFunction(()=>document.querySelector('button').textContent==='保存更改').catch(async error=>{const response=await rpc('state'),state=response.result||{};console.log('[translation diagnostic]',JSON.stringify({requests,error:response.error,tasks:state.wt_tasks,site:state.sites?.[origin],errors}));throw error;});
     assert.equal(requests,1);assert.equal(await page.locator('pre').textContent(),'private-code');assert.equal(await page.locator('input').inputValue(),'private-input');
     await page.reload();await page.waitForFunction(()=>document.querySelector('button').textContent==='保存更改');assert.equal(requests,1);
     await rpc('config',{preferences:{targetLanguage:'ja'}});
@@ -152,8 +157,37 @@ async function main(){
     await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='保存更改');assert.equal(await page.locator('[placeholder]').inputValue(),'private-name');assert.equal(requests,beforeCapture+1);
     await rpc('config',{preferences:{targetLanguage:'ja'}});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='First name');
     await rpc('config',{preferences:{targetLanguage:'zh-Hans'}});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='保存更改');
-    await rpc('group-change',{group:new URL(origin).host,action:'enabled',enabled:false});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='First name');
-    await rpc('group-change',{group:new URL(origin).host,action:'enabled',enabled:true});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='保存更改');
+    await rpc('group-change',{group:new URL(origin).hostname,action:'enabled',enabled:false});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='First name');
+    await rpc('group-change',{group:new URL(origin).hostname,action:'enabled',enabled:true});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='保存更改');
+    // Lazy controls create their content only after the extension's explicit exploration.
+    await context.route(origin+'/interactive',route=>route.fulfill({contentType:'text/html',body:`<!doctype html><html lang="en"><body><main>
+      <form><select name="sort"><option>Recommended ranking</option><option value="cost">Lowest cost</option></select><button aria-haspopup="menu">Never submit</button></form>
+      <button type="button" id="menu-trigger" aria-haspopup="listbox" aria-expanded="false">Ranking choices</button>
+      <button type="button" id="tip-trigger" tabindex="-1" data-base-ui-tooltip-trigger aria-label="About task estimates"><svg aria-hidden="true" width="16" height="16"><circle cx="8" cy="8" r="6"/></svg></button>
+      <button type="button" id="danger">Delete project</button><a href="/unwanted" aria-haspopup="menu">Never follow</a>
+      </main><script>
+      window.actions=0;window.openCounts={menu:0,tip:0};document.querySelector('form').onsubmit=e=>{e.preventDefault();window.actions++};document.querySelector('#danger').onclick=()=>window.actions++;
+      const trigger=document.querySelector('#menu-trigger');trigger.onpointerdown=()=>{const old=document.querySelector('#lazy-menu');if(old)return;window.openCounts.menu++;const menu=document.createElement('div');menu.id='lazy-menu';menu.setAttribute('role','listbox');menu.innerHTML='<div role="option">Highest throughput</div>';menu.onclick=()=>window.actions++;document.body.append(menu);trigger.setAttribute('aria-expanded','true');};
+      document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelector('#lazy-menu')?.remove();trigger.setAttribute('aria-expanded','false');}});const tip=document.querySelector('#tip-trigger');let timer;tip.onpointermove=()=>{window.openCounts.tip++;clearTimeout(timer);timer=setTimeout(()=>{if(document.querySelector('#lazy-tip'))return;const wrapper=document.createElement('div');wrapper.id='lazy-tip';wrapper.setAttribute('data-base-ui-portal','');wrapper.innerHTML='<div data-base-ui-focusable data-side="top">Tasks are inferred from a representative sample</div>';document.body.append(wrapper);},600);};tip.onpointerleave=()=>{clearTimeout(timer);document.querySelector('#lazy-tip')?.remove();};
+      </script></body></html>`}));
+    await page.goto(origin+'/interactive');
+    const beforeInteractive=requests,interactiveTask=await rpc('start',{tabId});assert.equal(interactiveTask.ok,true);
+    await waitState(state=>state.wt_tasks[interactiveTask.result.id]?.status==='completed');
+    const interactiveInputs=apiBatches.at(-1).inputs;
+    for(const text of ['Highest throughput','Tasks are inferred from a representative sample','Recommended ranking','Lowest cost'])assert.ok(interactiveInputs.some(i=>i.sourceText===text),text);
+    assert.equal(requests,beforeInteractive+1);assert.equal(await page.evaluate(()=>window.actions),0);assert.equal(new URL(page.url()).pathname,'/interactive');
+    assert.equal(await page.locator('#menu-trigger').getAttribute('aria-expanded'),'false');assert.equal(await page.locator('#lazy-tip').count(),0);
+    await page.waitForFunction(()=>document.querySelector('option').label==='保存更改');assert.equal(await page.locator('select').inputValue(),'Recommended ranking');
+    const beforeRepeat=await page.evaluate(()=>window.openCounts),repeatTask=await rpc('start',{tabId});await waitState(state=>state.wt_tasks[repeatTask.result.id]?.status==='completed');
+    assert.deepEqual(await page.evaluate(()=>window.openCounts),beforeRepeat,'同页更新不能重复打开已采集的菜单与提示');assert.equal(requests,beforeInteractive+1);
+    await page.locator('#menu-trigger').click();await page.waitForFunction(()=>document.querySelector('[role=option]')?.textContent==='保存更改');await page.keyboard.press('Escape');
+    await page.locator('#tip-trigger').hover();await page.waitForFunction(()=>document.querySelector('#lazy-tip > div')?.textContent==='保存更改');
+    assert.equal(await page.evaluate(()=>window.actions),0);assert.equal(requests,beforeInteractive+1);
+    await page.screenshot({path:path.join(output,'interactive-tooltip.png'),fullPage:true});await page.mouse.move(1200,850);
+    await page.reload();await page.locator('#menu-trigger').click();await page.waitForFunction(()=>document.querySelector('[role=option]')?.textContent==='保存更改');assert.equal(requests,beforeInteractive+1);
+    await rpc('group-change',{group:new URL(origin).hostname,action:'enabled',enabled:false});await page.waitForFunction(()=>!document.querySelector('option').hasAttribute('label') && document.querySelector('[role=option]')?.textContent==='Highest throughput');
+    assert.equal(await page.locator('select').inputValue(),'Recommended ranking');await rpc('group-change',{group:new URL(origin).hostname,action:'enabled',enabled:true});
+    console.log('[interactive]',JSON.stringify({autoExpanded:true,delayedTooltip:true,optionValuesPreserved:true,actions:0,refreshReused:true}));
     await page.goto(origin+'/speed-short');await page.evaluate(()=>{document.body.replaceChildren();const main=document.createElement('main');for(let i=0;i<160;i++){const b=document.createElement('button');b.textContent='Action option'+i;main.append(b);}document.body.append(main);});
     const beforeShort=requests,shortTask=await rpc('start',{tabId});assert.equal(shortTask.ok,true);await waitState(state=>state.wt_tasks[shortTask.result.id]?.status==='completed');assert.equal(requests-beforeShort,1);assert.equal(apiBatches.at(-1).inputs.length,160,'短标签不能再按20条拆请求');
     await page.goto(origin+'/speed-long');
@@ -165,8 +199,9 @@ async function main(){
     const longState=await waitState(state=>Object.values(state.wt_tasks).some(t=>!knownTasks.has(t.id) && t.status==='completed'));
     const longTask=Object.values(longState.wt_tasks).find(t=>!knownTasks.has(t.id));assert.equal(longTask.total,60);assert.ok(requests-beforeLong>1);assert.equal(peakApi,2,'多批翻译实际网络请求应有两个并发');
     console.log('[batching]',JSON.stringify({shortItems:160,shortRequests:1,longItems:60,longRequests:requests-beforeLong,peakConcurrentRequests:peakApi}));
-    await ui.getByRole('tab',{name:'常规',exact:true}).click();await ui.locator('#requestTimeoutMinutes').fill('8');await ui.getByRole('button',{name:'保存常规设置',exact:true}).click();
+    await ui.getByRole('tab',{name:'常规',exact:true}).click();assert.equal(await ui.locator('#autoExpandSeconds').inputValue(),'12');await ui.locator('#autoExpandSeconds').fill('7');await ui.locator('#requestTimeoutMinutes').fill('8');await ui.getByRole('button',{name:'保存常规设置',exact:true}).click();
     await waitState(state=>state.wt_preferences.requestTimeoutMinutes===8);await ui.reload();await ui.waitForFunction(()=>document.querySelector('#requestTimeoutMinutes').value==='8');assert.equal(await ui.locator('#requestTimeoutMinutes').inputValue(),'8');
+    assert.equal(await ui.locator('#autoExpandSeconds').inputValue(),'7');assert.equal((await rpc('state')).result.wt_preferences.autoExpandSeconds,7);
     const selectedSource='Missed selected account description';
     await context.route(origin+'/manual-queue',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html lang="en"><body><main><p class="account-panel">'+selectedSource+'</p><a href="/help"><code>protected code</code></a><input value="private-input"></main></body></html>'}));
     await page.goto(origin+'/manual-queue');
@@ -230,11 +265,11 @@ async function main(){
     await ui.screenshot({path:path.join(output,'deepl-prompt-settings.png'),fullPage:true});
     await ui.locator('#provider').selectOption('api');assert.equal(await ui.locator('#apiKey').inputValue(),'fixture-key');assert.equal(await ui.locator('#helper').isVisible(),false);
     await ui.getByRole('tab',{name:'常规',exact:true}).click();await ui.screenshot({path:path.join(output,'general-settings.png'),fullPage:true});
-    await ui.getByRole('tab',{name:'文件夹同步',exact:true}).click();assert.equal(await ui.locator('#syncHelper').isVisible(),true);await ui.locator('#syncHelper [data-native-browser]').selectOption('edge');assert.match(await ui.locator('#syncInstallCommand').textContent(),/-Browser edge/);await ui.screenshot({path:path.join(output,'sync-settings.png'),fullPage:true});
+    await ui.getByRole('tab',{name:'词库上传',exact:true}).click();assert.equal(await ui.locator('#repositoryForm').isVisible(),true);assert.equal(await ui.locator('#syncHelper').count(),0);await ui.screenshot({path:path.join(output,'sync-settings.png'),fullPage:true});
     const popup=await context.newPage();popup.on('pageerror',e=>errors.push(e.message));await popup.setViewportSize({width:340,height:510});await popup.goto('chrome-extension://'+id+'/popup/popup.html');await popup.locator('#status').filter({hasText:'已开启'}).waitFor();await popup.locator('main').screenshot({path:path.join(output,'popup.png')});
     assert.equal(await popup.locator('button').count(),4);
     assert.deepEqual(errors,[]);
-    const result={passed:true,browser:await context.browser().version(),apiRequests:requests,dynamicSource:{initial:initialNotice,changed:changedNotice,latest:latestNotice,final:finalNotice,aiSources:apiBatches.slice(2).map(b=>b.inputs.map(i=>i.sourceText))},checks:['连续更新越过已翻译项','五项预算保存回显','右键强制重译内置词条并稳定复用','同节点邮箱标签独立补译与隐私隔离','常规超时保存回显与任务快照','真实选区加右键事件及注册菜单回调','待翻译刷新保留与旧skip补译','手动译文刷新复用与输入保护','管理页加载与保存','后台任务与真实内容脚本','API mock 添加','刷新本地复用不请求 AI','zh-Hans/ja 隔离与切换恢复','代码与输入保护','停用恢复 lang','删除持久化','内置人工词库不重复调用 AI','内置中文引擎受语言隔离并清理标记','内置网站原文更新重新采集','连续改写仅发送最新原文','已存动态词条复用不重复请求','动态原文停用及跨语言恢复','采集跨导航与 window.open 子页面','采集过程中零 AI 请求','一次提交多页及表单提示','输入值与密码从未提交','placeholder 本地复用及语言切换','主域名分组启停','新设置标签与弹窗加载'],limits:['localhost 权限在隔离测试 manifest 中预授予','模拟页面/API，无真实账号','不代表个人浏览器、真实账号或双设备验收']};
+    const result={passed:true,browser:await context.browser().version(),apiRequests:requests,dynamicSource:{initial:initialNotice,changed:changedNotice,latest:latestNotice,final:finalNotice,aiSources:apiBatches.slice(2).map(b=>b.inputs.map(i=>i.sourceText))},checks:['下拉自动展开兼容 pointerdown 且不选择选项','延迟悬浮提示自动触发与刷新复用','原生选项显示翻译保留隐式提交值','连续更新越过已翻译项','五项预算保存回显','右键强制重译内置词条并稳定复用','同节点邮箱标签独立补译与隐私隔离','常规超时保存回显与任务快照','真实选区加右键事件及注册菜单回调','待翻译刷新保留与旧skip补译','手动译文刷新复用与输入保护','管理页加载与保存','后台任务与真实内容脚本','API mock 添加','刷新本地复用不请求 AI','zh-Hans/ja 隔离与切换恢复','代码与输入保护','停用恢复 lang','删除持久化','内置人工词库不重复调用 AI','内置中文引擎受语言隔离并清理标记','内置网站原文更新重新采集','连续改写仅发送最新原文','已存动态词条复用不重复请求','动态原文停用及跨语言恢复','采集跨导航与 window.open 子页面','采集过程中零 AI 请求','一次提交多页及表单提示','输入值与密码从未提交','placeholder 本地复用及语言切换','主域名分组启停','新设置标签与弹窗加载'],limits:['localhost 权限在隔离测试 manifest 中预授予','模拟页面/API，无真实账号','不代表个人浏览器、真实账号或双设备验收']};
     await fs.writeFile(path.join(output,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
   }finally{await context?.close();server.close();server.closeAllConnections();}
 }

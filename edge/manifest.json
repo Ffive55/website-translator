@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "网站翻译插件",
-  "version": "0.3.6",
+  "version": "0.3.16",
   "description": "使用本地词库翻译已适配的网站界面，支持按网站独立开关与持续扩展。",
   "icons": {
     "16": "assets/icons/icon16.png",
@@ -15,7 +15,8 @@
     "activeTab",
     "nativeMessaging",
     "alarms",
-    "contextMenus"
+    "contextMenus",
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "https://docker.com/*",
@@ -30,7 +31,8 @@
     "https://tailscale.com/*",
     "https://www.tailscale.com/*",
     "https://login.tailscale.com/*",
-    "https://console.tailscale.com/*"
+    "https://console.tailscale.com/*",
+    "https://api.github.com/*"
   ],
   "optional_host_permissions": [
     "https://*/*",
@@ -58,6 +60,11 @@
         "managed/core.js",
         "managed/text-provenance.js",
         "managed/content.js",
+        "managed/tldts.js",
+        "managed/dictionary-core.js",
+        "managed/dictionary-adapters.js",
+        "managed/github-dictionary-handlers.js",
+        "managed/dictionary-loader.js",
         "sites/catalog.js",
         "sites/preferences.js",
         "sites/browser-translation-guard.js",
@@ -74,6 +81,11 @@
         "managed/core.js",
         "managed/text-provenance.js",
         "managed/content.js",
+        "managed/tldts.js",
+        "managed/dictionary-core.js",
+        "managed/dictionary-adapters.js",
+        "managed/github-dictionary-handlers.js",
+        "managed/dictionary-loader.js",
         "sites/catalog.js",
         "sites/preferences.js",
         "sites/browser-translation-guard.js",
@@ -93,10 +105,14 @@
         "managed/core.js",
         "managed/text-provenance.js",
         "managed/content.js",
+        "managed/tldts.js",
+        "managed/dictionary-core.js",
+        "managed/dictionary-adapters.js",
+        "managed/github-dictionary-handlers.js",
+        "managed/dictionary-loader.js",
         "sites/catalog.js",
         "sites/preferences.js",
         "sites/browser-translation-guard.js",
-        "locals.js",
         "content.js"
       ],
       "run_at": "document_start"
@@ -112,6 +128,11 @@
         "managed/core.js",
         "managed/text-provenance.js",
         "managed/content.js",
+        "managed/tldts.js",
+        "managed/dictionary-core.js",
+        "managed/dictionary-adapters.js",
+        "managed/github-dictionary-handlers.js",
+        "managed/dictionary-loader.js",
         "sites/catalog.js",
         "sites/preferences.js",
         "sites/browser-translation-guard.js",
@@ -121,5 +142,16 @@
     }
   ],
   "options_page": "managed/managed.html",
-  "homepage_url": "https://github.com/Ffive55/website-translator"
+  "homepage_url": "https://github.com/Ffive55/website-translator",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "managed/dictionary-policy.json"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ]
 }

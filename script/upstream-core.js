@@ -7,7 +7,7 @@ const { spawnSync } = require('node:child_process');
 
 const normalize = text => text.replace(/\r\n/g, '\n');
 const hash = text => crypto.createHash('sha256').update(text).digest('hex');
-const TARGETS = ['chrome/locals.js', 'edge/locals.js', 'firefox/locals.js'];
+const TARGETS = ['chrome/locals.js', 'firefox/locals.js'];
 const BASE = 'upstream/github-chinese/locals.base.js';
 const LOCK = 'upstream/github-chinese/lock.json';
 
@@ -69,6 +69,20 @@ function atomicWrite(filename, data) {
   }
 }
 
+function deriveDictionaries(root) {
+  if (!fs.existsSync(path.join(root, 'extension/dictionary-policy.json'))) return new Map();
+  const result = spawnSync(process.execPath, [path.join(root, 'script/build-dictionaries.cjs'), '--export'], { cwd: root, encoding: 'utf8', timeout: 60000, maxBuffer: 32 * 1024 * 1024, windowsHide: true });
+  if (result.error || result.status !== 0) throw new Error('统一词库转换失败；新的正则、处理器或范围需要本地审阅。' + (result.stderr || result.error?.message || ''));
+  const rows = JSON.parse(result.stdout);
+  if (!Array.isArray(rows) || rows.length > 1000) throw new Error('统一词库转换输出无效');
+  const outputs = new Map();
+  for (const [file, data] of rows) {
+    if (!(file === 'docs/github-dictionary-conversion.json' || /^dictionaries\/(?:index\.json|[a-z0-9][a-z0-9.-]*\/(?:manifest\.json|[a-zA-Z0-9-]+\/[a-z0-9][a-z0-9.-]*\.json))$/.test(file)) || file.includes('..') || typeof data !== 'string' || outputs.has(file)) throw new Error('统一词库转换输出路径或内容无效');
+    outputs.set(file, data);
+  }
+  return outputs;
+}
+
 function applyUpdate({ root, state, incoming, merged, commit, directory, validate }) {
   validateSource(merged);
   validateSource(incoming);
@@ -92,11 +106,18 @@ function applyUpdate({ root, state, incoming, merged, commit, directory, validat
       atomicWrite(path.join(root, file), content);
       changed.push(file);
     }
+    for (const [file, content] of deriveDictionaries(root)) {
+      const target = path.join(root, file), previous = fs.existsSync(target) ? fs.readFileSync(target) : null;
+      if (previous?.equals(Buffer.from(content))) continue;
+      backups.set(file, previous);
+      if (previous) { const backupFile = path.join(directory, 'backup', file); fs.mkdirSync(path.dirname(backupFile), { recursive: true }); fs.writeFileSync(backupFile, previous); }
+      fs.mkdirSync(path.dirname(target), { recursive: true }); atomicWrite(target, content); changed.push(file);
+    }
     validate();
   } catch (error) {
     const failures = [];
     for (const file of changed.reverse()) {
-      try { atomicWrite(path.join(root, file), backups.get(file)); }
+      try { const previous = backups.get(file); if (previous === null) fs.unlinkSync(path.join(root, file)); else atomicWrite(path.join(root, file), previous); }
       catch (rollbackError) { failures.push(`${file}: ${rollbackError.message}`); }
     }
     if (failures.length) throw new Error(`同步失败，部分文件恢复失败；备份位于 ${directory}/backup。${failures.join('; ')}。原错误：${error.message}`);
@@ -105,4 +126,4 @@ function applyUpdate({ root, state, incoming, merged, commit, directory, validat
   return newLock;
 }
 
-module.exports = { normalize, hash, TARGETS, BASE, LOCK, validateSource, readState, threeWayMerge, writePatch, applyUpdate };
+module.exports = { normalize, hash, TARGETS, BASE, LOCK, validateSource, readState, threeWayMerge, writePatch, applyUpdate, deriveDictionaries };

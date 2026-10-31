@@ -5,7 +5,6 @@ import test from 'node:test';
 
 const locales = [
   ['chrome', new URL('../locals.js', import.meta.url)],
-  ['edge', new URL('../../edge/locals.js', import.meta.url)],
   ['firefox', new URL('../../firefox/locals.js', import.meta.url)],
 ].filter(([browser])=>!process.env.WT_BROWSER || browser===process.env.WT_BROWSER);
 

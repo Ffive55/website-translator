@@ -93,6 +93,37 @@ test('实际仓库上游锁定文件、基线和三端词库一致', () => {
   readState(path.resolve(__dirname, '..'));
 });
 
+test('上游更新的统一词库与来源记录同事务派生，回归失败逐字节回退且移除本次新文件', t => {
+  const { root, directory } = fixture(t), target = 'dictionaries/example.com/zh-Hans/example.com.json', added = 'dictionaries/example.com/zh-Hans/shared.json';
+  for (const name of ['extension', 'script', 'dictionaries/example.com/zh-Hans']) fs.mkdirSync(path.join(root, name), { recursive: true });
+  fs.writeFileSync(path.join(root, 'extension/dictionary-policy.json'), '{}');
+  fs.writeFileSync(path.join(root, target), 'original\r\n');
+  const outputs = [[target, 'new-data'], [added, 'new-shared-data']];
+  fs.writeFileSync(path.join(root, 'script/build-dictionaries.cjs'), `process.stdout.write(${JSON.stringify(JSON.stringify(outputs))});`);
+  const files = [...TARGETS, BASE, LOCK, target], before = files.map(file => fs.readFileSync(path.join(root, file)));
+  const incoming = base.replace("Six: '六'", "Six: '新六'");
+  assert.throws(() => applyUpdate({ root, directory, state: readState(root), incoming, merged: incoming, commit: 'c'.repeat(40), validate() {
+    assert.equal(fs.readFileSync(path.join(root, added), 'utf8'), 'new-shared-data'); throw new Error('fixture-validation-failure');
+  } }), /已恢复原词库/);
+  files.forEach((file, i) => assert.ok(fs.readFileSync(path.join(root, file)).equals(before[i]), file));
+  assert.equal(fs.existsSync(path.join(root, added)), false);
+  applyUpdate({ root, directory, state: readState(root), incoming, merged: incoming, commit: 'c'.repeat(40), validate() {} });
+  assert.equal(fs.readFileSync(path.join(root, target), 'utf8'), 'new-data'); assert.equal(fs.readFileSync(path.join(root, added), 'utf8'), 'new-shared-data');
+});
+
+test('派生转换失败或试图写源码路径时回退，不触碰范围外文件', t => {
+  const { root, directory } = fixture(t);
+  for (const name of ['extension', 'script']) fs.mkdirSync(path.join(root, name), { recursive: true });
+  fs.writeFileSync(path.join(root, 'extension/dictionary-policy.json'), '{}');
+  const script = path.join(root, 'script/build-dictionaries.cjs'), sentinel = path.join(root, 'do-not-change.txt'); fs.writeFileSync(sentinel, 'original');
+  const incoming = base.replace("Six: '六'", "Six: '新六'");
+  for (const source of ['process.exit(2);', `process.stdout.write(${JSON.stringify(JSON.stringify([['do-not-change.txt', 'bad']]))});`]) {
+    fs.writeFileSync(script, source);
+    assert.throws(() => applyUpdate({ root, directory, state: readState(root), incoming, merged: incoming, commit: 'd'.repeat(40), validate() {} }), /已恢复原词库/);
+    assert.equal(fs.readFileSync(sentinel, 'utf8'), 'original'); assert.equal(readState(root).current, base);
+  }
+});
+
 test('公开 API 不可用时通过 Git 查询相同分支；双重失败不返回假更新状态', async () => {
   const { resolveCommit } = require('../script/sync-upstream');
   const lock = { repository: 'MaydayV/github-chinese', branch: 'chrome' };

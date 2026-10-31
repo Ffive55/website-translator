@@ -24,7 +24,12 @@ function buildChangelog(check = false, browsers=['chrome','edge','firefox']) {
     const target = path.join(ROOT, browser, 'options/changelog.html');
     if (check) {
       if (!fs.existsSync(target) || fs.readFileSync(target, 'utf8').replace(/\r\n/g, '\n') !== html) throw new Error(`${browser} 更新日志未同步，请执行 npm run build`);
-    } else fs.writeFileSync(target, html);
+    } else if(!fs.existsSync(target) || fs.readFileSync(target,'utf8').replace(/\r\n/g,'\n')!==html) {
+      for(let attempt=0;;attempt++)try{fs.writeFileSync(target,html);break;}catch(error){
+        if(attempt>=5 || !['EBUSY','EPERM','UNKNOWN'].includes(error.code))throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,100);
+      }
+    }
   }
   console.log(`[changelog] ${check ? '校验' : '生成'}完成：v${version}`);
 }

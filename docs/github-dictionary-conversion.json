@@ -2015,6 +2015,23 @@
       "revision": "9eda21d5ce563d98aba399f42efb2630a4ef4b66c990417dc627ea028ebf1297"
     },
     {
+      "group": "openrouter.ai",
+      "files": [
+        {
+          "id": "managed-entries",
+          "path": "dictionaries/openrouter.ai/zh-Hans/managed-entries.json",
+          "sha256": "593ca8823520ff15789763b10d7e2d7bdc0d1ac6028973d47c7c07a5c933a3cc",
+          "bytes": 1053415,
+          "kind": "entries",
+          "origins": [
+            "https://openrouter.ai"
+          ],
+          "requires": []
+        }
+      ],
+      "revision": "fa80f815ac4b3d629010ae8ffb73ae115fcea97b8aa22795f2beca0f3304d52c"
+    },
+    {
       "group": "tailscale.com",
       "files": [
         {

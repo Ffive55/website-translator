@@ -190,13 +190,13 @@ test('网站注册自动发现；不同适配器不能接管重叠域名', t => 
 test('三种浏览器仅对指定域名注入对应脚本，新增站点不加载 GitHub 词库', () => {
   for (const browser of (process.env.WT_BROWSER?[process.env.WT_BROWSER]:['chrome','edge','firefox'])) {
     const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, browser, 'manifest.json'), 'utf8'));
-    assert.deepEqual(manifest.permissions, ['storage', 'scripting', 'activeTab', 'nativeMessaging', 'alarms', 'contextMenus']);
+    assert.deepEqual(manifest.permissions, ['storage', 'scripting', 'activeTab', 'nativeMessaging', 'alarms', 'contextMenus', ...(browser==='edge'?['unlimitedStorage']:[])]);
     const entry = manifest.content_scripts.find(item => item.matches.includes('https://console.tailscale.com/*'));
-    assert.deepEqual(entry.js, ['managed/core.js', 'managed/text-provenance.js', 'managed/content.js', 'sites/catalog.js', 'sites/preferences.js', 'sites/browser-translation-guard.js', 'sites/tailscale.js']);
+    assert.deepEqual(entry.js, ['managed/core.js', 'managed/text-provenance.js', 'managed/content.js', ...(browser==='edge'?['managed/tldts.js','managed/dictionary-core.js','managed/dictionary-adapters.js','managed/github-dictionary-handlers.js','managed/dictionary-loader.js']:[]), 'sites/catalog.js', 'sites/preferences.js', 'sites/browser-translation-guard.js', 'sites/tailscale.js']);
     assert.equal(entry.run_at, 'document_start');
     assert.ok(!manifest.host_permissions.includes('https://*/*'));
     for (const filename of entry.js) assert.ok(fs.existsSync(path.join(ROOT, browser, filename)));
-    assert.equal(fs.readFileSync(path.join(ROOT, browser, 'sites/tailscale.js'), 'utf8'), fs.readFileSync(path.join(ROOT, 'chrome/sites/tailscale.js'), 'utf8'));
+    if(browser==='edge'){assert.ok(!fs.existsSync(path.join(ROOT,browser,'locals.js')));assert.ok(!fs.readFileSync(path.join(ROOT,browser,'sites/tailscale.js'),'utf8').includes('Installation takes minutes'));}else assert.equal(fs.readFileSync(path.join(ROOT, browser, 'sites/tailscale.js'), 'utf8'), fs.readFileSync(path.join(ROOT, 'chrome/sites/tailscale.js'), 'utf8'));
   }
   execFileSync(process.execPath, ['script/build-sites.js', '--check', ...(process.env.WT_BROWSER?['--browser',process.env.WT_BROWSER]:[])], { cwd: ROOT });
 });

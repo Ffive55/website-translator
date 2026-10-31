@@ -5,10 +5,11 @@
   const requestSlot=B.limiter();
   let queue = Promise.resolve(), database, committed, syncFlight = null, syncRequested = false;
   const SYNC_RETRY='wt-sync-retry';
-  let syncConfigIntent=0;
+  let syncConfigIntent=0,inImportWrite=false;
   const locked = fn => { const next = queue.then(fn); queue = next.catch(() => {}); return next; };
-  let cachedView,viewOps,viewLength;
-  const view = () => {if(viewOps!==database.ops || viewLength!==database.ops.length){cachedView=C.materialize(database.ops);viewOps=database.ops;viewLength=database.ops.length;}return cachedView;};
+  let cachedView,viewOps,viewLength,versionOps,versionLength,versionIndex;
+  function localVersions(){if(versionOps!==database.ops||versionLength!==database.ops.length){versionIndex=new Map();for(const op of database.ops)if(op.kind==='entry')versionIndex.set(C.canonical([op.siteId,op.generation,op.payload]),op.opId);versionOps=database.ops;versionLength=database.ops.length;}return versionIndex;}
+  const view = () => {if(viewOps!==database.ops || viewLength!==database.ops.length){cachedView=C.materialize(database.ops);if(globalThis.WTDictionaryRuntime)for(const site of Object.values(cachedView.sites))site.group=C.dictionary.groupFor(site.origin,tldts.getDomain);viewOps=database.ops;viewLength=database.ops.length;}return cachedView;};
   function heads() {
     const applied = new Set(view().applied);
     const deps = new Set(applied);
@@ -16,6 +17,7 @@
     return [...deps];
   }
   function append(siteId, generation, kind, payload, deps=heads()) {
+    C.assert(!dictionaryRuntime||dictionaryRuntime.active()||inImportWrite,'本机词库迁移或导入尚未完成，请稍后重试');
     const seq = ++database.seq;
     const op = { schemaVersion: 1, deviceId: database.deviceId, seq, opId: `${database.deviceId}-${seq}`, deps, siteId, generation, kind, payload };
     C.validateOp(op); database.ops.push(op); return op;
@@ -26,10 +28,44 @@
       const { wt_sync_status = {} } = await chrome.storage.local.get('wt_sync_status');
       await chrome.storage.local.set({ wt_database: database, wt_view: view(), wt_sync_status: { ...wt_sync_status, saved: true, ...(changed?{pendingLocal:true,directorySaved:false,peerConfirmed:false}:{}) } });
       committed = structuredClone(database);
-      if(changed)autoSync();
+      if(changed){if(dictionaryRuntime)dictionaryRuntime.changed();else autoSync();}
     }
     catch (error) { database = structuredClone(committed); throw error; }
   }
+  async function applySyncedRows(rows){
+      const values={}; const sites=new Map();
+      for(const row of rows)if(row.kind==='preference')values[row.field]=row.value;else {if(!sites.has(row.id))sites.set(row.id,{});sites.get(row.id)[row.field]=row.value;}
+      for(const [field,value] of Object.entries(values))if(field==='aiSettings'||field.startsWith('aiProfile:'))C.assert(Object.hasOwn(P.catalog,value.provider),'同步服务无效，未应用本轮设置');
+      for(const [origin,settings] of sites){let site=view().sites[origin];
+        if(settings.installed===false){if(site&&!site.deleted)append(site.id,site.generation,'delete',{});continue;}
+        if(settings.installed!==true)continue;
+        if(!site||site.deleted){const known=SUPPORTED_SITES.find(s=>s.matches.includes(origin+'/*'));append(origin,(site?.generation||0)+1,'create',{origin,name:settings.name||new URL(origin).hostname,group:group(origin),builtinId:known?.id||null});site=view().sites[origin];}
+        for(const key of ['enabled','excludedPaths'])if(settings[key]!==undefined&&C.canonical(site[key])!==C.canonical(settings[key]))append(site.id,site.generation,'setting',{key,value:settings[key]});
+      }
+      const profiles=(await chrome.storage.local.get('wt_ai_profiles')).wt_ai_profiles || {};
+      const {wt_ai_local_keys:keys={}}=await chrome.storage.local.get('wt_ai_local_keys');
+      for(const profile of Object.values(profiles))if(profile.apiKey)keys[C.canonical([profile.provider,profile.endpoint])]=profile.apiKey;
+      const keyFor=a=>keys[C.canonical([a.provider,a.endpoint])] || '';
+      await chrome.storage.local.set({wt_ai_local_keys:keys});
+      for(const [field,a] of Object.entries(values))if(field.startsWith('aiProfile:')){C.assert(P.catalog[a.provider],'同步服务无效');profiles[a.provider]={...a,apiKey:keyFor(a)};}
+      if(values.aiSettings){const a=values.aiSettings;C.assert(P.catalog[a.provider],'同步服务无效');const selected=values['aiProfile:'+a.provider] || a;profiles[a.provider]={...selected,apiKey:keyFor(selected)};await chrome.storage.local.set({wt_ai:profiles[a.provider]});}
+      await chrome.storage.local.set({wt_ai_profiles:profiles});
+      const old=await preferences(),prefs={...old,...WTCore.dictionary.syncPreferences(values)};
+      const {wt_prompt:localPrompt}=await chrome.storage.local.get('wt_prompt');
+      const canSyncPrompt=localPrompt===undefined||C.dictionary.bytes(localPrompt)<=5000;
+      await chrome.storage.local.set({wt_preferences:prefs,...(canSyncPrompt&&values.prompt!==undefined?{wt_prompt:C.validatePrompt(values.prompt)}:{})});
+      if(values.enable_extension!==undefined && (await chrome.storage.sync.get('enable_extension')).enable_extension!==values.enable_extension)await chrome.storage.sync.set({enable_extension:values.enable_extension});
+      await save(false);await registrations();
+  }
+  async function mergeOperations(ops){const all=new Map(database.ops.map(o=>[o.opId,o]));for(const op of ops){C.validateOp(op);C.assert(!all.has(op.opId)||C.canonical(all.get(op.opId))===C.canonical(op),'旧文件记录冲突');all.set(op.opId,op);}C.materialize([...all.values()]);database.ops=[...all.values()];database.seq=Math.max(database.seq,...database.ops.filter(o=>o.deviceId===database.deviceId).map(o=>o.seq));await save();}
+  const dictionaryRuntime = globalThis.WTDictionaryRuntime?.create({
+    restorePreferences:prefs=>chrome.storage.local.set({wt_preferences:{...C.dictionary.syncPreferences(prefs)}}),
+    localVersion:(site,entry)=>localVersions().get(C.canonical([site.origin,site.generation,entry])) || '',
+    view, database:()=>database, deviceId:()=>database.deviceId, preferences, broadcast,
+    importOps:ops=>locked(()=>mergeOperations(ops)),importOpsDirect:mergeOperations,
+    withWriter:fn=>locked(async()=>{inImportWrite=true;try{return await fn();}finally{inImportWrite=false;}}),
+    applySync:rows=>locked(()=>applySyncedRows(rows)),applySyncDirect:applySyncedRows
+  });
   const ready = locked(async () => {
     await chrome.storage.local.setAccessLevel?.({ accessLevel: 'TRUSTED_CONTEXTS' });
     const stored = await chrome.storage.local.get(['wt_database', 'wt_tasks']);
@@ -55,7 +91,7 @@
     if(wt_prompt===undefined)await chrome.storage.local.set({wt_prompt:C.validatePrompt(wt_ai?.prompt)});
     database = stored.wt_database || { schemaVersion: 1, deviceId: crypto.randomUUID(), seq: 0, ops: [] };
     committed = structuredClone(database);
-    if (!stored.wt_database) {
+    if (!stored.wt_database && !dictionaryRuntime) {
       const old = await chrome.storage.sync.get(null);
       for (const site of SUPPORTED_SITES) for (const pattern of site.matches) {
         const origin = new URL(pattern.replace('*', '')).origin;
@@ -70,8 +106,9 @@
     await save();
     await registrations();
   });
-  ready.then(autoSync).catch(() => {});
-  function group(origin) { const u = new URL(origin); return tldts.getDomain(u.hostname, { allowPrivateDomains: true }) || u.host; }
+  const dictionaryReady = ready.then(()=>dictionaryRuntime?.start()).catch(error=>chrome.storage.local.set({wt_repository_status:{error:'词库迁移失败，原本机词条保留：'+error.message}}));
+  if(!dictionaryRuntime)ready.then(autoSync).catch(() => {});
+  function group(origin) { const u = new URL(origin); if(dictionaryRuntime)return C.dictionary.groupFor(u.origin,tldts.getDomain);return tldts.getDomain(u.hostname, { allowPrivateDomains: true }) || u.host; }
   function siteFor(url) { return view().sites[new URL(url).origin]; }
   function isGithubOrigin(url) {
     try { const origin=new URL(url).origin;return SUPPORTED_SITES.some(s=>s.id==='github' && s.matches.includes(`${origin}/*`)); } catch { return false; }
@@ -111,7 +148,7 @@
   async function pageState(url, tabId) {
     let site = siteFor(url);
     const {wt_preferences={},wt_capture} = await chrome.storage.local.get(['wt_preferences','wt_capture','wt_ai_profiles']);
-    if(site)site={...site,targetLanguage:wt_preferences.targetLanguage || 'zh-Hans'};
+    if(site)site={...(dictionaryRuntime ? await dictionaryRuntime.enrich(site) : site),targetLanguage:wt_preferences.targetLanguage || 'zh-Hans'};
     let captureId=null;
     if(wt_capture?.status==='collecting' && group(url)===wt_capture.group) {
       const tab=tabId==null?null:await chrome.tabs.get(tabId).catch(()=>null);
@@ -121,7 +158,7 @@
       }
     }
     const { enable_extension = true } = await chrome.storage.sync.get('enable_extension');
-    return { site, captureLimits:C.captureLimits(wt_preferences), globalEnabled: enable_extension, captureId:enable_extension!==false ? captureId : null };
+    return { site, captureLimits:C.captureLimits(wt_preferences), autoExpandSeconds:C.autoExpandSeconds(wt_preferences.autoExpandSeconds), globalEnabled: enable_extension, captureId:enable_extension!==false ? captureId : null };
   }
   async function broadcast() {
     for (const tab of await chrome.tabs.query({})) {
@@ -141,6 +178,8 @@
   }
   async function selectionMenu(info,tab){
     await ready;
+    await dictionaryReady;
+    C.assert(!dictionaryRuntime||dictionaryRuntime.active(),'本机词库迁移或导入尚未完成，请稍后加入待翻译');
     C.assert((await chrome.storage.sync.get('enable_extension')).enable_extension!==false,'请先开启插件');
     C.assert(!info.editable,'输入区域不能加入待翻译');
     C.assert(!info.frameId,'暂不支持 iframe 内的选区，请在主页面选择文字');
@@ -233,9 +272,10 @@
     return data.choices?.[0]?.message?.content;
   }
   async function activeTask(task) {
+    if(dictionaryRuntime&&!dictionaryRuntime.active())throw B.error('本机词库尚未就绪，任务已暂停','cancel');
     const site=view().sites[task.siteId];
     if(!site || site.deleted || !site.enabled || site.generation!==task.generation || (await preferences()).targetLanguage!==task.targetLanguage || (await chrome.storage.sync.get('enable_extension')).enable_extension===false)throw B.error('网站或目标语言状态已改变，任务已停止','cancel');
-    return site;
+    return dictionaryRuntime?await dictionaryRuntime.enrich(site):site;
   }
   async function storePending(task,items,truncated) {
     const {wt_task_inputs={}}=await chrome.storage.local.get('wt_task_inputs');
@@ -250,9 +290,11 @@
       // Keep the service worker alive while an explicitly requested batch is in flight.
       heartbeat = setInterval(() => chrome.runtime.getPlatformInfo().catch(() => {}), 20000);
       if(!captured) await chrome.scripting.executeScript({ target: { tabId }, files: ['managed/core.js','managed/text-provenance.js','managed/content.js'] });
-      const scan = captured || await chrome.tabs.sendMessage(tabId, { type: 'wt:collect',site:{...view().sites[task.siteId],targetLanguage:task.targetLanguage},captureLimits:C.captureLimits(await preferences()) });
+      const scanPreferences=await preferences();
+      const scan = captured || await chrome.tabs.sendMessage(tabId, { type: 'wt:collect',expand:true,site:{...(await activeTask(task)),targetLanguage:task.targetLanguage},captureLimits:C.captureLimits(scanPreferences),autoExpandSeconds:scanPreferences.autoExpandSeconds });
+      C.assert(!scan?.error,scan?.error || '页面扫描失败');
       C.assert(scan?.origin === task.siteId, '页面已跳转，请重试');
-      const site = view().sites[task.siteId];
+      const site = await activeTask(task);
       const queued=(await manualQueue()).filter(row=>row.siteId===task.siteId && row.generation===task.generation && row.targetLanguage===task.targetLanguage && !site.excludedPaths.some(p=>row.path.startsWith(p)) && (!task.retryOnly || scan.items.some(item=>item.queueId===row.id)));
       const selected=queued.map(({id,sourceText,context,path})=>({id,queueId:id,sourceText,context,path,userSelected:true}));
       const selectedKeys=new Set(selected.map(item=>C.entryKey({...item,targetLanguage:task.targetLanguage})));
@@ -331,13 +373,13 @@
       }));
       task.failed=missing.length-task.completed;
       if(task.failed){task.status=task.completed?'partial':'failed';task.message=(failures[0] || '部分批次未完成')+'；已保存的结果保留，可在翻译记录中重试剩余内容。';}
-      else {task.status='completed';task.message=captured?'采集内容处理完成。':'当前页面处理完成。';}
+      else {task.status='completed';task.message=captured?'采集内容处理完成。':'当前页面处理完成。';if(scan.exploration?.limited)task.message+=' 本轮展开检查已达到上限，再次添加 / 更新将继续检查剩余入口。';}
       await broadcast();
 
     } catch (e) { task.status = task.completed ? 'partial' : 'failed'; task.message = e.message; }
     finally { clearInterval(heartbeat); await taskSet(task); }
   }
-  async function preferences() { const {wt_preferences={}}=await chrome.storage.local.get('wt_preferences');return {inputContextK:B.inputContextK(wt_preferences.inputContextK),...C.captureLimits(wt_preferences),targetLanguage:wt_preferences.targetLanguage || 'zh-Hans',requestTimeoutMinutes:B.timeoutMinutes(wt_preferences.requestTimeoutMinutes)}; }
+  async function preferences() { const {wt_preferences={}}=await chrome.storage.local.get('wt_preferences');return {inputContextK:B.inputContextK(wt_preferences.inputContextK),...C.captureLimits(wt_preferences),autoExpandSeconds:C.autoExpandSeconds(wt_preferences.autoExpandSeconds),targetLanguage:wt_preferences.targetLanguage || 'zh-Hans',requestTimeoutMinutes:B.timeoutMinutes(wt_preferences.requestTimeoutMinutes)}; }
   async function startCapture(tabId) {
     C.assert((await chrome.storage.sync.get('enable_extension')).enable_extension!==false,'请先开启插件');
     const tab=await chrome.tabs.get(tabId),u=new URL(tab.url);
@@ -501,7 +543,7 @@
       if(!await chrome.alarms?.get(SYNC_RETRY))await chrome.alarms?.create(SYNC_RETRY,{delayInMinutes:1,periodInMinutes:1});
     }else await chrome.alarms?.clear(SYNC_RETRY);
   }
-  function autoSync() { return chrome.storage.local.get('wt_sync').then(async({wt_sync}) => { if (wt_sync?.enabled && wt_sync.confirmedAt) {await updateRetry();return synchronize();} }).catch(() => {}); }
+  function autoSync() { if(dictionaryRuntime)return Promise.resolve();return chrome.storage.local.get('wt_sync').then(async({wt_sync}) => { if (wt_sync?.enabled && wt_sync.confirmedAt) {await updateRetry();return synchronize();} }).catch(() => {}); }
   chrome.alarms?.onAlarm.addListener(alarm=>{if(alarm.name===SYNC_RETRY)ready.then(autoSync).catch(()=>{});});
   chrome.runtime.onStartup.addListener(() => ready.then(autoSync));
   chrome.permissions.onAdded.addListener(() => ready.then(registrations));
@@ -521,18 +563,26 @@
       await ready;
       const trustedUI = sender.id === chrome.runtime.id && sender.url?.startsWith(chrome.runtime.getURL(''));
       if (!trustedUI && sender.tab) {
-        C.assert(['wt:page','wt:capture-data'].includes(message.type), '页面没有此操作权限');
+        C.assert(['wt:page','wt:capture-data','wt:dictionary'].includes(message.type), '页面没有此操作权限');
+        if(message.type==='wt:dictionary')return dictionaryRuntime?.adapter(sender.url);
         if(message.type==='wt:page') return pageState(sender.url,sender.tab.id);
         return locked(async()=>{try{return await captureData(message,sender);}catch(error){await captureError(message.captureId,sender.tab.id,error.message);throw error;}});
       }
       C.assert(trustedUI, '仅允许扩展界面操作');
+      if(message.type!=='wt:state'&&message.type!=='wt:dictionary-action')await dictionaryReady;
+      if(['wt:install','wt:start','wt:capture-start','wt:capture-finish','wt:retry-task','wt:change','wt:group-change'].includes(message.type))C.assert(!dictionaryRuntime||dictionaryRuntime.active(),'本机词库迁移或导入尚未完成，请在设置查看进度');
+      if(message.type==='wt:install'){
+        const origin=C.dictionary.origin(message.origin);await locked(async()=>{let site=siteFor(origin);if(!site||site.deleted){const known=SUPPORTED_SITES.find(s=>s.matches.includes(origin+'/*'));append(origin,(site?.generation||0)+1,'create',{origin,name:new URL(origin).hostname,group:group(origin),builtinId:known?.id||null});await save();}});await registrations();if(dictionaryRuntime)dictionaryRuntime.changed();return '已添加，缺失词库将在后台下载；网站权限需单独授予';
+      }
+      if(message.type==='wt:dictionary-action'){if(!['backup','startup'].includes(message.action))await dictionaryReady;C.assert(dictionaryRuntime,'词库服务不可用');return dictionaryRuntime.handle(message);}
       if (message.type === 'wt:state') {
         const state = structuredClone(view());
         const local = await chrome.storage.local.get(['wt_tasks','wt_ai','wt_sync','wt_sync_status','wt_preferences','wt_capture','wt_ai_profiles','wt_prompt','wt_subscription_models','wt_selection_status']);
         local.wt_preferences=await preferences();local.wt_manual_queue=await manualQueue();
         for (const site of Object.values(state.sites)) site.authorized = await chrome.permissions.contains({ origins: [`${new URL(site.origin).protocol}//${new URL(site.origin).hostname}/*`] });
         const {wt_task_inputs={}}=await chrome.storage.local.get('wt_task_inputs');for(const task of Object.values(local.wt_tasks || {}))task.canRetry=!!wt_task_inputs[task.id]?.items?.length && ['failed','partial','interrupted'].includes(task.status);
-        return { ...state, ...local, defaultPrompt:C.translationPrompt, globalEnabled:(await chrome.storage.sync.get('enable_extension')).enable_extension !== false };
+        if(dictionaryRuntime)for(const [id,site] of Object.entries(state.sites))state.sites[id]=await dictionaryRuntime.enrich(site);
+        return { dictionary:dictionaryRuntime?await dictionaryRuntime.summary():null, ...state, ...local, defaultPrompt:C.translationPrompt, globalEnabled:(await chrome.storage.sync.get('enable_extension')).enable_extension !== false };
       }
       if(message.type==='wt:manual-remove'){
         await locked(async()=>{const row=(await manualQueue()).find(row=>row.id===message.id);C.assert(row,'待翻译项不存在');
@@ -589,17 +639,18 @@
         }
         if(message.prompt!==undefined)await chrome.storage.local.set({wt_prompt:C.validatePrompt(message.prompt)});
         if(message.preferences) {
-          await locked(async()=>{const old=await preferences();const targetLanguage=C.language(message.preferences.targetLanguage ?? old.targetLanguage),requestTimeoutMinutes=B.timeoutMinutes(message.preferences.requestTimeoutMinutes ?? old.requestTimeoutMinutes);const inputContextK=B.inputContextK(message.preferences.inputContextK ?? old.inputContextK),captureLimits=C.captureLimits({...old,...message.preferences});const {wt_capture}=await chrome.storage.local.get('wt_capture');C.assert(wt_capture?.status!=='collecting' || targetLanguage===old.targetLanguage,'请先完成或取消采集后再切换目标语言');await chrome.storage.local.set({wt_preferences:{...old,...captureLimits,targetLanguage,requestTimeoutMinutes,inputContextK}});});
+          await locked(async()=>{const old=await preferences();const targetLanguage=C.language(message.preferences.targetLanguage ?? old.targetLanguage),requestTimeoutMinutes=B.timeoutMinutes(message.preferences.requestTimeoutMinutes ?? old.requestTimeoutMinutes);const inputContextK=B.inputContextK(message.preferences.inputContextK ?? old.inputContextK),captureLimits=C.captureLimits({...old,...message.preferences}),autoExpandSeconds=C.autoExpandSeconds(message.preferences.autoExpandSeconds===undefined?old.autoExpandSeconds:message.preferences.autoExpandSeconds);const {wt_capture}=await chrome.storage.local.get('wt_capture');C.assert(wt_capture?.status!=='collecting' || targetLanguage===old.targetLanguage,'请先完成或取消采集后再切换目标语言');await chrome.storage.local.set({wt_preferences:{...old,...captureLimits,targetLanguage,requestTimeoutMinutes,inputContextK,autoExpandSeconds}});});
           await broadcast();
         }
         if (message.sync) {
+          C.assert(!dictionaryRuntime,'文件夹同步已退出，请使用词库上传');
           const intent=++syncConfigIntent,enabled=!!message.sync.enabled;
           let directory=String(message.sync.directory || '').trim(),confirmedAt=null;
           if(enabled){const checked=await native({action:'confirm-directory',directory});C.assert(checked?.writable===true && typeof checked.directory==='string' && checked.directory.length,'目录确认失败，请更新本地连接程序');directory=checked.directory;confirmedAt=Date.now();}
           await locked(async()=>{C.assert(intent===syncConfigIntent,'目录设置已改变，请重新确认');await chrome.storage.local.set({wt_sync:{enabled,directory,confirmedAt,revision:crypto.randomUUID()},wt_sync_status:{saved:true,pendingLocal:true,directorySaved:false,peerConfirmed:false,directory}});});
           await updateRetry();
         }
-        if(message.sync)autoSync(); return true;
+        if(dictionaryRuntime)dictionaryRuntime.changed();else if(message.sync)autoSync(); return true;
       }
       if(message.type==='wt:test'){const inputs=[{id:'test',sourceText:'Save changes',context:'form/button/text',path:'/'}];const targetLanguage=(await preferences()).targetLanguage;C.validateResult(await translate(inputs,targetLanguage,[]),inputs,targetLanguage);return true;}
       if (message.type === 'wt:sync') return synchronize();

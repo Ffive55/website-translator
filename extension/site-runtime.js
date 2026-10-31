@@ -6,7 +6,7 @@ const protectedSelector = [
   'svg', 'math', '[contenteditable]:not([contenteditable="false"])',
   '[translate="no"]', '.notranslate', '.monaco-editor', '.cm-editor', '.CodeMirror'
 ].join(',');
-const attributes = SITE.attributes || ['title', 'placeholder', 'aria-label'];
+let attributes = SITE.attributes || ['title', 'placeholder', 'aria-label'];
 const originals = new WeakMap();
 const pending = new Set();
 let enabled = false;
@@ -171,6 +171,11 @@ function refreshRoute() {
 }
 
 async function start() {
+  if(globalThis.WTLoadDictionary) {
+    const loaded=await globalThis.WTLoadDictionary();
+    if(!loaded)return;
+    Object.assign(SITE,loaded);attributes=SITE.attributes || attributes;
+  }
   if (!SITE.matches.some(matchesUrl)) return;
   config = pageConfig();
   observer = new MutationObserver(mutations => {

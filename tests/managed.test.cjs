@@ -16,6 +16,15 @@ function builder(deviceId=randomUUID()){
 const sitePayload={origin,name:'Example',group:'example.com',builtinId:null};
 const entry=(translation='保存',targetLanguage='zh-Hans',origin='ai')=>({sourceText:'Save {count}',context:'main/button/text',path:'/settings',sourceLanguage:null,targetLanguage,category:'ui',action:'translate',translation:`${translation} {count}`,origin});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
+test('同步服务选择复用最新公共配置，并保留本设备 API Key',async t=>{
+  require('../extension/dictionary-core');let hooks;
+  const runtime={create:value=>{hooks=value;return {start:async()=>{},changed(){},enrich:async site=>site,summary:async()=>({})};}};
+  const w=await worker(t,undefined,undefined,{WTDictionaryRuntime:runtime});
+  await w.request('config',{ai:{provider:'api',model:'old',endpoint:'https://api.example.com/v1/chat/completions',apiKey:'fixture-local-only'}});
+  const old={provider:'api',model:'old',endpoint:'https://api.example.com/v1/chat/completions',region:'',reasoningEffort:'auto'},latest={...old,model:'new-public-model'};
+  await hooks.applySync([{kind:'preference',field:'aiSettings',value:old},{kind:'preference',field:'aiProfile:api',value:latest}]);
+  assert.equal(w.local.wt_ai.model,'new-public-model');assert.equal(w.local.wt_ai.apiKey,'fixture-local-only');
+});
 test('AI 返回严格校验数量、ID、分类、占位符、脚本字段和 HTML',()=>{
   const input=[{id:'t0',sourceText:'Save {count}',context:'main/button/text',path:'/'}];
   const good={id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''};
@@ -408,6 +417,18 @@ test('常规超时校验、局部设置保留及 API 请求固定启动值',asyn
   await w.request('config',{preferences:{requestTimeoutMinutes:20}});
   await w.request('retry-task',{taskId:started.result.id});await until(()=>w.local.wt_tasks[started.result.id].status!=='running');
   assert.equal(timeouts.at(-1),1200000);
+});
+
+test('自动展开秒数校验、局部保存保留并传递到页面与新扫描',async t=>{
+  const w=await worker(t,async()=>translationResponse([]));await configureFixture(w);
+  assert.equal((await w.request('state')).result.wt_preferences.autoExpandSeconds,12);
+  for(const value of [0,121,1.5,'30',null])assert.equal((await w.request('config',{preferences:{autoExpandSeconds:value}})).ok,false);
+  assert.equal((await w.request('config',{preferences:{autoExpandSeconds:45}})).ok,true);
+  await w.request('config',{preferences:{inputContextK:50}});assert.equal((await w.request('state')).result.wt_preferences.autoExpandSeconds,45);
+  const pageState=await w.request('page',{}, {id:'test',url:origin+'/settings',tab:{id:1}});assert.equal(pageState.result.autoExpandSeconds,45);
+  const scans=[];w.chrome.tabs.sendMessage=async(_id,m)=>{if(m.type==='wt:collect')scans.push(m);return {origin,path:'/settings',items:[],truncated:false};};
+  const task=await w.request('start',{tabId:1});await until(()=>w.local.wt_tasks[task.result.id].status!=='running');
+  assert.equal(scans[0].autoExpandSeconds,45);assert.equal(scans[0].expand,true);
 });
 
 function selectedFixture(w,sourceText='Missing text'){

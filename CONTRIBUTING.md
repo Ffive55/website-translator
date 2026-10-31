@@ -18,4 +18,6 @@
 
 上游词库更新请使用 [同步流程](docs/上游词条同步.md)，不要直接覆盖整个上游仓库或手动重写基线。
 
+GitHub 集中词库正在分阶段迁移。`dictionaries/` 当前是静态生成的候选，执行 `npm run build:dictionaries` 更新，报告在 `docs/github-dictionary-conversion.json`。新增函数、正则或页面范围需要本地审阅白名单；不得执行下载的 JavaScript。迁移模块尚未接入正常入口，不能据此删除当前内置分发或旧同步流程。开发范围及后续验收见 [实施计划](docs/GitHub词库迁移实施计划.md)。
+
 提交的修改沿用项目 GPL-3.0-or-later 许可证，并保留来源与版权说明。

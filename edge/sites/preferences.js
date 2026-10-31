@@ -17,6 +17,7 @@
   }
   const currentSite = SUPPORTED_SITES.find(site => site.matches.some(matches));
   function isEnabled(values = settings, id = currentSite?.id) {
+    if(globalThis.WTLoadDictionary && (!managedSite || managedSite.dictionaryAvailable===false))return false;
     const managedEnabled = !managedSite || (!managedSite.deleted && managedSite.enabled && managedSite.targetLanguage === 'zh-Hans' && !managedSite.excludedPaths.some(p => location.pathname.startsWith(p)));
     return managedEnabled && !!values && !!id && values.enable_extension !== false && (!!managedSite || values[keyFor(id)] !== false);
   }

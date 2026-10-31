@@ -6,7 +6,9 @@
 
 项目显示名称为“网站翻译插件”，仓库名为 `website-translator`。本项目从 `fixed-site-translator` v3.3.0 独立复制，后者是基于 MaydayV/github-chinese 的多网站翻译扩展。不得修改、移动、清理或把构建结果写回原 `fixed-site-translator` 目录。来源提交见 `docs/source-baseline.json`。
 
-当前 v0.3.6 为新功能开发预览，新增实现及验证边界见 `docs/实现与验收.md`；产品设计见 `docs/新项目设计.md`。不要把自动化协议测试当成真实订阅账号或双设备验收。
+当前 v0.3.16 为 GitHub 词库运行时开发预览，新增实现及验证边界见 `docs/实现与验收.md`；启动和数据修复见 `docs/v0.3.15启动与数据完整性修复.md`；迁移进度见 `docs/GitHub词库迁移实施计划.md`，统一协议见 `docs/GitHub词库协议.md`。不要把自动化协议测试当成真实订阅账号或双设备验收。
+
+当前 Edge 使用 GitHub 集中词库、浏览器非敏感设置和安装清单同步；不分发或加载旧 locals.js 和网站翻译数据。旧 OneDrive 自动交换和管理入口已退出，下文相关要求仅适用于历史迁移/回退及旧版本。初始词库已于 2026-10-31 发布到 main（5c4b8f57d6f655692e8b95e9fc6f001211469bb0）；每台设备独立配置私有仓库读取凭据。后续远端写入仍须用户明确要求。
 
 保留 GitHub 专用引擎，通过 `sites/<id>/site.json` 和 `extension/` 扩展新网站。不要将整个上游仓库覆盖到此项目。
 
@@ -29,7 +31,7 @@
 3. 若词库没变化，说明已是最新，不制造空变更。
 4. 若可合并，使用报告的 incomingCommit 固定版本：`npm run upstream:update -- --ref <完整 SHA>`。
 5. 若有冲突，项目词库不会被覆盖。在报告目录的 merged.locals.js 中结合本地意图与上游修改解决冲突，然后运行 `npm run upstream:resolve -- <report.json 路径>`。不清空本地译法、不直接使用 incoming.locals.js 覆盖。
-6. 更新命令自动同步三端词库并运行完整测试。失败会回滚词库、基线和锁定文件；阅读 validation.log 排查，不直接跳过测试。
+6. 更新命令自动同步旧词库源码、静态生成统一 JSON 候选及转换报告，再运行完整测试。未知处理器/正则/范围先审阅本地白名单；转换或测试失败会回滚词库、基线、锁定文件和本轮派生产物；阅读 validation.log 排查，不直接跳过测试。
 7. 成功后检查差异，运行 `npm run test:browser` 更新发布包。向用户报告来源提交、实际变更、测试结果、冲突或限制；提示重新加载扩展。
 
 没有新的改动或失败原因时，不重复已通过的测试。准备发布不等于授权向 GitHub 推送；只有用户要求上传/发布时才操作远端。
@@ -37,6 +39,7 @@
 ## 日常修改
 
 - `extension/managed-core.js` 是浏览器和本地程序共用的纯数据协议；词条和同步变更必须经过该模块校验。`managed-background.js` 负责单写者存储、任务和权限；`managed-content.js` 负责原文采集与本地应用；`managed-ui.js`、`managed.html`、`managed.css` 为管理界面源文件。
+- `extension/dictionary-core.js` 通过 `WTCore.dictionary` 扩展统一词库校验与三方比较；`dictionary-store.js` 使用 IndexedDB 分组事务，保留基线、本地修改层和单份冲突候选。这些模块由 dictionary-runtime.js 接入正常后台；下载使用持久化请求代次，拒绝旧任务。`dictionaries/` 当前由 `script/build-dictionaries.cjs` 生成，不手工覆盖；执行语法树静态转换，禁止运行下载的 locals.js。未知正则、函数或范围须先审阅本地白名单，不能自动从远端生成可执行代码。
 - 手动补译通过浏览器右键事件读取隔离环境中的真实选区；`wt_manual_queue` 仅保存在本机，加入不调用 AI。成功词条的 `userSelected` 标记经过共享协议校验，不能让它绕过输入、代码或敏感数据保护；AI 仍返回 skip 时保留待处理项。邮箱前冒号标签使用 `/@label-prefix` 上下文，队列及 AI 输入只含标签，邮箱始终在本机拼回；不能把整节点全文写入词库或队列。
 - 常规超时保存于 `wt_preferences.requestTimeoutMinutes`，1–60 整数分钟、默认 3。任务固定启动值，手动重试读取新值；API 与订阅均须传递，订阅响应流超时必须分类为可重试。
 - `extension/managed-batching.js` 统一可配置输入 token 预算（默认 200K）、按文本量分批及全局有限并发规则，不预扣预计输出；可恢复任务输入仅保存在本机。`managed-background.js` 按批校验后单写者提交，保留已完成词条。
@@ -46,7 +49,7 @@
 - `*/managed/` 由 `script/build-sites.js` 生成，不直接编辑。新增协议回归在 `tests/managed.test.cjs`；浏览器烟测使用独立 `.cache` 配置，不复用个人浏览器。
 - 通用逻辑修改 `extension/`；网站配置和词库修改 `sites/`。
 - GitHub 核心代码修改 `chrome/src/`，运行 `npm run build` 生成三端 content.js。
-- GitHub 词库的本地修改应同步三端 locals.js；上游纯基线只能由同步工具维护。
+- GitHub 旧词库源码维护 chrome/firefox 的 locals.js；Edge 只生成独立 JSON 数据，不重新写入 edge/locals.js。上游纯基线只能由同步工具维护。
 - 原 GitHub UI/后台共享文件以 chrome 目录为准，改动后同步到 edge/firefox，避免只改一个浏览器。
 - 不直接编辑 `*/sites/*.js` 和 `*/options/changelog.html`，这些由构建器生成。
 - 版本号以 package.json 为准，并在 CHANGELOG.md 增加对应版本；更新后运行构建和测试。

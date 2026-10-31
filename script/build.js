@@ -94,7 +94,12 @@ function main() {
   // Write mode
   for (const target of TARGETS) {
     const rel = path.relative(ROOT, target);
-    fs.writeFileSync(target, output, 'utf8');
+    if(!fs.existsSync(target) || normalize(fs.readFileSync(target,'utf8'))!==output) {
+      for(let attempt=0;;attempt++)try{fs.writeFileSync(target,output,'utf8');break;}catch(error){
+        if(attempt>=5 || !['EBUSY','EPERM','UNKNOWN'].includes(error.code))throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,100);
+      }
+    }
     console.log(`[build] Synchronized -> ${rel}`);
   }
 

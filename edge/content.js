@@ -1218,9 +1218,12 @@
     }
 
     async function init() {
-        if (typeof I18N === 'undefined') {
-            throw new Error('词库文件 locals.js 未加载，脚本无法运行');
+        if (globalThis.WTLoadDictionary) {
+            const loaded = await globalThis.WTLoadDictionary();
+            if (!loaded) return;
+            globalThis.I18N = loaded;
         }
+        if (typeof I18N === 'undefined') return;
 
         await loadFeatureSet();
         // 禁用 GitHub 时完全退出：不设置中文 lang，不启动正文翻译和页面观察器。

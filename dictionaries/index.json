@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "minReaderVersion": 1,
+  "groups": [
+    {
+      "group": "docker.com",
+      "manifest": {
+        "path": "dictionaries/docker.com/manifest.json",
+        "sha256": "9c6df05890c07da1c122d1ab143df7796bc32cf4cf9918b05f8f64a9b07f56e6",
+        "bytes": 1197
+      },
+      "languages": {
+        "zh-Hans": "bb1f1298eab6347d1677f1ea9b94ca92a7d96fb46c7b61cccd52883739b5f4e0"
+      }
+    },
+    {
+      "group": "github.com",
+      "manifest": {
+        "path": "dictionaries/github.com/manifest.json",
+        "sha256": "deb941093acad42661e7e6d76d63aecc93528dff58dbd1e25b608229386e5699",
+        "bytes": 1894
+      },
+      "languages": {
+        "zh-Hans": "10482e2df549d1f21e6354fa48503d2917ee6aa1c522406d0d5729ebd4a2f7d3"
+      }
+    },
+    {
+      "group": "githubstatus.com",
+      "manifest": {
+        "path": "dictionaries/githubstatus.com/manifest.json",
+        "sha256": "c317e56be6f23fc06a8f4f7e20e53b33ae731387fa9b8d11332078e0a5f6b840",
+        "bytes": 696
+      },
+      "languages": {
+        "zh-Hans": "9eda21d5ce563d98aba399f42efb2630a4ef4b66c990417dc627ea028ebf1297"
+      }
+    },
+    {
+      "group": "tailscale.com",
+      "manifest": {
+        "path": "dictionaries/tailscale.com/manifest.json",
+        "sha256": "4b243bc0c17bd8f094435cea552c3c3b338914feff6c5e198097b6ffed3f7f07",
+        "bytes": 912
+      },
+      "languages": {
+        "zh-Hans": "4746d47e1e3618e7eef39cacdfeb3cdd7bfc4a959829040ef4b214812763f039"
+      }
+    }
+  ]
+}

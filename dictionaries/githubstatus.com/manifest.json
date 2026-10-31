@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "minReaderVersion": 1,
+  "group": "githubstatus.com",
+  "languages": {
+    "zh-Hans": {
+      "revision": "9eda21d5ce563d98aba399f42efb2630a4ef4b66c990417dc627ea028ebf1297",
+      "origins": [
+        "https://www.githubstatus.com"
+      ],
+      "files": [
+        {
+          "id": "www.githubstatus.com",
+          "path": "dictionaries/githubstatus.com/zh-Hans/www.githubstatus.com.json",
+          "sha256": "ae3e1b1ac50a7f03d422f9f59bcfe7fce0c71b35f0bd476d874620ed99df31f6",
+          "bytes": 208490,
+          "kind": "github",
+          "origins": [
+            "https://www.githubstatus.com"
+          ],
+          "requires": []
+        }
+      ]
+    }
+  }
+}

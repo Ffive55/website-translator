@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "minReaderVersion": 1,
+  "group": "docker.com",
+  "languages": {
+    "zh-Hans": {
+      "revision": "bb1f1298eab6347d1677f1ea9b94ca92a7d96fb46c7b61cccd52883739b5f4e0",
+      "origins": [
+        "https://app.docker.com",
+        "https://docker.com",
+        "https://hub.docker.com",
+        "https://www.docker.com"
+      ],
+      "files": [
+        {
+          "id": "shared-docker-hub",
+          "path": "dictionaries/docker.com/zh-Hans/shared-docker-hub.json",
+          "sha256": "a343e32cdf2ea3b950d852a9560b6e2417efd0c69662d2d8fb02e85c30b347ee",
+          "bytes": 50427,
+          "kind": "site",
+          "origins": [
+            "https://app.docker.com",
+            "https://hub.docker.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "shared-docker",
+          "path": "dictionaries/docker.com/zh-Hans/shared-docker.json",
+          "sha256": "4acaf82a910fb045fbace319e04962b3c5d73719a3aabdcb164deee70639ae15",
+          "bytes": 27139,
+          "kind": "site",
+          "origins": [
+            "https://docker.com",
+            "https://www.docker.com"
+          ],
+          "requires": []
+        }
+      ]
+    }
+  }
+}

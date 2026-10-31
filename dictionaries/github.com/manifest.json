@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "minReaderVersion": 1,
+  "group": "github.com",
+  "languages": {
+    "zh-Hans": {
+      "revision": "10482e2df549d1f21e6354fa48503d2917ee6aa1c522406d0d5729ebd4a2f7d3",
+      "origins": [
+        "https://education.github.com",
+        "https://gist.github.com",
+        "https://github.com",
+        "https://skills.github.com"
+      ],
+      "files": [
+        {
+          "id": "education.github.com",
+          "path": "dictionaries/github.com/zh-Hans/education.github.com.json",
+          "sha256": "507821955911220e84e45375446f0c0dae1169e213e67e92cbe03fd95072a73b",
+          "bytes": 252279,
+          "kind": "github",
+          "origins": [
+            "https://education.github.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "gist.github.com",
+          "path": "dictionaries/github.com/zh-Hans/gist.github.com.json",
+          "sha256": "a593f1468ef8cdf0ee36bccabe3df9cced89bab9f32eb9dad02a4a7a2de2bf3f",
+          "bytes": 222566,
+          "kind": "github",
+          "origins": [
+            "https://gist.github.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "github.com",
+          "path": "dictionaries/github.com/zh-Hans/github.com.json",
+          "sha256": "c3a48ed04a0b8b69a9bed3ef61bcfb448eae61464482dac096d13481181b37b5",
+          "bytes": 5693619,
+          "kind": "github",
+          "origins": [
+            "https://github.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "skills.github.com",
+          "path": "dictionaries/github.com/zh-Hans/skills.github.com.json",
+          "sha256": "b7f47729c2b00d206f9468dbf3870e883dd386416c2ff7ff6d025414491d19cb",
+          "bytes": 231008,
+          "kind": "github",
+          "origins": [
+            "https://skills.github.com"
+          ],
+          "requires": []
+        }
+      ]
+    }
+  }
+}

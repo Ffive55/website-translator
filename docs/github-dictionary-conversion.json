@@ -1,0 +1,2046 @@
+{
+  "schemaVersion": 1,
+  "status": "prepared-not-published",
+  "runtimeSwitched": false,
+  "source": {
+    "path": "chrome/locals.js",
+    "sha256": "9ab61573f8b46eeb12222217acb87d23d09da0fc32b2b30c01d0678238e9e720",
+    "upstream": {
+      "repository": "MaydayV/github-chinese",
+      "branch": "chrome",
+      "commit": "fa48c902e1858627a56d3c552066b11499b31af2",
+      "sha256": "9ab61573f8b46eeb12222217acb87d23d09da0fc32b2b30c01d0678238e9e720"
+    }
+  },
+  "sources": [
+    {
+      "path": "sites/docker/site.json",
+      "sha256": "9e52c14b0f5e97702f3149ef6f99745207ec64007962e8e17f866c5046eaeb84"
+    },
+    {
+      "path": "sites/docker-hub/site.json",
+      "sha256": "9a498554d298a4266eccd34060f2eb4ec3e59f7ff01ac0053b0770d5789b3088"
+    },
+    {
+      "path": "sites/github/site.json",
+      "sha256": "596c304cabd1f39c407d824ed1685e96564976efa99d1f2bd4528d5be6e11ce1"
+    },
+    {
+      "path": "sites/tailscale/site.json",
+      "sha256": "b5d63f26e11b09b44277be46eaff9e6d5aa52133724d7b7fb3a5a256f1a634c3"
+    }
+  ],
+  "targetLanguage": "zh-Hans",
+  "staticEntries": 44975,
+  "regexpRules": 4410,
+  "selectorRules": 9,
+  "pages": 277,
+  "uniqueRegexps": 1247,
+  "uniqueHandlers": 53,
+  "assignments": 280,
+  "pageInventory": [
+    {
+      "page": "title",
+      "staticEntries": 128,
+      "regexpRules": 96,
+      "selectorRules": 0
+    },
+    {
+      "page": "public",
+      "staticEntries": 1045,
+      "regexpRules": 23,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs-public",
+      "staticEntries": 3,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-dashboard",
+      "staticEntries": 336,
+      "regexpRules": 41,
+      "selectorRules": 0
+    },
+    {
+      "page": "dashboard",
+      "staticEntries": 336,
+      "regexpRules": 41,
+      "selectorRules": 0
+    },
+    {
+      "page": "feed",
+      "staticEntries": 336,
+      "regexpRules": 41,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/dashboard",
+      "staticEntries": 336,
+      "regexpRules": 41,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile-public",
+      "staticEntries": 120,
+      "regexpRules": 20,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/achievements",
+      "staticEntries": 120,
+      "regexpRules": 20,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/followers",
+      "staticEntries": 120,
+      "regexpRules": 20,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/following",
+      "staticEntries": 120,
+      "regexpRules": 20,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile",
+      "staticEntries": 188,
+      "regexpRules": 47,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/overview",
+      "staticEntries": 188,
+      "regexpRules": 47,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/repositories",
+      "staticEntries": 241,
+      "regexpRules": 14,
+      "selectorRules": 1
+    },
+    {
+      "page": "page-profile/projects",
+      "staticEntries": 249,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/sponsoring",
+      "staticEntries": 128,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/packages",
+      "staticEntries": 146,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/sponsors",
+      "staticEntries": 119,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-profile/stars",
+      "staticEntries": 188,
+      "regexpRules": 9,
+      "selectorRules": 0
+    },
+    {
+      "page": "confirm-access",
+      "staticEntries": 51,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "payment-module",
+      "staticEntries": 71,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings-menu",
+      "staticEntries": 52,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs-settings-menu",
+      "staticEntries": 84,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/profile",
+      "staticEntries": 149,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings",
+      "staticEntries": 149,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/admin",
+      "staticEntries": 136,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "succession/invitation",
+      "staticEntries": 11,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/appearance",
+      "staticEntries": 90,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/accessibility",
+      "staticEntries": 109,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/notifications",
+      "staticEntries": 126,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/billing",
+      "staticEntries": 686,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "account/billing/history",
+      "staticEntries": 686,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/billing",
+      "staticEntries": 686,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/billing_managers/new",
+      "staticEntries": 686,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/billing/history",
+      "staticEntries": 686,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/billing/plans",
+      "staticEntries": 686,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/education/benefits",
+      "staticEntries": 176,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/emails",
+      "staticEntries": 102,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/security",
+      "staticEntries": 220,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/auth",
+      "staticEntries": 16,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/sessions",
+      "staticEntries": 79,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/credentials",
+      "staticEntries": 64,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/keys",
+      "staticEntries": 98,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/ssh",
+      "staticEntries": 59,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/gpg",
+      "staticEntries": 56,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/organizations",
+      "staticEntries": 71,
+      "regexpRules": 11,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/enterprises",
+      "staticEntries": 58,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/blocked_users",
+      "staticEntries": 78,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/interaction_limits",
+      "staticEntries": 76,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/code_review_limits",
+      "staticEntries": 65,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/repositories",
+      "staticEntries": 69,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/deleted_repositories",
+      "staticEntries": 63,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/codespaces",
+      "staticEntries": 148,
+      "regexpRules": 4,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/models",
+      "staticEntries": 122,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/packages",
+      "staticEntries": 132,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/packages",
+      "staticEntries": 132,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/copilot",
+      "staticEntries": 266,
+      "regexpRules": 13,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/pages",
+      "staticEntries": 140,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/pages",
+      "staticEntries": 140,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/replies",
+      "staticEntries": 65,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/security_analysis",
+      "staticEntries": 139,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/installations",
+      "staticEntries": 225,
+      "regexpRules": 35,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/apps/authorizations",
+      "staticEntries": 225,
+      "regexpRules": 35,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/applications",
+      "staticEntries": 225,
+      "regexpRules": 35,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/connections/applications",
+      "staticEntries": 225,
+      "regexpRules": 35,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/installations",
+      "staticEntries": 225,
+      "regexpRules": 35,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/policies/applications",
+      "staticEntries": 225,
+      "regexpRules": 35,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/reminders",
+      "staticEntries": 84,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/security-log",
+      "staticEntries": 111,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/sponsors-log",
+      "staticEntries": 64,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/apps",
+      "staticEntries": 466,
+      "regexpRules": 17,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/apps/new",
+      "staticEntries": 466,
+      "regexpRules": 17,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/developers",
+      "staticEntries": 17,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/applications/new",
+      "staticEntries": 18,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/applications/new",
+      "staticEntries": 18,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/personal-access-tokens",
+      "staticEntries": 328,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "settings/tokens",
+      "staticEntries": 328,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository-public",
+      "staticEntries": 224,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "page-new-repo",
+      "staticEntries": 378,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "new",
+      "staticEntries": 378,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "new/import",
+      "staticEntries": 378,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/import",
+      "staticEntries": 378,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/fork",
+      "staticEntries": 378,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/repositories/new",
+      "staticEntries": 378,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository",
+      "staticEntries": 618,
+      "regexpRules": 97,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/tree",
+      "staticEntries": 618,
+      "regexpRules": 97,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/milestones",
+      "staticEntries": 264,
+      "regexpRules": 47,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/milestone",
+      "staticEntries": 264,
+      "regexpRules": 47,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/pull_issue_public",
+      "staticEntries": 271,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/issues",
+      "staticEntries": 1057,
+      "regexpRules": 101,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/labels",
+      "staticEntries": 1057,
+      "regexpRules": 101,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/pulls",
+      "staticEntries": 527,
+      "regexpRules": 70,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/pull",
+      "staticEntries": 1230,
+      "regexpRules": 158,
+      "selectorRules": 1
+    },
+    {
+      "page": "repository/compare",
+      "staticEntries": 419,
+      "regexpRules": 54,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/commit",
+      "staticEntries": 403,
+      "regexpRules": 69,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/blob",
+      "staticEntries": 389,
+      "regexpRules": 53,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/blame",
+      "staticEntries": 389,
+      "regexpRules": 53,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/discussions",
+      "staticEntries": 611,
+      "regexpRules": 78,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/orgs/discussions",
+      "staticEntries": 611,
+      "regexpRules": 78,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/actions",
+      "staticEntries": 569,
+      "regexpRules": 76,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/runs",
+      "staticEntries": 569,
+      "regexpRules": 76,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/deployments",
+      "staticEntries": 278,
+      "regexpRules": 48,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/attestations",
+      "staticEntries": 259,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/watchers",
+      "staticEntries": 227,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/stargazers",
+      "staticEntries": 232,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/new",
+      "staticEntries": 420,
+      "regexpRules": 54,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/edit",
+      "staticEntries": 420,
+      "regexpRules": 54,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/delete",
+      "staticEntries": 420,
+      "regexpRules": 54,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/upload",
+      "staticEntries": 420,
+      "regexpRules": 54,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/find",
+      "staticEntries": 231,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/models",
+      "staticEntries": 261,
+      "regexpRules": 47,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/wiki",
+      "staticEntries": 340,
+      "regexpRules": 52,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/branches",
+      "staticEntries": 308,
+      "regexpRules": 55,
+      "selectorRules": 1
+    },
+    {
+      "page": "repository/activity",
+      "staticEntries": 263,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/releases",
+      "staticEntries": 398,
+      "regexpRules": 63,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/tags",
+      "staticEntries": 398,
+      "regexpRules": 63,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/packages",
+      "staticEntries": 301,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/pkgs",
+      "staticEntries": 345,
+      "regexpRules": 20,
+      "selectorRules": 0
+    },
+    {
+      "page": "packages",
+      "staticEntries": 349,
+      "regexpRules": 20,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/security",
+      "staticEntries": 682,
+      "regexpRules": 76,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/contribute",
+      "staticEntries": 9,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/subscription",
+      "staticEntries": 11,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/invitations",
+      "staticEntries": 13,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/tasks",
+      "staticEntries": 15,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository-insights-menu",
+      "staticEntries": 20,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/pulse",
+      "staticEntries": 318,
+      "regexpRules": 61,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/graphs/contributors",
+      "staticEntries": 268,
+      "regexpRules": 55,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/graphs/community",
+      "staticEntries": 271,
+      "regexpRules": 48,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/community",
+      "staticEntries": 317,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/graphs/traffic",
+      "staticEntries": 292,
+      "regexpRules": 48,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/graphs/commit-activity",
+      "staticEntries": 265,
+      "regexpRules": 47,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/graphs/code-frequency",
+      "staticEntries": 260,
+      "regexpRules": 48,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/network/dependencies",
+      "staticEntries": 292,
+      "regexpRules": 55,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/network/dependents",
+      "staticEntries": 253,
+      "regexpRules": 47,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/network/updates",
+      "staticEntries": 262,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/network",
+      "staticEntries": 261,
+      "regexpRules": 45,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/network/members",
+      "staticEntries": 251,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/forks",
+      "staticEntries": 283,
+      "regexpRules": 48,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository-settings-menu",
+      "staticEntries": 36,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings",
+      "staticEntries": 512,
+      "regexpRules": 64,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/access",
+      "staticEntries": 314,
+      "regexpRules": 59,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/interaction_limits",
+      "staticEntries": 283,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/code_review_limits",
+      "staticEntries": 263,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/branches",
+      "staticEntries": 277,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/branch_protection_rules",
+      "staticEntries": 363,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/tag_protection",
+      "staticEntries": 292,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/rules",
+      "staticEntries": 695,
+      "regexpRules": 90,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/rules",
+      "staticEntries": 695,
+      "regexpRules": 90,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/rules",
+      "staticEntries": 695,
+      "regexpRules": 90,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/actions",
+      "staticEntries": 408,
+      "regexpRules": 60,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/models/access-policy",
+      "staticEntries": 323,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/hooks",
+      "staticEntries": 496,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/hooks",
+      "staticEntries": 496,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/copilot/code_review",
+      "staticEntries": 337,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/copilot/coding_agent",
+      "staticEntries": 404,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/environments",
+      "staticEntries": 342,
+      "regexpRules": 58,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/codespaces",
+      "staticEntries": 333,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/pages",
+      "staticEntries": 334,
+      "regexpRules": 50,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/security_analysis",
+      "staticEntries": 388,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/keys",
+      "staticEntries": 287,
+      "regexpRules": 46,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/secrets",
+      "staticEntries": 335,
+      "regexpRules": 51,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/variables",
+      "staticEntries": 335,
+      "regexpRules": 51,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/installations",
+      "staticEntries": 263,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/notifications",
+      "staticEntries": 268,
+      "regexpRules": 44,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/key_links",
+      "staticEntries": 275,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/transfer",
+      "staticEntries": 52,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/codespaces",
+      "staticEntries": 240,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/custom-properties",
+      "staticEntries": 5,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "homepage",
+      "staticEntries": 134,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "home",
+      "staticEntries": 134,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "session-authentication",
+      "staticEntries": 303,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "login",
+      "staticEntries": 303,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "logout",
+      "staticEntries": 303,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "session",
+      "staticEntries": 303,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "sessions",
+      "staticEntries": 303,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "password_reset",
+      "staticEntries": 303,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "signup",
+      "staticEntries": 49,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "account_verifications",
+      "staticEntries": 54,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "notifications",
+      "staticEntries": 132,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "watching",
+      "staticEntries": 32,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "notifications/subscriptions",
+      "staticEntries": 39,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "stars",
+      "staticEntries": 33,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "issues",
+      "staticEntries": 1104,
+      "regexpRules": 120,
+      "selectorRules": 0
+    },
+    {
+      "page": "pulls",
+      "staticEntries": 1204,
+      "regexpRules": 125,
+      "selectorRules": 0
+    },
+    {
+      "page": "repos",
+      "staticEntries": 19,
+      "regexpRules": 2,
+      "selectorRules": 0
+    },
+    {
+      "page": "search",
+      "staticEntries": 282,
+      "regexpRules": 8,
+      "selectorRules": 2
+    },
+    {
+      "page": "repository/search",
+      "staticEntries": 282,
+      "regexpRules": 8,
+      "selectorRules": 2
+    },
+    {
+      "page": "discussions",
+      "staticEntries": 7,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "gist",
+      "staticEntries": 183,
+      "regexpRules": 19,
+      "selectorRules": 0
+    },
+    {
+      "page": "login/oauth",
+      "staticEntries": 40,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "explore",
+      "staticEntries": 51,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "topics",
+      "staticEntries": 40,
+      "regexpRules": 4,
+      "selectorRules": 0
+    },
+    {
+      "page": "trending",
+      "staticEntries": 50,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "collections",
+      "staticEntries": 13,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "sponsors",
+      "staticEntries": 392,
+      "regexpRules": 33,
+      "selectorRules": 0
+    },
+    {
+      "page": "showcases",
+      "staticEntries": 3,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "account/organizations/new",
+      "staticEntries": 33,
+      "regexpRules": 4,
+      "selectorRules": 0
+    },
+    {
+      "page": "account/choose",
+      "staticEntries": 5,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "account/upgrade",
+      "staticEntries": 101,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "marketplace",
+      "staticEntries": 569,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "apps",
+      "staticEntries": 35,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs",
+      "staticEntries": 135,
+      "regexpRules": 13,
+      "selectorRules": 1
+    },
+    {
+      "page": "orgs/repositories",
+      "staticEntries": 241,
+      "regexpRules": 14,
+      "selectorRules": 1
+    },
+    {
+      "page": "orgs/projects",
+      "staticEntries": 249,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/packages",
+      "staticEntries": 146,
+      "regexpRules": 10,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/people",
+      "staticEntries": 79,
+      "regexpRules": 26,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/outside-collaborators",
+      "staticEntries": 79,
+      "regexpRules": 26,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/pending_collaborators",
+      "staticEntries": 79,
+      "regexpRules": 26,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/teams",
+      "staticEntries": 104,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/new-team",
+      "staticEntries": 104,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/invitations",
+      "staticEntries": 14,
+      "regexpRules": 5,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/invitation",
+      "staticEntries": 15,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/domain/new",
+      "staticEntries": 5,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/profile",
+      "staticEntries": 191,
+      "regexpRules": 9,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/policies/repositories",
+      "staticEntries": 91,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/roles",
+      "staticEntries": 107,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/member_privileges",
+      "staticEntries": 193,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/teams",
+      "staticEntries": 94,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/import-export",
+      "staticEntries": 91,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/blocked_users",
+      "staticEntries": 109,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/interaction_limits",
+      "staticEntries": 108,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/code_review_limits",
+      "staticEntries": 89,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/moderators",
+      "staticEntries": 90,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/repository-defaults",
+      "staticEntries": 131,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/topics",
+      "staticEntries": 86,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/codespaces",
+      "staticEntries": 106,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/sandboxes",
+      "staticEntries": 93,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/custom-properties",
+      "staticEntries": 89,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/issue-fields",
+      "staticEntries": 88,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/copilot",
+      "staticEntries": 331,
+      "regexpRules": 23,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/actions",
+      "staticEntries": 226,
+      "regexpRules": 13,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/discussions",
+      "staticEntries": 96,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/projects",
+      "staticEntries": 99,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/security",
+      "staticEntries": 98,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/security_analysis",
+      "staticEntries": 175,
+      "regexpRules": 19,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/dependabot_rules",
+      "staticEntries": 387,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/settings/dependabot_rules",
+      "staticEntries": 387,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/domains",
+      "staticEntries": 89,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/secrets",
+      "staticEntries": 246,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/variables",
+      "staticEntries": 246,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/oauth_application_policy",
+      "staticEntries": 120,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/personal-access-token",
+      "staticEntries": 174,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/reminders",
+      "staticEntries": 93,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/sponsors-log",
+      "staticEntries": 94,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/audit-log",
+      "staticEntries": 114,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/audit-log/event_settings",
+      "staticEntries": 114,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/deleted_repositories",
+      "staticEntries": 87,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/applications",
+      "staticEntries": 88,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/apps",
+      "staticEntries": 96,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/settings/publisher",
+      "staticEntries": 88,
+      "regexpRules": 6,
+      "selectorRules": 0
+    },
+    {
+      "page": "projects",
+      "staticEntries": 520,
+      "regexpRules": 13,
+      "selectorRules": 0
+    },
+    {
+      "page": "new/project",
+      "staticEntries": 520,
+      "regexpRules": 13,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/projects/new",
+      "staticEntries": 520,
+      "regexpRules": 13,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/projects",
+      "staticEntries": 520,
+      "regexpRules": 13,
+      "selectorRules": 0
+    },
+    {
+      "page": "redeem",
+      "staticEntries": 2,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "github-copilot/signup",
+      "staticEntries": 294,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "github-copilot/free_signup",
+      "staticEntries": 8,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "github-copilot/pro",
+      "staticEntries": 103,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/enterprise_plan",
+      "staticEntries": 9,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "codespaces",
+      "staticEntries": 124,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "codespaces/allow_permissions",
+      "staticEntries": 8,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "developer/register",
+      "staticEntries": 24,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "features",
+      "staticEntries": 40,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "status",
+      "staticEntries": 100,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "skills",
+      "staticEntries": 212,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "orgs/sponsoring",
+      "staticEntries": 16,
+      "regexpRules": 8,
+      "selectorRules": 0
+    },
+    {
+      "page": "organizations/plan",
+      "staticEntries": 1,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repo-actions-merics-public",
+      "staticEntries": 315,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/actions/metrics/usage",
+      "staticEntries": 320,
+      "regexpRules": 3,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/actions/metrics/performance",
+      "staticEntries": 329,
+      "regexpRules": 7,
+      "selectorRules": 0
+    },
+    {
+      "page": "copilot",
+      "staticEntries": 337,
+      "regexpRules": 12,
+      "selectorRules": 0
+    },
+    {
+      "page": "github-copilot/code-review-waitlist",
+      "staticEntries": 8,
+      "regexpRules": 1,
+      "selectorRules": 0
+    },
+    {
+      "page": "spark",
+      "staticEntries": 154,
+      "regexpRules": 4,
+      "selectorRules": 0
+    },
+    {
+      "page": "sitemap",
+      "staticEntries": 133,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "education",
+      "staticEntries": 368,
+      "regexpRules": 5,
+      "selectorRules": 0
+    },
+    {
+      "page": "mcp",
+      "staticEntries": 11,
+      "regexpRules": 0,
+      "selectorRules": 0
+    },
+    {
+      "page": "repository/agents",
+      "staticEntries": 52,
+      "regexpRules": 7,
+      "selectorRules": 3
+    }
+  ],
+  "handlerInventory": [
+    {
+      "id": "h-915e386f18fd5a9819e758b723aa0e0dbdbbdfcace3fc4230e2e2a5eb49607fa",
+      "line": 2042
+    },
+    {
+      "id": "h-9dba11368068f7edf6fb3658325691427a653f7f16f4d96e62707b789d43dd71",
+      "line": 2099
+    },
+    {
+      "id": "h-ce16d0e3fa64ee5afe688c346508e2bd901f04db7085138c2ab43fdd75032c31",
+      "line": 2129
+    },
+    {
+      "id": "h-f7f332fcbfbb280c0f69ed1fecf5c73422725a2acc91374fac9940349a14b89a",
+      "line": 2133
+    },
+    {
+      "id": "h-c2e4eca150a7929b3b04f581c4fe98f686be040d24dddae19b1b11fb0bef7adf",
+      "line": 2179
+    },
+    {
+      "id": "h-445463be0632d6fe4b158ce5ad15a19dbd4848713ce77ea8f673e02dbab7f25f",
+      "line": 2223
+    },
+    {
+      "id": "h-0722dbbd04ee857153777e15ce08ad22c0f9612269c275ec8f65726a4ddefbd5",
+      "line": 2281
+    },
+    {
+      "id": "h-37764b54e66a773845a73f48c78f804cfb4683fabdd7fba93b64829fbe9856b8",
+      "line": 2746
+    },
+    {
+      "id": "h-b2e5a7a6307ab2b9ab3a43cfa4b3dcbb9cb1f3056b68acd6b951a4b0df93c651",
+      "line": 2751
+    },
+    {
+      "id": "h-15a1b5c54545336b2f99771832279c75938baca78d66608d46cf24ae12db7f9a",
+      "line": 2957
+    },
+    {
+      "id": "h-bffef37b8787a7208c2c1add20e6fbb6efc5a41413eb1f841620ab092d799f6d",
+      "line": 3088
+    },
+    {
+      "id": "h-37709d78cb90579aeb6e96228c967d54fea4f5ed613764bb1308af7b716931a2",
+      "line": 3129
+    },
+    {
+      "id": "h-80f65102ced575383cb740b365bdec2ff5be2a94856e5336f4f1ba148d6839b3",
+      "line": 3539
+    },
+    {
+      "id": "h-7509615022a8890026fb45d45e80660a4c689fde75e3cbdacb310198d1eebec5",
+      "line": 5290
+    },
+    {
+      "id": "h-563e9932c2e5c553118e97f2792beb2b7458fd2d63cdab10856d20f4f11e0aca",
+      "line": 5296
+    },
+    {
+      "id": "h-7293ec6e766a68cf9f0b473837a69bd4d0bcd5e91846c5116bfd6d451fc8cf24",
+      "line": 5304
+    },
+    {
+      "id": "h-9beb52dde860b8469b0842318c4a38f02b0e932271b94edf2bc80d9c17507b18",
+      "line": 5325
+    },
+    {
+      "id": "h-0eeabf7eebf004b084c9193f9f25fb0512f23f6f5ae148a7bed7d218e8da827d",
+      "line": 5348
+    },
+    {
+      "id": "h-6233f1a5c82dda8a5cd05b0eb5e7e3863401f31a8b7c56d8bf31eb67fe184b91",
+      "line": 5368
+    },
+    {
+      "id": "h-04130b62b8a2d9c2bf4a55a12ae35bdb17463ed954336cb4743988cff8544f92",
+      "line": 5374
+    },
+    {
+      "id": "h-aace7c052f8a7ac9a5da19bc2de9a5368cbbfcb28d7b7b6aaf6912b03abdc1b4",
+      "line": 5383
+    },
+    {
+      "id": "h-02974e9b1920bbd40ab766482986d4d3ce4d4d38854c51dbc6159af6c869cde0",
+      "line": 5395
+    },
+    {
+      "id": "h-c0b23fb4c349a256954c5d480980b571b007268b9b17d03ceea1d55bf6a63a7c",
+      "line": 5436
+    },
+    {
+      "id": "h-eb01f3aa00844484768d132d5aaeee0859aaec6e45a4a5a2cd0f4ab94b68acb3",
+      "line": 5441
+    },
+    {
+      "id": "h-2b02e22bc9c815f2661f4635e7224797c164c243c8bd90845c707f0713547b9b",
+      "line": 5468
+    },
+    {
+      "id": "h-27e0a022bc731d84ae57c95ca4418bcdd8ed9c3a601c52fdbed035c3bcce72cc",
+      "line": 5589
+    },
+    {
+      "id": "h-0769d225b56c8de8737a9a0c00b7833758bff986753dc34c07ad9202babc39c9",
+      "line": 5873
+    },
+    {
+      "id": "h-8f012e9556c5314702b96fbe4e0320a3cd0318af7a6b5664caccf29859372c00",
+      "line": 8569
+    },
+    {
+      "id": "h-b8b9776765f5120a6cad126bca2ee3be5410befc08d5251451d62b6d7379f2c6",
+      "line": 8596
+    },
+    {
+      "id": "h-9ad2c6d5451c393dddd532f0d18af305bb48e33d7cead0a06ebc6025f4e885cc",
+      "line": 8961
+    },
+    {
+      "id": "h-6725827a931d70543df518a33d1d931d0e5360606983ea0759b87b78365f249a",
+      "line": 8967
+    },
+    {
+      "id": "h-3c4f17af2ed2ed68a12c16ff15e237001f67864101aa604594338a0b4e594066",
+      "line": 9911
+    },
+    {
+      "id": "h-079e5041d474a8bff1f21a07fc1a95809b8e61d86d3161955cefd09dc8817b61",
+      "line": 12377
+    },
+    {
+      "id": "h-33b77dc3808059dd22d8cf678e86072073854ee1934957f128e97ce0d9a7fef4",
+      "line": 13949
+    },
+    {
+      "id": "h-b8922285bad1ff11601f75ba6afaf87432ef7eb733d28cd9893af8b21dc4875d",
+      "line": 15970
+    },
+    {
+      "id": "h-04da1e59a976aa5b644b75c1b0de50de56cd6f2d85da5aa66c740c806fd8335f",
+      "line": 16641
+    },
+    {
+      "id": "h-2b471b2c0b1b783dc70f493c57cb1c8c0298e12a3e30934dc727f32b99383081",
+      "line": 16977
+    },
+    {
+      "id": "h-a7bb5bfae5df7f53190c54e2be0b45d2b6d4913a9fc06b4efb007a658d152384",
+      "line": 16983
+    },
+    {
+      "id": "h-3769a1de5437d41d6322f22e4bc9569ffc740a18807e2a767719ea469db5c338",
+      "line": 16988
+    },
+    {
+      "id": "h-6263101703fee790ae66c12bfebbad78e5be75bbaab0aa8b3664efd74a6dbb37",
+      "line": 16993
+    },
+    {
+      "id": "h-b2a4611073db0eb50b48a6b601cf44e59e61b950ee979acbcc6c79abc1097a95",
+      "line": 17299
+    },
+    {
+      "id": "h-e6c8de7d2db55e97d80850f4d9e8a76ddf142e061f052e979c4c4578af908986",
+      "line": 17317
+    },
+    {
+      "id": "h-fc7c450a1f49313b8c54b3397ece404dbf3cb2bdcaee45e50e956afd42848f72",
+      "line": 17488
+    },
+    {
+      "id": "h-c31995248440c892ebbe2e63de2a3eb4bec2668e42719b3d7ea2e19c134f2b8d",
+      "line": 17699
+    },
+    {
+      "id": "h-3d1dfb50c79ff91ae44241add14f068c52f372e79e55a53b96940e3a784b6545",
+      "line": 25374
+    },
+    {
+      "id": "h-d69327370f66e5c5e6c2a9b6ef73788dc7d7f9810f241cb76f991bce016ecb69",
+      "line": 28740
+    },
+    {
+      "id": "h-03ab3fb23084da5ee77b1f17943d9c7c43272e8e410b54d5d24eb9a3f3cf25ff",
+      "line": 29365
+    },
+    {
+      "id": "h-c76efc9d36fdb33d1a0a226c46c1ea145f950251ff6fbbc33dd51389c8cf164d",
+      "line": 29379
+    },
+    {
+      "id": "h-6f8aa824df5ac85433ec8ef4cd4790f42bb80091b005db69b7fbb18749eab61d",
+      "line": 29438
+    },
+    {
+      "id": "h-170be3566b0aa9005ba719d258ab57157d2a2b863b856ca96159a6a4cf344b4b",
+      "line": 29929
+    },
+    {
+      "id": "h-3b603b943608e646bd251aa3e63618c7f088425c0805cb522aa3a52b4f1c59a7",
+      "line": 30476
+    },
+    {
+      "id": "h-fcc0b563e22271951760703bcfe91619b9431a3f6e0b2a066a004752c42d2d1a",
+      "line": 30482
+    },
+    {
+      "id": "h-fdf982a147fc0118bf71ee378be233fb17b47b3d47dc240576b4671e6afbeaa9",
+      "line": 30488
+    }
+  ],
+  "groups": [
+    {
+      "group": "docker.com",
+      "files": [
+        {
+          "id": "shared-docker-hub",
+          "path": "dictionaries/docker.com/zh-Hans/shared-docker-hub.json",
+          "sha256": "a343e32cdf2ea3b950d852a9560b6e2417efd0c69662d2d8fb02e85c30b347ee",
+          "bytes": 50427,
+          "kind": "site",
+          "origins": [
+            "https://app.docker.com",
+            "https://hub.docker.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "shared-docker",
+          "path": "dictionaries/docker.com/zh-Hans/shared-docker.json",
+          "sha256": "4acaf82a910fb045fbace319e04962b3c5d73719a3aabdcb164deee70639ae15",
+          "bytes": 27139,
+          "kind": "site",
+          "origins": [
+            "https://docker.com",
+            "https://www.docker.com"
+          ],
+          "requires": []
+        }
+      ],
+      "revision": "bb1f1298eab6347d1677f1ea9b94ca92a7d96fb46c7b61cccd52883739b5f4e0"
+    },
+    {
+      "group": "github.com",
+      "files": [
+        {
+          "id": "education.github.com",
+          "path": "dictionaries/github.com/zh-Hans/education.github.com.json",
+          "sha256": "507821955911220e84e45375446f0c0dae1169e213e67e92cbe03fd95072a73b",
+          "bytes": 252279,
+          "kind": "github",
+          "origins": [
+            "https://education.github.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "gist.github.com",
+          "path": "dictionaries/github.com/zh-Hans/gist.github.com.json",
+          "sha256": "a593f1468ef8cdf0ee36bccabe3df9cced89bab9f32eb9dad02a4a7a2de2bf3f",
+          "bytes": 222566,
+          "kind": "github",
+          "origins": [
+            "https://gist.github.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "github.com",
+          "path": "dictionaries/github.com/zh-Hans/github.com.json",
+          "sha256": "c3a48ed04a0b8b69a9bed3ef61bcfb448eae61464482dac096d13481181b37b5",
+          "bytes": 5693619,
+          "kind": "github",
+          "origins": [
+            "https://github.com"
+          ],
+          "requires": []
+        },
+        {
+          "id": "skills.github.com",
+          "path": "dictionaries/github.com/zh-Hans/skills.github.com.json",
+          "sha256": "b7f47729c2b00d206f9468dbf3870e883dd386416c2ff7ff6d025414491d19cb",
+          "bytes": 231008,
+          "kind": "github",
+          "origins": [
+            "https://skills.github.com"
+          ],
+          "requires": []
+        }
+      ],
+      "revision": "10482e2df549d1f21e6354fa48503d2917ee6aa1c522406d0d5729ebd4a2f7d3"
+    },
+    {
+      "group": "githubstatus.com",
+      "files": [
+        {
+          "id": "www.githubstatus.com",
+          "path": "dictionaries/githubstatus.com/zh-Hans/www.githubstatus.com.json",
+          "sha256": "ae3e1b1ac50a7f03d422f9f59bcfe7fce0c71b35f0bd476d874620ed99df31f6",
+          "bytes": 208490,
+          "kind": "github",
+          "origins": [
+            "https://www.githubstatus.com"
+          ],
+          "requires": []
+        }
+      ],
+      "revision": "9eda21d5ce563d98aba399f42efb2630a4ef4b66c990417dc627ea028ebf1297"
+    },
+    {
+      "group": "tailscale.com",
+      "files": [
+        {
+          "id": "shared-tailscale",
+          "path": "dictionaries/tailscale.com/zh-Hans/shared-tailscale.json",
+          "sha256": "a14189ae4e7a7ad1ad6d75eb761bfc4bcbfe6ecfe5d46a7d9e6fb6fba20bb16c",
+          "bytes": 161075,
+          "kind": "site",
+          "origins": [
+            "https://console.tailscale.com",
+            "https://login.tailscale.com",
+            "https://tailscale.com",
+            "https://www.tailscale.com"
+          ],
+          "requires": []
+        }
+      ],
+      "revision": "4746d47e1e3618e7eef39cacdfeb3cdd7bfc4a959829040ef4b214812763f039"
+    }
+  ],
+  "unhandled": [],
+  "notes": [
+    "静态解释赋值、对象/数组展开与引用；未执行 locals.js。",
+    "统计按唯一对象计数，页面清单保留展开和别名后的各页面效果。",
+    "正则、处理器和可执行范围必须符合扩展本地受审白名单。",
+    "相同 site.json 的明确网址共用受限 shared.json；GitHub 子网站分别限定网址和页面。",
+    "转换工具不发布数据或迁移浏览器；运行时从已下载缓存读取，首次发布仍单独执行。"
+  ]
+}

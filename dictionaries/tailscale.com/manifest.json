@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "minReaderVersion": 1,
+  "group": "tailscale.com",
+  "languages": {
+    "zh-Hans": {
+      "revision": "4746d47e1e3618e7eef39cacdfeb3cdd7bfc4a959829040ef4b214812763f039",
+      "origins": [
+        "https://console.tailscale.com",
+        "https://login.tailscale.com",
+        "https://tailscale.com",
+        "https://www.tailscale.com"
+      ],
+      "files": [
+        {
+          "id": "shared-tailscale",
+          "path": "dictionaries/tailscale.com/zh-Hans/shared-tailscale.json",
+          "sha256": "a14189ae4e7a7ad1ad6d75eb761bfc4bcbfe6ecfe5d46a7d9e6fb6fba20bb16c",
+          "bytes": 161075,
+          "kind": "site",
+          "origins": [
+            "https://console.tailscale.com",
+            "https://login.tailscale.com",
+            "https://tailscale.com",
+            "https://www.tailscale.com"
+          ],
+          "requires": []
+        }
+      ]
+    }
+  }
+}

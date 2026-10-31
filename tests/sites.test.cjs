@@ -37,10 +37,19 @@ async function page(t, html, { url = 'https://console.tailscale.com/admin/machin
       onChanged: { addListener: listener => listeners.push(listener) }
     }
   };
-  const source = built ? fs.readFileSync(path.join(ROOT, 'chrome/sites/tailscale.js'), 'utf8') :
+  const browser=process.env.WT_BROWSER || 'edge';let managedFixture;
+  if(built&&browser==='edge'){
+    // The generated Edge adapter loads already-validated data from the background.
+    dom.window.WTCore={};dom.window.WTLoadDictionary=async()=>site;
+    managedFixture={enabled:siteEnabled,deleted:false,targetLanguage:'zh-Hans',excludedPaths:[],dictionaryAvailable:true};
+    dom.window.chrome.runtime.sendMessage=async()=>({ok:true,result:{site:managedFixture}});
+  }
+  const source = built ? fs.readFileSync(path.join(ROOT, browser, 'sites/tailscale.js'), 'utf8') :
     `(() => { const SITE = ${JSON.stringify(site)};\n${runtime}\n})();`;
   dom.window.eval(`const SUPPORTED_SITES = ${JSON.stringify([site])};\n${preferencesCode}`);
   dom.window.eval(source);
+  if(dom.window.document.readyState==='loading')await new Promise(resolve=>dom.window.document.addEventListener('DOMContentLoaded',resolve,{once:true}));
+  await dom.window.FixedSitePreferences.ready;
   await wait();
   assert.deepEqual(errors, [], '运行时不应产生初始化错误');
   return {
@@ -50,6 +59,7 @@ async function page(t, html, { url = 'https://console.tailscale.com/admin/machin
       await wait();
     },
     toggleSite: async (id, enabled) => {
+      if(managedFixture&&id===site.id)managedFixture.enabled=enabled;
       listeners.forEach(listener => listener({ [`site_enabled_${id}`]: { newValue: enabled } }, 'sync'));
       await wait();
     }

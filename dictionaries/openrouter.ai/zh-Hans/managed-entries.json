@@ -38745,6 +38745,2400 @@
         "translation": null,
         "origin": "ai"
       }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Account",
+        "context": "page/div/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "账户",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Personal",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "个人",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspaces",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Profile",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "个人资料",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Activity",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "活动",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Logs",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "日志",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Recent sessions",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "最近会话",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Credits",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "额度",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Preferences",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "偏好设置",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Theme",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "主题",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "System",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "系统",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Sign out",
+        "context": "page/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "退出登录",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Edit workspace",
+        "context": "page/a/menuitem",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "编辑工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "View activity",
+        "context": "page/a/menuitem",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "查看活动",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Theme: System",
+        "context": "page/div/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "主题：系统",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Sign out",
+        "context": "page/div/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "退出登录",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ori",
+        "context": "nav/button/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ori",
+        "context": "nav/a/button",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Account",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "账户",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspaces",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Profile",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "个人资料",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Activity",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "活动",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Logs",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "日志",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Credits",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "额度",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Management keys",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "管理密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Notifications",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "通知",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Privacy",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "隐私",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Security",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "安全",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Preferences",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "偏好设置",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Account",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "账户",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspace",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "API keys",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "API 密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Files",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "文件",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Beta",
+        "context": "main/div/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "测试版",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Guardrails",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "护栏",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "BYOK",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "BYOK",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Routing",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "路由",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Presets",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "预设",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Tools",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工具",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Observability",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "可观测性",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Classifiers",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "分类器",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Settings",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "设置",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspaces",
+        "context": "main/h1/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Manage your workspaces and their configurations.",
+        "context": "main/div/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "管理工作区及其配置。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "New workspace",
+        "context": "main/button/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "新建工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Name",
+        "context": "main/th/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "名称",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Description",
+        "context": "main/th/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "描述",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Spend",
+        "context": "main/th/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "支出",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Keys",
+        "context": "main/th/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Actions",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "操作",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Default Workspace",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "默认工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "The initial workspace for your account. Includes all API Keys, Presets, and other configurations previously created.",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "您账户的初始工作区。包含之前创建的所有 API 密钥、预设及其他配置。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "No limit",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "无限制",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "$0.00",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "/ ",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "∞",
+        "context": "main/span/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "0",
+        "context": "main/a/text",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Theme: System",
+        "context": "main/button/@aria-label",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "主题：系统",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Sign out",
+        "context": "main/button/@aria-label",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "退出登录",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "The initial workspace for your account. Includes all API Keys, Presets, and other configurations previously created.",
+        "context": "main/span/@title",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "您账户的初始工作区。包含之前创建的所有 API 密钥、预设及其他配置。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspace actions",
+        "context": "main/button/@aria-label",
+        "path": "/workspaces",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区操作",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Account",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "账户",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Personal",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "个人",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspaces",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Profile",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "个人资料",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Activity",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "活动",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Logs",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "日志",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Recent sessions",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "最近会话",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Credits",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "额度",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Preferences",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "偏好设置",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Theme",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "主题",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "System",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "系统",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Sign out",
+        "context": "page/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "退出登录",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Today",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "今天",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Last 7 Days",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "最近 7 天",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Last 30 Days",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "最近 30 天",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Month to Date",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "本月至今",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Last Year",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "去年",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "All Time",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "全部时间",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Theme: System",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "主题：系统",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Sign out",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "退出登录",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Top models",
+        "context": "page/h2/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "热门模型",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ranked by Spend over the selected window",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "按所选时间窗口内的支出排序",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Daily ",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "每日",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Spend",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "支出",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": " over the tracked history. Darker cells are busier days.",
+        "context": "page/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "（基于已跟踪的历史记录）。颜色越深表示当天越活跃。",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ori",
+        "context": "nav/button/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Ori",
+        "context": "nav/a/button",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Account",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "账户",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspaces",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Profile",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "个人资料",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Activity",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "活动",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Logs",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "日志",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Credits",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "额度",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Management keys",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "管理密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Notifications",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "通知",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Privacy",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "隐私",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Security",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "安全",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Preferences",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "偏好设置",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Account",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "账户",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Workspace",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工作区",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "API keys",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "API 密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Files",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "文件",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Beta",
+        "context": "main/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "测试版",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Guardrails",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "防护规则",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "BYOK",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Routing",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "路由",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Presets",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "预设",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Tools",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "工具",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Observability",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "可观测性",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Classifiers",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "分类器",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Settings",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "设置",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Usage summary",
+        "context": "main/h3/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "用量摘要",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Last {WTN0} Days",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "最近 {WTN0} 天",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Tokens",
+        "context": "main/button/tab",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "令牌",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Spend",
+        "context": "main/button/tab",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "支出",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Requests",
+        "context": "main/button/tab",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "请求",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "View full activity",
+        "context": "main/a/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "查看完整活动",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "$0.00",
+        "context": "main/p/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "No prior data",
+        "context": "main/p/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "暂无历史数据",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Daily by model",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "按模型每日统计",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "—",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10/24",
+        "context": "main/tspan/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10/25",
+        "context": "main/tspan/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10/26",
+        "context": "main/tspan/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10/27",
+        "context": "main/tspan/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10/28",
+        "context": "main/tspan/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10/29",
+        "context": "main/tspan/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "10/30",
+        "context": "main/tspan/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Top models",
+        "context": "main/h3/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "热门模型",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "by ",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "stable_content",
+        "action": "translate",
+        "translation": "按",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "spend",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "支出",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "No usage in this period",
+        "context": "main/p/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "此期间无用量",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Activity",
+        "context": "main/h3/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "活动",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Spend",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "支出",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Longest streak",
+        "context": "main/dt/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "最长连续记录",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "0",
+        "context": "main/dd/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "days",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "天",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Avg / day",
+        "context": "main/dt/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "日均",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "$0",
+        "context": "main/dd/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Avg / week",
+        "context": "main/dt/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "周均",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Total",
+        "context": "main/dt/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "总计",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Jun",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "6月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Jul",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "7月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Aug",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "8月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Sep",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "9月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Oct",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "10月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Nov",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "11月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Dec",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "12月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Jan",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "1月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Feb",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "2月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Mar",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "3月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Apr",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "4月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "May",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "5月",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "M",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "一",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "W",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "三",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "F",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "五",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Less",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "较少",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "More",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "较多",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "API keys",
+        "context": "main/h3/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "API 密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "0",
+        "context": "main/span/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "protected",
+        "action": "skip",
+        "translation": null,
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Active keys",
+        "context": "main/dt/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "有效密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Disabled / expired",
+        "context": "main/dt/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "已禁用 / 已过期",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Last created",
+        "context": "main/dt/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "最近创建",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Never",
+        "context": "main/dd/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "从未",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "No API keys yet",
+        "context": "main/div/text",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "暂无 API 密钥",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "主题：系统",
+        "context": "main/button/@aria-label",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "主题：系统",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "退出登录",
+        "context": "main/button/@aria-label",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "退出登录",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Change profile picture",
+        "context": "header/button/@aria-label",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "更换头像",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Close",
+        "context": "page/button/@aria-label",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "关闭",
+        "origin": "ai"
+      }
+    },
+    {
+      "site": "https://openrouter.ai",
+      "entry": {
+        "sourceText": "Back",
+        "context": "page/button/@aria-label",
+        "path": "/settings/profile",
+        "sourceLanguage": null,
+        "targetLanguage": "zh-Hans",
+        "category": "ui",
+        "action": "translate",
+        "translation": "返回",
+        "origin": "ai"
+      }
     }
   ],
   "adapter": null

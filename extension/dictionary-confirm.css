@@ -1,0 +1,8 @@
+/* GPL-3.0-or-later. Shared by settings and the action popup. */
+dialog.dictionary-confirm{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 24px);overflow:auto;border:1px solid #b8c8da;border-radius:12px;padding:20px;color:#182b46;background:#fff;box-sizing:border-box;box-shadow:0 12px 48px #0003;font:14px/1.6 "Microsoft YaHei","Segoe UI",sans-serif}
+dialog.dictionary-confirm::backdrop{background:#0006}
+dialog.dictionary-confirm h2{margin:0 0 12px;font-size:20px}
+dialog.dictionary-confirm p{line-height:1.65;overflow-wrap:anywhere}
+dialog.dictionary-confirm .actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin:18px 0 0}
+dialog.dictionary-confirm button{font:inherit;border:1px solid #bbd2f5;background:#edf4ff;color:#194780;border-radius:9px;padding:8px 12px;cursor:pointer}
+dialog.dictionary-confirm button.primary{background:#285db1;border-color:#285db1;color:#fff}

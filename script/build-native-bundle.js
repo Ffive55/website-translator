@@ -21,7 +21,7 @@ async function buildNativeBundle(root){
   const project=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
   files['package.json']=Buffer.from(JSON.stringify({name:'website-translator-local-helper',version:project.version,private:true},null,2));
   files['runtime/source.json']=Buffer.from(JSON.stringify({version:NODE_VERSION,platform:'win32',arch:'x64',url:`https://nodejs.org/dist/v${NODE_VERSION}/${ARCHIVE}`,sha256:NODE_SHA256},null,2));
-  files['README.txt']=Buffer.from('Windows x64 本地连接程序\r\n包含 Node.js 与 jose，无需另装 Node.js、npm 或 PowerShell 7。\r\n在插件目录内双击 local-helper\\Install.cmd，粘贴设置页显示的扩展 ID。\r\n完成后返回设置页检查本地连接。浏览器不能自动注册本地主机。\r\n安装后的目录需保持原位置；移动或更新扩展 ID 后重新运行安装。\r\n');
+  files['README.txt']=Buffer.from('Windows x64 本地连接程序（独立安装）\r\n仅 ChatGPT 订阅功能需要；API Key 翻译、词库和设置同步不需要。\r\n包含 Node.js 与 jose，无需另装 Node.js、npm 或 PowerShell 7。\r\n将本地程序压缩包解压到长期保留的文件夹，在该文件夹双击 Install.cmd，粘贴扩展设置页显示的当前扩展 ID。\r\n安装只为当前用户注册主机，不复制文件、不自动登录；请保留解压目录，不能放在临时目录。\r\n返回设置页授予本地通信权限并检查连接；移动目录或扩展 ID 变化后重新运行安装。\r\n独立程序不由扩展商城自动更新，应在关闭本地连接后手动更新并重新注册。\r\n先在扩展退出订阅登录，再运行 Uninstall.cmd 移除 Edge 本地通信注册；该操作保留订阅数据目录，完全清理需另行处理当前用户数据目录的 WebsiteTranslator 文件夹。\r\n');
   return files;
 }
 function installer(browser){return Buffer.from(`@echo off\r\nsetlocal DisableDelayedExpansion\r\n"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0native\\install.ps1" -Browser ${browser} -ExtensionId "%~1"\r\nif errorlevel 1 (echo Installation failed. Please check the message above.) else (echo Installation finished. Return to the extension and check the connection.)\r\npause\r\n`);}

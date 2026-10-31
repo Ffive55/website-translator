@@ -23,7 +23,7 @@ test('服务选择切换字段、按钮与独立草稿，标签页和主域名�
   choose('azure');assert.equal(d.querySelector('#regionField').hidden,false);assert.equal(d.querySelector('#apiKey').value,'');assert.equal(d.querySelector('#helper').hidden,true);
   choose('api');assert.equal(d.querySelector('#apiKey').value,'local-key');choose('chatgpt');assert.equal(d.querySelector('#reasoningEffort').value,'high');
   assert.equal(d.querySelector('#prompt').value,'全局提示词草稿');assert.equal(d.querySelector('#prompt').closest('form').id,'promptForm');
-  d.querySelector('#tab-sync').click();assert.ok(d.querySelector('#repositoryForm'));assert.equal(d.querySelector('#syncHelper'),null);assert.equal(d.querySelector('#tab-sync').textContent,'GitHub 仓库');
+  d.querySelector('#tab-sync').click();assert.ok(d.querySelector('#repositoryForm'));assert.equal(d.querySelector('#syncHelper'),null);assert.equal(d.querySelector('#tab-sync').textContent,'词库仓库');
   d.querySelector('#tab-websites').click();assert.equal(d.querySelector('#general').hidden,true);assert.equal(d.querySelector('#websites').hidden,false);
   assert.equal(d.querySelectorAll('.domain-group').length,1);assert.equal(d.querySelectorAll('.site').length,2);assert.equal(d.querySelectorAll('[aria-label="BCP 47 目标语言"]').length,0);
   d.querySelector('.group-actions button').click();await new Promise(r=>setTimeout(r,20));assert.ok(calls.some(m=>m.type==='wt:group-change' && m.group==='example.com' && m.enabled===false));
@@ -67,7 +67,7 @@ test('所有设置保存统一悬浮反馈，连续保存重置消失时间，�
   w.chrome={runtime:{id:'fixture',sendMessage:async m=>m.type==='wt:state'?{ok:true,result:state}:fail?{ok:false,error:'保存失败，请重试'}:{ok:true,result:true}},permissions:{request:async()=>true},storage:{sync:{set:async()=>{}},onChanged:{addListener(){}}}};
   const originalTimer=w.setTimeout.bind(w);w.setTimeout=(fn,delay,...args)=>{if(delay===3000 || delay===8000){timers.push({fn,delay});return 100000+timers.length;}return originalTimer(fn,delay,...args);};
   w.eval(read('managed-providers.js'));w.eval(read('managed-ui.js'));await new Promise(r=>setTimeout(r,20));const message=d.querySelector('#message');assert.equal(message.hidden,true);
-  for(const id of ['generalForm','aiForm','promptForm','repositoryForm']){
+  for(const id of ['generalForm','aiForm','promptForm']){
     d.querySelector('#'+id).dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,20));
     assert.equal(message.hidden,false,id);assert.equal(message.dataset.kind,'success');assert.equal(message.getAttribute('role'),'status');assert.equal(timers.at(-1).delay,3000);
   }
@@ -78,14 +78,88 @@ test('所有设置保存统一悬浮反馈，连续保存重置消失时间，�
   timers[1].fn();assert.equal(message.hidden,false);timers.at(-1).fn();assert.equal(message.hidden,true);
 });
 
-function dictionaryUI(t,handler){
+function dictionaryUI(t,handler,configure=()=>{}){
   const dom=new JSDOM(read('managed.html'),{url:'https://fixture.invalid/#websites',runScripts:'outside-only'});t.after(()=>dom.window.close());
   const w=dom.window,site=(origin,group)=>({id:origin,origin,name:origin,group,enabled:true,entries:{},conflicts:{},excludedPaths:[],authorized:true});
   const repository={owner:'Ffive55',repo:'website-translator',branch:'main'},state={sites:{a:site('https://example.com','example.com'),b:site('https://other.test','other.test')},wt_tasks:{},wt_preferences:{targetLanguage:'zh-Hans'},dictionary:{ready:true,repository,hasToken:true,status:{},groups:{'example.com':{pending:2,conflicts:[],installed:true,downloadedOrigins:['https://example.com']},'other.test':{pending:0,conflicts:[],installed:true,downloadedOrigins:['https://other.test']}},check:{groups:[]}}},calls=[];
   w.chrome={runtime:{id:'fixture',sendMessage:async m=>{calls.push(m);return {ok:true,result:m.type==='wt:state'?state:await handler(m,state)};}},permissions:{request:async()=>true},storage:{onChanged:{addListener(){}}}};
-  w.eval(read('managed-providers.js'));w.eval(read('managed-ui.js'));return {w,d:w.document,state,calls};
+  configure(w);w.eval(read('managed-providers.js'));w.eval(read('managed-ui.js'));return {w,d:w.document,state,calls};
 }
 const tick=()=>new Promise(r=>setTimeout(r,20));
+
+test('订阅本地通信只在点击时申请，拒绝权限不连接；无下载网址不生成假链接',async t=>{
+ let asked=0;const {d,calls}=dictionaryUI(t,async()=>({connected:true,version:'test'}),w=>{w.chrome.permissions.request=async options=>{assert.deepEqual(JSON.parse(JSON.stringify(options)),{permissions:['nativeMessaging']});asked++;return false;};});
+ await tick();assert.equal(asked,0);assert.equal(d.querySelector('[data-native-download]').hidden,true);assert.match(d.querySelector('[data-native-unavailable]').textContent,/暂不提供/);
+ d.querySelector('[data-check-native]').click();await tick();assert.equal(asked,1);assert.equal(calls.some(m=>m.type==='wt:native'),false);assert.match(d.querySelector('#message').textContent,/未授予本地通信/);
+});
+test('非 Windows x64 本地连接显示平台限制，仍可使用 API 配置',async t=>{
+ let asked=false;const {d,calls}=dictionaryUI(t,async()=>true,w=>{w.chrome.runtime.getPlatformInfo=async()=>({os:'linux',arch:'x86-64'});w.chrome.permissions.request=async()=>{asked=true;return true;};});
+ await tick();assert.match(d.querySelector('[data-native-platform]').textContent,/当前设备不支持/);d.querySelector('[data-check-native]').click();await tick();assert.equal(asked,false);assert.equal(calls.some(m=>m.type==='wt:native'),false);assert.match(d.querySelector('#message').textContent,/Windows x64/);
+});
+test('清除当前服务密钥提交显式空值，不清空其他服务配置',async t=>{
+ const {d,state,calls}=dictionaryUI(t,async()=>true);state.wt_ai={provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'test-model',apiKey:'fixture-key'};await tick();
+ d.querySelector('#clearApiKey').click();await tick();const message=calls.find(m=>m.type==='wt:config');assert.equal(message.ai.provider,'openai');assert.equal(message.ai.apiKey,'');assert.equal(d.querySelector('#apiKey').value,'');assert.equal(message.aiProfiles,undefined);
+});
+
+test('更新冲突先确认，取消不覆盖；再次确认只提交后台生成的 ID',async t=>{
+ const {d,state,calls}=dictionaryUI(t,async m=>m.action==='update'?{requiresConfirmation:true,id:'update-plan',direction:'update',group:'example.com',language:'zh-Hans',full:false,conflicts:2,reason:'同词条冲突'}:'已处理');
+ state.dictionary.check.groups=[{group:'example.com',hasUpdate:true}];await tick();
+ d.querySelector('.group-actions button').click();await tick();let dialog=d.querySelector('dialog');
+ assert.match(dialog.textContent,/2 项冲突/);assert.match(dialog.textContent,/保留其余本地修改/);assert.equal(calls.some(m=>m.action==='transfer-confirm'),false);
+ dialog.querySelector('button').click();await tick();assert.ok(calls.some(m=>m.action==='transfer-cancel'));assert.equal(calls.some(m=>m.action==='transfer-confirm'),false);
+ d.querySelector('.group-actions button').click();await tick();d.querySelector('dialog button.primary').click();await tick();
+ const confirm=calls.find(m=>m.action==='transfer-confirm');assert.equal(confirm.id,'update-plan');assert.equal(confirm.repository,undefined);assert.equal(confirm.full,undefined);assert.equal(d.querySelector('dialog'),null);
+});
+test('上传无法判断时说明整份覆盖，批量逐组等待确认后才检测下一组',async t=>{
+ const {d,calls}=dictionaryUI(t,async m=>{
+  if(m.action==='upload-all')return {batch:{direction:'upload',context:'ctx',groups:['example.com','other.test']}};
+  if(m.action==='upload')return {requiresConfirmation:true,id:m.group,direction:'upload',group:m.group,language:'zh-Hans',full:true,reason:'缺少共同基线'};
+  return '上传成功';
+ });await tick();d.querySelector('#dictionaryUploadAll').click();await tick();
+ assert.match(d.querySelector('dialog').textContent,/仓库独有内容可能被移除/);assert.equal(calls.filter(m=>m.action==='upload').length,1);
+ d.querySelector('dialog button.primary').click();await tick();assert.equal(calls.filter(m=>m.action==='upload').length,2);
+ d.querySelector('dialog button').click();await tick();assert.equal(calls.filter(m=>m.action==='transfer-confirm').length,1);assert.equal(d.querySelector('dialog'),null);
+});
+test('云端恢复的仓库平台更新界面，用户正在编辑的平台选择不被刷新覆盖',async t=>{
+ const {d,w,state}=dictionaryUI(t,async()=> '已检查');await tick();
+ state.dictionary.repository={provider:'gitee',owner:'fixture',repo:'dictionary',branch:'main'};
+ d.querySelector('#dictionaryCheck').click();await tick();assert.equal(d.querySelector('#repositoryProvider').value,'gitee');
+ d.querySelector('#repositoryProvider').value='github';d.querySelector('#repositoryProvider').dispatchEvent(new w.Event('change'));
+ d.querySelector('#dictionaryCheck').click();await tick();assert.equal(d.querySelector('#repositoryProvider').value,'github');
+});
+test('词库仓库测试列出候选，确认只提交候选 ID；修改平台或令牌使旧结果失效',async t=>{
+ const candidate={id:'candidate',repository:{provider:'gitee',owner:'fixture',repo:'dictionary',branch:'data'},writePermission:true};
+ const {d,w,calls,state}=dictionaryUI(t,async m=>{
+  if(m.action==='repository-test')return {id:'session',provider:'gitee',done:false,scanned:0,empty:0,candidates:[]};
+  if(m.action==='repository-test-next')return {id:'session',provider:'gitee',done:true,scanned:1,empty:0,candidates:[candidate]};
+  if(m.action==='repository-confirm'){state.dictionary.repository=candidate.repository;return '已确认词库仓库';}
+  return '已取消';
+ });
+ await tick();assert.equal(d.querySelector('#repositoryOwner'),null);assert.equal(d.querySelector('#repositoryBranch'),null);
+ const platform=d.querySelector('#repositoryProvider');platform.value='gitee';platform.dispatchEvent(new w.Event('change'));
+ d.querySelector('#repositoryToken').value='fixture-only';d.querySelector('#repositoryForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();
+ assert.equal(d.querySelector('#repositoryChoices').options.length,2);assert.equal(state.dictionary.repository.repo,'website-translator');assert.equal(d.querySelector('#repositoryToken').value,'');
+ d.querySelector('#repositoryChoices').value='candidate';d.querySelector('#repositoryChoices').dispatchEvent(new w.Event('change'));
+ assert.equal(d.querySelector('#repositoryConfirm').disabled,false);d.querySelector('#repositoryConfirm').click();await tick();
+ const confirm=calls.find(m=>m.action==='repository-confirm');assert.equal(confirm.candidateId,'candidate');assert.equal(confirm.id,'session');assert.equal(confirm.repository,undefined);assert.equal(confirm.token,undefined);
+ assert.equal(state.dictionary.repository.provider,'gitee');assert.equal(d.querySelector('#repositoryConfirm').disabled,true);
+ d.querySelector('#repositoryToken').dispatchEvent(new w.Event('input'));assert.equal(d.querySelector('#repositoryConfirm').disabled,true);
+});
+
+test('空仓库确认明确初始化，按进度继续请求，直到校验连接完成才解锁',async t=>{
+ let steps=0,release;
+ const candidate={id:'empty',type:'empty',repository:{owner:'fixture',repo:'empty',branch:'main'},writePermission:true};
+ const {d,w,calls}=dictionaryUI(t,async m=>{
+  if(m.action==='repository-test')return {id:'session',done:true,scanned:1,empty:1,candidates:[candidate]};
+  if(m.action==='repository-confirm'){steps++;if(steps===1)return {initializing:true,completed:1,total:8};await new Promise(r=>release=r);return '已连接';}
+  return '已取消';
+ });await tick();d.querySelector('#repositoryForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
+ assert.equal(steps,0);d.querySelector('#repositoryChoices').value='empty';d.querySelector('#repositoryChoices').dispatchEvent(new w.Event('change'));
+ assert.equal(d.querySelector('#repositoryConfirm').textContent,'初始化并连接');assert.match(d.querySelector('#repositorySelectionHint').textContent,/github.com/);
+ d.querySelector('#repositoryConfirm').click();await tick();assert.equal(steps,2);assert.equal(d.querySelector('#repositoryProvider').disabled,true);assert.match(d.querySelector('#repositoryTestStatus').textContent,/1\/8/);
+ release();await tick();assert.equal(d.querySelector('#repositoryProvider').disabled,false);assert.equal(d.querySelector('#repositoryConfirm').disabled,true);
+ assert.ok(calls.filter(m=>m.action==='repository-confirm').every(m=>m.candidateId==='empty'&&!m.repository&&!m.files));
+});
 
 test('上传入口位于主域名行和顶部，无本地修改时隐藏；点击直接上传，刷新不放开重复上传',async t=>{
   let release;const {d,calls,state}=dictionaryUI(t,async(m,s)=>{

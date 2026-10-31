@@ -256,6 +256,18 @@
     if (same(value, conflict.remote)) delete result.pending[key]; else result.pending[key] = structuredClone(value);
     result.canInstall = result.conflicts.length === 0; return result;
   }
+  function comparisonReason(state, remote, commit, hasRemote=Object.keys(remote).length>0) {
+    const hasLocal=Object.keys(state?.local || {}).length>0;
+    if(state?.commit!==commit && state?.seenCommits?.includes(commit))return '仓库当前提交曾被本机较新内容替换，无法可靠判断修改关系';
+    if((state?.contentRevision || hasLocal && hasRemote) &&
+      (!/^[a-f0-9]{40}$/.test(state?.commit || '') || !/^[a-f0-9]{64}$/.test(state?.contentRevision || '') || !state?.baseline))return '本机缺少完整的共同基线，无法可靠判断修改关系';
+    return null;
+  }
+  function preferConflicts(comparison, choice) {
+    let result=comparison;
+    for(const conflict of comparison.conflicts)result=resolveConflict(result,conflict.key,choice);
+    return result;
+  }
   const currentGeneration = (expected, actual) => same(expected, actual);
 
   const preferenceKeys = ['targetLanguage', 'requestTimeoutMinutes', 'inputContextK', 'autoExpandSeconds', ...Object.keys(C.captureDefaults)];
@@ -265,6 +277,15 @@
     for (const [key, min, max] of [['requestTimeoutMinutes', 1, 60], ['inputContextK', 1, 1000]]) if (own(out, key)) C.assert(Number.isInteger(out[key]) && out[key] >= min && out[key] <= max, '同步常规设置无效');
     if (own(out, 'autoExpandSeconds')) C.autoExpandSeconds(out.autoExpandSeconds);
     C.captureLimits(out); return out;
+  }
+  function repositoryConfiguration(value) {
+    C.assert(value && Object.keys(value).every(k => ['provider','owner', 'repo', 'branch'].includes(k)), '词库仓库配置无效');
+    const selected=value.provider||'github';C.assert(['github','gitee'].includes(selected),'不支持的词库平台');
+    C.assert(typeof value.owner === 'string' && typeof value.repo === 'string' && (selected==='gitee'?/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$/:/^[a-zA-Z0-9][a-zA-Z0-9-]{0,99}$/).test(value.owner) && /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$/.test(value.repo), '词库仓库名称无效');
+    C.assert(typeof value.branch === 'string' && value.branch.length <= 200 && /^[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(value.branch) && !/\.\.|\/\/|\/$|\.lock(?:\/|$)/.test(value.branch), '词库分支无效');
+    // Keep the existing GitHub identity byte-for-byte: IndexedDB keys, mirrors,
+    // conflicts and download tickets must survive an upgrade without re-keying.
+    return Object.freeze({ ...(selected==='gitee'?{provider:selected}:{}), owner:value.owner, repo:value.repo, branch:value.branch });
   }
   function validateSyncRecord(row) {
     object(row, ['kind', 'id', 'field', 'counter', 'deviceId', 'value']);
@@ -279,12 +300,15 @@
       if (preferenceKeys.includes(row.field)) syncPreferences({ [row.field]: row.value });
       else if (row.field === 'enable_extension') C.assert(typeof row.value === 'boolean', '同步总开关无效');
       else if (row.field === 'aiSettings' || /^aiProfile:[a-z0-9_-]+$/.test(row.field)) {
-        object(row.value,['provider','model','endpoint','region','reasoningEffort']);
-        for(const [key,value] of Object.entries(row.value))C.assert(typeof value==='string'&&value.length<=2000,'同步 AI 参数无效');
+        object(row.value,['provider','model','endpoint','region','reasoningEffort','apiKey'],['provider','model','endpoint','region','reasoningEffort']);
+        for(const [key,value] of Object.entries(row.value))C.assert(typeof value==='string'&&value.length<=(key==='apiKey'?6000:2000)&&!(key==='apiKey'&&/[\r\n]/.test(value)),'同步 AI 参数无效');
+        C.assert(row.value.provider!=='chatgpt'||!row.value.apiKey,'订阅登录凭据不属于同步设置');
         C.assert(/^[a-z0-9_-]+$/.test(row.value.provider),'同步服务无效');
         if(row.field.startsWith('aiProfile:'))C.assert(row.field.slice(10)===row.value.provider,'同步服务配置身份无效');
         if(row.value.endpoint){const u=new URL(row.value.endpoint);C.assert(['https:','http:'].includes(u.protocol)&&!u.username&&!u.password&&!u.search&&!u.hash,'同步 API 地址不能含凭据');}
       }
+      else if (row.field === 'dictionaryRepository') repositoryConfiguration(row.value);
+      else if (/^dictionaryToken:(github|gitee)$/.test(row.field)) C.assert(typeof row.value==='string'&&row.value.length<=1000&&!/[\r\n]/.test(row.value),'同步词库令牌无效');
       else if (row.field === 'prompt') C.assert(typeof row.value === 'string' && bytes(row.value) <= 5000, '提示词超过浏览器同步单项容量；请保留在本机');
       else C.assert(false, '同步字段不在白名单');
     }
@@ -329,8 +353,8 @@
     await packSync(merged); return merged;
   }
   const api = { VERSION, limits, bytes, digest, origin, originId, groupFor, groupId, path, validateIndex, validateManifest, selectFiles, validateGraph, adapterShape,
-    validatePackage, verifyFile, validateRecord, entryIdentity, recordsMap, staticEntry, mergeRecords, resolveConflict, currentGeneration,
-    syncPreferences, validateSyncRecord, mergeSync, packSync, unpackSync, syncIdentity };
+    validatePackage, verifyFile, validateRecord, entryIdentity, recordsMap, staticEntry, mergeRecords, resolveConflict, comparisonReason, preferConflicts, currentGeneration,
+    repositoryConfiguration, syncPreferences, validateSyncRecord, mergeSync, packSync, unpackSync, syncIdentity };
   C.dictionary = Object.freeze(api);
   if (typeof module !== 'undefined') module.exports = C.dictionary;
 })();

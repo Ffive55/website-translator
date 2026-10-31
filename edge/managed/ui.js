@@ -8,6 +8,21 @@
   document.addEventListener('change',event=>{const id=event.target.closest('form')?.id;if(id)dirtyForms.add(id);});
   const aiFields=['endpoint','apiKey','model','region','reasoningEffort'];
   const drafts={};let selectedProvider='api';
+  let nativePlatform=null;
+  async function ensureNativePermission(){
+    if(nativePlatform && (nativePlatform.os!=='win'||nativePlatform.arch!=='x86-64'))throw new Error('ChatGPT 订阅本地程序目前仅支持 Windows x64；可选择 API 翻译服务');
+    if(chrome.permissions?.request && !await chrome.permissions.request({permissions:['nativeMessaging']}))throw new Error('未授予本地通信权限；词库和 API 翻译仍可使用');
+  }
+  const nativeRequest=async action=>{await ensureNativePermission();return request('native',{action});};
+  async function nativeDistribution(){
+    if(chrome.runtime.getPlatformInfo)try{nativePlatform=await chrome.runtime.getPlatformInfo();}catch{}
+    const supported=!nativePlatform || nativePlatform.os==='win'&&nativePlatform.arch==='x86-64';
+    const platform=document.querySelector('[data-native-platform]');if(platform)platform.textContent=supported?'本地连接程序仅支持 Windows x64，供 ChatGPT 订阅使用。':'当前设备不支持 Windows x64 本地连接程序，请使用词库或 API 翻译。';
+    if(!chrome.runtime.getURL || !globalThis.fetch)return;
+    try{const config=await(await fetch(chrome.runtime.getURL('managed/distribution.json'))).json();const link=document.querySelector('[data-native-download]');
+      if(link && config.helperDownloadUrl){const url=new URL(config.helperDownloadUrl);if(url.protocol==='https:'&&!url.username&&!url.password){link.href=url.href;link.hidden=false;document.querySelector('[data-native-unavailable]').hidden=true;}}
+    }catch{}
+  }
   const aiValues=()=>({provider:$('provider').value,...Object.fromEntries(aiFields.map(k=>[k,$(k).value.trim()]))});
   function providerUI(){
     const id=$('provider').value,p=WTProviders.catalog[id],subscription=id==='chatgpt',machine=p.kind==='mt';
@@ -15,13 +30,14 @@
       $(field).hidden=!show;for(const control of $(field).querySelectorAll('input,select,textarea'))control.disabled=!show;
     }
     $('helper').hidden=!subscription;
+    if($('clearApiKey'))$('clearApiKey').hidden=subscription;
     $('modelLabel').htmlFor=subscription?'modelSelect':'model';$('modelLabel').textContent=subscription?'ChatGPT 模型':'模型 ID';
     $('model').hidden=subscription;$('model').disabled=subscription || (machine && !p.model);$('modelSelect').hidden=!subscription;$('modelSelect').disabled=!subscription;$('modelSelect').required=subscription;
     $('endpoint').required=!subscription;$('apiKey').required=!subscription;$('model').required=!machine || !!p.model;
     $('endpointLabel').textContent=p.kind==='chat' || id==='qwen_mt'?'Chat Completions API 地址':'翻译 API 地址';
     for(const id of ['login','models','nativeStatus','logout'])$(id).hidden=!subscription;
     $('promptHint').textContent=machine?'提示词统一保存且始终可编辑；当前机器翻译接口不使用这段提示词。切换到对话模型或 ChatGPT 订阅后使用。':'所有对话模型与 ChatGPT 订阅共用此提示词。输出格式与隐私保护规则始终保留。';
-    $('providerHint').textContent=subscription?'通过本地连接程序使用 ChatGPT 订阅。思考强度支持范围由所选模型决定，模型默认不额外指定强度。':machine?'机器翻译仅发送明确的界面控件和输入框提示，不发送无法判断的正文；此接口不接受通用 AI 提示词。':'API Key 仅保存在本机。支持服务商地址或兼容网关，模型 ID 以服务商提供的为准。';
+    $('providerHint').textContent=subscription?'通过本地连接程序使用 ChatGPT 订阅。思考强度支持范围由所选模型决定，模型默认不额外指定强度。':machine?'机器翻译仅发送明确的界面控件和输入框提示，不发送无法判断的正文；此接口不接受通用 AI 提示词。':'API Key 随浏览器设置同步。支持服务商地址或兼容网关，模型 ID 以服务商提供的为准。';
   }
   function loadProvider(id,profile={}){
     selectedProvider=id;$('provider').value=id;
@@ -54,17 +70,49 @@
   async function action(fn, b) { if (b) b.disabled = true;clearMessage();try { const msg = await fn();await refresh(false);if($('message'))showMessage(typeof msg === 'string' ? msg : msg?.message || '已保存',!!msg?.error); } catch(e) { await refresh(false).catch(()=>{});showMessage(e.message,true); } finally { if(b) b.disabled = false; } }
   let dictionaryUploading=false,catalogResult=null;const dictionaryDownloads=new Set();
   function uploadButtons(){for(const b of document.querySelectorAll('[data-dictionary-upload]'))b.disabled=dictionaryUploading;}
+  let transferDialogBusy=false;
+  function askTransfer(result){
+    if(transferDialogBusy)return Promise.resolve(false);
+    transferDialogBusy=true;
+    if(!document.getElementById('dictionaryConfirmStyle')){const link=document.createElement('link');link.id='dictionaryConfirmStyle';link.rel='stylesheet';link.href=chrome.runtime.getURL?chrome.runtime.getURL('managed/dictionary-confirm.css'):'dictionary-confirm.css';document.head.append(link);}
+    return new Promise(resolve=>{
+      const upload=result.direction==='upload',dialog=document.createElement('dialog'),title=document.createElement('h2'),text=document.createElement('p'),reason=document.createElement('p'),buttons=document.createElement('div'),cancel=document.createElement('button'),accept=document.createElement('button');
+      dialog.className='dictionary-confirm';title.id='dictionaryConfirmTitle';title.textContent=upload?'用本地词库覆盖仓库？':'用仓库词库覆盖本地？';dialog.setAttribute('aria-labelledby',title.id);
+      reason.textContent=result.reason+'。范围：'+result.group+' · '+result.language+'。';
+      text.textContent=result.full?(upload?'继续后，将以本地完整词库替换仓库中该分组、该语言的词库，仓库独有内容可能被移除。':'继续后，将以仓库完整词库替换本地该分组、该语言的词库，丢弃尚未上传的本地修改。'):
+        ('检测到 '+result.conflicts+' 项冲突。'+(upload?'继续后，冲突项采用本地内容并上传，保留双方其余修改。':'继续后，冲突项采用仓库内容更新本地，保留其余本地修改。'));
+      cancel.textContent='取消';accept.textContent=upload?'确认覆盖仓库并上传':'确认覆盖本地';accept.className='primary';
+      const finish=value=>{dialog.remove();transferDialogBusy=false;resolve(value);};cancel.onclick=()=>finish(false);accept.onclick=()=>finish(true);dialog.oncancel=event=>{event.preventDefault();finish(false);};
+      buttons.className='actions';buttons.append(cancel,accept);dialog.append(title,reason,text,buttons);document.body.append(dialog);if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');cancel.focus();
+    });
+  }
+  async function finishTransfer(result){
+    if(result?.batch){
+      const {direction,groups,context}=result.batch,messages=[];let done=0,error=false;
+      for(const group of groups)try{
+        const next=await finishTransfer(await request('dictionary-action',{action:direction,group,batchContext:context}));
+        if(typeof next==='string'&&next.startsWith('已取消'))messages.push(group+'：'+next);else{done++;messages.push(typeof next==='string'?next:next?.message || group);}
+      }catch(e){error=true;messages.push(group+'：'+e.message);}
+      return {message:(direction==='upload'?'已上传 ':'已更新 ')+done+' 个主域名'+(messages.length?'；'+messages.join('；'):''),error};
+    }
+    if(result?.requiresConfirmation){
+      if(!await askTransfer(result)){await request('dictionary-action',{action:'transfer-cancel',id:result.id});return '已取消覆盖，词库保留';}
+      return request('dictionary-action',{action:'transfer-confirm',id:result.id});
+    }
+    return result;
+  }
+  async function updateDictionary(group){return finishTransfer(await request('dictionary-action',group?{action:'update',group}:{action:'all'}));}
   async function uploadDictionary(group){
     if(dictionaryUploading)return '正在上传，请等待当前操作完成';
     dictionaryUploading=true;uploadButtons();
-    try{return await request('dictionary-action',group?{action:'upload',group}:{action:'upload-all'});}
+    try{return await finishTransfer(await request('dictionary-action',group?{action:'upload',group}:{action:'upload-all'}));}
     finally{dictionaryUploading=false;uploadButtons();}
   }
   function renderCatalog(){
     const box=$('dictionaryResults');if(!box)return;box.replaceChildren();
     if(!catalogResult)return;
     const dictionary=current?.dictionary,language=current?.wt_preferences?.targetLanguage || 'zh-Hans';
-    if(['owner','repo','branch'].some(key=>dictionary?.repository?.[key]!==catalogResult.repository[key])||language!==catalogResult.targetLanguage){catalogResult=null;$('dictionarySearchStatus').textContent='仓库或目标语言已改变，请重新搜索。';return;}
+    if(['provider','owner','repo','branch'].some(key=>dictionary?.repository?.[key]!==catalogResult.repository[key])||language!==catalogResult.targetLanguage){catalogResult=null;$('dictionarySearchStatus').textContent='仓库或目标语言已改变，请重新搜索。';return;}
     const rows=catalogResult.rows.filter(row=>!row.origins.every(origin=>dictionary?.groups[row.group]?.downloadedOrigins?.includes(origin)));
     $('dictionarySearchStatus').textContent=rows.length?'找到 '+rows.length+' 个未完整下载的主域名词库 · '+language:'没有符合条件的未下载主域名词库 · '+language;
     for(const row of rows){
@@ -74,7 +122,7 @@
         if(dictionaryDownloads.has(row.group))return '正在下载此主域名词库，请稍候';
         dictionaryDownloads.add(row.group);renderCatalog();
         try{
-          const origins=[...new Set(['https://api.github.com/*',...row.origins.map(origin=>{const u=new URL(origin);return u.protocol+'//'+u.hostname+'/*';})])];
+          const origins=[...new Set([repositoryPermission(),...row.origins.map(origin=>{const u=new URL(origin);return u.protocol+'//'+u.hostname+'/*';})])];
           if(!await chrome.permissions.request({origins}))throw new Error('未授予词库或网站权限');
           const result=await request('dictionary-action',{action:'download-group',group:row.group});return result.includes('冲突')?{message:result,error:true}:result;
         }finally{dictionaryDownloads.delete(row.group);renderCatalog();}
@@ -117,11 +165,11 @@
         return enabled?'已启用当前网页':'已停用当前网页';
       }
       if(kind==='download'){
-        const origins=[...new Set(['https://api.github.com/*',...(popupRemote?.origins || [origin]).map(origin=>{const site=new URL(origin);return site.protocol+'//'+site.hostname+'/*';})])];
+        const origins=[...new Set([repositoryPermission(),...(popupRemote?.origins || [origin]).map(origin=>{const site=new URL(origin);return site.protocol+'//'+site.hostname+'/*';})])];
         if(!await chrome.permissions.request({origins}))throw new Error('未授予词库或网站权限');
       }
       if(!group)throw new Error('词库检测尚未完成，请稍后重试');
-      const result=await request('dictionary-action',{action:kind==='upload'?'upload':kind==='download'?'download-group':'update',group});
+      const result=await finishTransfer(await request('dictionary-action',{action:kind==='upload'?'upload':kind==='download'?'download-group':'update',group}));
       return typeof result==='string'&&result.includes('冲突')?{message:result,error:true}:result;
     }finally{popupBusy=false;popupCheckKey=null;popupRemote=null;}
   }
@@ -137,7 +185,7 @@
       const count=document.createElement('span');count.className='detail';count.textContent=values.length+' 个网址';
       const controls=document.createElement('span');controls.className='group-actions';
       const dictionary=current?.dictionary, checked=dictionary?.check?.groups.find(g=>g.group===name), info=dictionary?.groups[name];
-      if(checked?.hasUpdate)controls.append(button('更新',async()=>{const result=await request('dictionary-action',{action:'update',group:name});await request('dictionary-action',{action:'check'});return result;}));
+      if(checked?.hasUpdate)controls.append(button('更新',async()=>{const result=await updateDictionary(name);await request('dictionary-action',{action:'check'});return result;}));
       if(info?.pending){const upload=button('上传',()=>uploadDictionary(name));upload.dataset.dictionaryUpload='';upload.disabled=dictionaryUploading;upload.title='待上传 '+info.pending+' 项本地新增、修改或删除';upload.setAttribute('aria-label','上传 '+name+' 词库');controls.append(upload);}
       if(info?.conflicts.length){const conflicts=document.createElement('div');conflicts.className='dictionary-conflicts';for(const c of info.conflicts){const box=document.createElement('article'),p=document.createElement('p');p.textContent=JSON.parse(c.key)[3]+' · 基线：'+(c.base?.entry.translation||'删除/无')+' · 本地：'+(c.local?.entry.translation||'删除/无')+' · 远端：'+(c.remote?.entry.translation||'删除/无');box.append(p);for(const [label,choice] of [['保留本地','local'],['采用远端','remote']])box.append(button(label,()=>request('dictionary-action',{action:'resolve',group:name,key:c.key,choice})));const edit=document.createElement('textarea');edit.value=c.local?.entry.translation||c.remote?.entry.translation||'';box.append(edit,button('编辑后使用',()=>{const row=JSON.parse(JSON.stringify(c.local||c.remote||c.base));row.entry={...row.entry,translation:edit.value,category:'ui',action:'translate',origin:'manual',userSelected:true};return request('dictionary-action',{action:'resolve',group:name,key:c.key,choice:'edited',edited:row});}));conflicts.append(box);}group.append(conflicts);}
       const enabled=values.every(s=>s.enabled);
@@ -187,6 +235,35 @@
       box.append(info,text,remove);list.append(box);
     }
   }
+  let repositorySession=null,repositoryRun=0,repositoryInitialized=false;
+  const repositoryPermission=(selected=current?.dictionary?.repository?.provider||'github')=>selected==='gitee'?'https://gitee.com/*':'https://api.github.com/*';
+  function repositoryHelp(){
+    const selected=$('repositoryProvider').value,label=selected==='gitee'?'Gitee':'GitHub',saved=current?.dictionary?.credentialPlatforms?.[selected];
+    const help=$('repositoryTokenHelp');help.replaceChildren();help.append((saved?'本平台已保存令牌。':'本平台尚未保存令牌。')+' ');
+    const link=document.createElement('a');link.href=selected==='gitee'?'https://gitee.com/profile/personal_access_tokens':'https://github.com/settings/personal-access-tokens/new';link.target='_blank';link.rel='noopener noreferrer';link.textContent='创建 '+label+' 令牌';help.append(link);
+    help.append(selected==='github'?'。读取需要所选仓库的 Contents 读取权限；上传需要写入权限。':'。请选择能访问目标仓库的权限；需要上传时还需仓库写入权限。');
+  }
+  function invalidateRepositoryTest(){
+    repositoryRun++;const old=repositorySession;repositorySession=null;
+    $('repositoryChoices').replaceChildren(new Option('请先进行仓库测试',''));$('repositoryChoices').disabled=true;$('repositoryConfirm').disabled=true;
+    $('repositoryConfirm').textContent='确认仓库';$('repositorySelectionHint').textContent='';
+    $('repositoryTestStatus').textContent='';$('repositoryCancel').hidden=true;
+    if(old)request('dictionary-action',{action:'repository-test-cancel',id:old.id}).catch(()=>{});
+  }
+  function repositorySelection(){
+    const row=repositorySession?.candidates.find(r=>r.id===$('repositoryChoices').value),initialize=['empty','resume'].includes(row?.type);
+    $('repositoryConfirm').disabled=!repositorySession?.done||!row;
+    $('repositoryConfirm').textContent=initialize?(row.type==='resume'?'继续初始化并连接':'初始化并连接'):'确认仓库';
+    $('repositorySelectionHint').textContent=initialize?'确认后将上传 GitHub 主站（github.com）的简体中文词库、索引、许可证和来源说明。需要写入权限；上传完成并校验后才切换连接。':'已有词库仓库确认后直接连接。';
+  }
+  function renderRepositoryTest(result){
+    repositorySession=result;const select=$('repositoryChoices'),chosen=select.value;select.replaceChildren(new Option('请选择词库仓库',''));
+    for(const row of result.candidates){const r=row.repository,label=row.type==='empty'?'空仓库 · 将初始化 GitHub 主站词库':row.type==='resume'?'初始化未完成 · 可继续':'已有词库';select.append(new Option(r.owner+'/'+r.repo+' · '+r.branch+' · '+label+(row.writePermission===true?' · 平台报告可写':row.writePermission===false?' · 平台报告只读':' · 写入权限待验证'),row.id));}
+    if([...select.options].some(o=>o.value===chosen))select.value=chosen;
+    select.disabled=!result.done||!result.candidates.length;$('repositoryConfirm').disabled=!result.done||!select.value;
+    repositorySelection();
+    $('repositoryTestStatus').textContent=(result.done?'测试完成':'正在检测')+' · 已检查 '+result.scanned+' 个仓库，发现 '+result.candidates.length+' 个词库仓库'+(result.empty?'；'+result.empty+' 个空仓库':'')+(result.inaccessible?'；'+result.inaccessible+' 个仓库无读取权限':'')+(result.invalid?'；有不兼容或无效索引':'')+(result.partial?'；已达到本轮扫描上限，结果不完整':'');
+  }
   function renderDictionary(info){
     if(!info?.ready){const progress=info?.status?.startup;$('dictionaryStatus').textContent=info?.status?.error||((progress?.phase||'词库服务初始化中')+(progress?.total?' · '+progress.done+'/'+progress.total:''));$('dictionaryStatus').hidden=false;$('dictionaryAll').hidden=true;$('dictionaryUploadAll').hidden=true;return;}
     const status=info.status||{},network=(status.needsAuthorization||status.networkRetryAt>Date.now())?status.networkError:null,updates=info.check?.groups.filter(g=>g.hasUpdate)||[];
@@ -194,7 +271,8 @@
     const pending=Object.values(info.groups).filter(data=>data.pending).length;$('dictionaryUploadAll').hidden=!pending;$('dictionaryUploadAll').textContent='上传全部（'+pending+'）';uploadButtons();
     $('dictionaryStatus').textContent=status.busy?'正在更新 '+status.busy:(status.networkKind==='rate-limit'&&status.networkRetryAt<=Date.now()?'上次限流等待已结束，可检查更新':status.error)||network||status.syncError||'';$('dictionaryStatus').hidden=!$('dictionaryStatus').textContent;
     $('repositoryStatus').textContent=(info.hasToken?'本设备已配置凭据 · API 请求携带 Token':'本设备未配置凭据 · 当前匿名访问')+(status.lastUpload?' · 上次上传 '+status.lastUpload:'')+(status.syncError?' · 设置同步失败：'+status.syncError:'')+(status.networkKind==='rate-limit'&&status.networkRetryAt>Date.now()&&status.rateLimit?.limit!==null&&status.rateLimit?.limit!==undefined?' · 最近请求配额 '+status.rateLimit.limit+'/小时，剩余 '+(status.rateLimit.remaining??'未知'):'')+(status.promptLocalOnly?' · 当前提示词超过同步容量，仅保存在本机':'');
-    if(document.activeElement?.closest('#repositoryForm')==null){$('repositoryOwner').value=info.repository.owner;$('repositoryName').value=info.repository.repo;$('repositoryBranch').value=info.repository.branch;}
+    $('repositoryCurrent').textContent='当前连接：'+(info.repository.provider==='gitee'?'Gitee':'GitHub')+' · '+info.repository.owner+'/'+info.repository.repo+' · '+info.repository.branch;
+    if(!repositoryInitialized||!dirtyForms.has('repositoryForm')&&!repositorySession&&!$('repositoryToken').value){$('repositoryProvider').value=info.repository.provider||'github';repositoryInitialized=true;}repositoryHelp();
     renderCatalog();
   }
   function refresh(forms=false){if(refreshFlight){refreshAgain=true;return refreshFlight;}refreshFlight=refreshState(forms||!formsLoaded).finally(()=>{refreshFlight=null;if(refreshAgain){refreshAgain=false;setTimeout(()=>refresh(false).catch(()=>{}),100);}});return refreshFlight;}
@@ -237,32 +315,56 @@
     $('promptForm').onsubmit=e=>{e.preventDefault();action(()=>request('config',{prompt:$('prompt').value}),e.submitter);};
     $('resetPrompt').onclick=()=>{$('prompt').value=current.defaultPrompt;};
     for(const box of document.querySelectorAll('.native-setup')){
-      const select=box.querySelector('[data-native-browser]'),command=box.querySelector('[data-install-command]'),result=box.querySelector('[data-native-result]');
-      select.value=/Firefox\//.test(navigator.userAgent)?'firefox':/Edg\//.test(navigator.userAgent)?'edge':'chrome';
+      const result=box.querySelector('[data-native-result]');
       box.querySelector('[data-native-id]').textContent=chrome.runtime.id;
-      const update=()=>{command.textContent='powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\local-helper\\native\\install.ps1 -Browser '+select.value+(select.value==='firefox'?'':' -ExtensionId '+chrome.runtime.id);};
-      select.onchange=update;update();
-      box.querySelector('[data-copy-install]').onclick=()=>action(async()=>{await navigator.clipboard.writeText(command.textContent);return '已复制安装命令，请在项目源码目录执行';});
+      box.querySelector('[data-copy-native-id]').onclick=()=>action(async()=>{await navigator.clipboard.writeText(chrome.runtime.id);return '已复制扩展 ID，请在独立本地程序安装时使用';});
       const check=box.querySelector('[data-check-native]');check.onclick=()=>action(async()=>{
         result.textContent='正在检查本地连接…';
-        try{const r=await request('native',{action:'ping'});if(r.connected!==true)throw new Error('本地程序响应无效，请更新程序');result.textContent='本地连接正常 · 程序版本 '+r.version+' · 可继续登录 ChatGPT 订阅';}
+        try{const r=await nativeRequest('ping');if(r.connected!==true)throw new Error('本地程序响应无效，请更新程序');result.textContent='本地连接正常 · 程序版本 '+r.version+' · 可继续登录 ChatGPT 订阅';}
         catch(e){result.textContent=e.message;throw e;}
       },check);
     }
+    nativeDistribution();
     $('aiForm').onsubmit=e=>{e.preventDefault();action(saveAI,e.submitter);};
-    $('testConnection').onclick=()=>{if(!$('aiForm').reportValidity())return;action(async()=>{await saveAI();await request('test');return '连接测试通过，测试译文已校验';},$('testConnection'));};
-    $('repositoryForm').onsubmit=e=>{e.preventDefault();const token=$('repositoryToken').value.trim();action(async()=>{if(!await chrome.permissions.request({origins:['https://api.github.com/*']}))throw new Error('未授予 GitHub 连接权限');return request('dictionary-action',{action:'configure',repository:{owner:$('repositoryOwner').value.trim(),repo:$('repositoryName').value.trim(),branch:$('repositoryBranch').value.trim()},token,clearToken:$('clearRepositoryToken').checked});},e.submitter);$('repositoryToken').value='';};
+    $('clearApiKey').onclick=()=>action(async()=>{const ai={...aiValues(),apiKey:''};await request('config',{ai});$('apiKey').value='';drafts[ai.provider]=ai;return '已清除当前服务 API Key，并加入浏览器设置同步';},$('clearApiKey'));
+    $('testConnection').onclick=()=>{if(!$('aiForm').reportValidity())return;action(async()=>{if($('provider').value==='chatgpt')await ensureNativePermission();await saveAI();await request('test');return '连接测试通过，测试译文已校验';},$('testConnection'));};
+    $('repositoryProvider').onchange=()=>{dirtyForms.add('repositoryForm');invalidateRepositoryTest();$('repositoryToken').value='';repositoryHelp();};
+    $('repositoryToken').oninput=()=>{dirtyForms.add('repositoryForm');invalidateRepositoryTest();};
+    $('repositoryCancel').onclick=invalidateRepositoryTest;
+    $('repositoryChoices').onchange=repositorySelection;
+    $('repositoryForm').onsubmit=e=>{e.preventDefault();invalidateRepositoryTest();const run=repositoryRun,provider=$('repositoryProvider').value,token=$('repositoryToken').value.trim();
+      action(async()=>{
+        if(!await chrome.permissions.request({origins:[repositoryPermission(provider)]}))throw new Error('未授予所选平台连接权限');
+        $('repositoryToken').value='';$('repositoryTestStatus').textContent='正在验证令牌…';$('repositoryCancel').hidden=false;
+        let result=await request('dictionary-action',{action:'repository-test',provider,token});
+        while(run===repositoryRun){renderRepositoryTest(result);if(result.done)break;result=await request('dictionary-action',{action:'repository-test-next',id:result.id});}
+        if(run!==repositoryRun){request('dictionary-action',{action:'repository-test-cancel',id:result.id}).catch(()=>{});return '仓库测试已取消';}
+        return result.candidates.length?'请选择词库仓库并确认':'没有发现可读取的词库索引；请检查令牌权限及仓库是否已上传词库';
+      },e.submitter).finally(()=>{$('repositoryCancel').hidden=true;});
+    };
+    $('repositoryConfirm').onclick=()=>{const session=repositorySession,candidateId=$('repositoryChoices').value;if(!session||!candidateId)return;
+      const controls=['repositoryProvider','repositoryToken','repositoryTest','repositoryClearToken','repositoryChoices'];controls.forEach(id=>$(id).disabled=true);
+      action(async()=>{
+        let result;try{do {
+          result=await request('dictionary-action',{action:'repository-confirm',id:session.id,candidateId});
+          if(result.initializing)$('repositoryTestStatus').textContent='正在初始化词库仓库 · 已上传 '+result.completed+'/'+result.total+' 个文件；完成后将校验并连接。关闭此页可暂停，重新测试可继续。';
+        }while(result.initializing);}catch(error){$('repositoryTestStatus').textContent='操作已停止：'+error.message;throw error;}
+        dirtyForms.delete('repositoryForm');invalidateRepositoryTest();return result;
+      },$('repositoryConfirm')).finally(()=>{controls.forEach(id=>$(id).disabled=false);$('repositoryChoices').disabled=!repositorySession?.done;repositorySelection();});
+    };
+    $('repositoryClearToken').onclick=()=>action(async()=>{invalidateRepositoryTest();$('repositoryToken').value='';return request('dictionary-action',{action:'repository-clear-token',provider:$('repositoryProvider').value});},$('repositoryClearToken'));
     $('dictionaryCheck').onclick=()=>action(()=>request('dictionary-action',{action:'check'}),$('dictionaryCheck'));
-    $('dictionaryAll').onclick=()=>action(()=>request('dictionary-action',{action:'all'}),$('dictionaryAll'));
+    $('dictionaryAll').onclick=()=>action(()=>updateDictionary(),$('dictionaryAll'));
     $('dictionaryUploadAll').onclick=()=>action(()=>uploadDictionary(),$('dictionaryUploadAll'));
     $('dictionarySearchForm').onsubmit=e=>{e.preventDefault();action(async()=>{
-      if(!await chrome.permissions.request({origins:['https://api.github.com/*']}))throw new Error('未授予 GitHub 连接权限');
+      if(!await chrome.permissions.request({origins:[repositoryPermission()]}))throw new Error('未授予词库平台连接权限');
       catalogResult=null;$('dictionaryResults').replaceChildren();$('dictionarySearchStatus').textContent='正在检索词库…';
       try{catalogResult=await request('dictionary-action',{action:'catalog',query:$('dictionaryQuery').value.trim()});}
       catch(error){$('dictionarySearchStatus').textContent='检索失败，请稍后重新搜索。';throw error;}
       return '词库搜索完成';
     },$('dictionarySearch'));};
     $('login').onclick=()=>action(async()=>{
+      await ensureNativePermission();
       // A persistent port keeps the native process and callback listener alive during login.
       const port=chrome.runtime.connectNative('local.website_translator');
       await new Promise((resolve,reject)=>{
@@ -285,8 +387,8 @@
         port.postMessage({action:'login'});
       });
     },$('login'));
-    $('models').onclick=()=>action(async()=>{const models=await request('native',{action:'models'});renderModels(models);return `已读取 ${models.length} 个模型，请从完整列表选择并保存`;},$('models'));
-    for (const [id, actionName] of [['logout','logout'],['nativeStatus','status']]) $(id).onclick=()=>action(async()=>{const r=await request('native',{action:actionName});$('accountStatus').textContent=r.signedIn?`ChatGPT 已登录：${r.email || '账号信息不可用'}（模型访问需实际请求验证）`:`本地程序已连接，ChatGPT 未登录${actionName==='logout' && !r.revoked?'；远端撤销未确认，可在 ChatGPT 设置中断开此应用':''}`;});
+    $('models').onclick=()=>action(async()=>{const models=await nativeRequest('models');renderModels(models);return `已读取 ${models.length} 个模型，请从完整列表选择并保存`;},$('models'));
+    for (const [id, actionName] of [['logout','logout'],['nativeStatus','status']]) $(id).onclick=()=>action(async()=>{const r=await nativeRequest(actionName);$('accountStatus').textContent=r.signedIn?`ChatGPT 已登录：${r.email || '账号信息不可用'}（模型访问需实际请求验证）`:`本地程序已连接，ChatGPT 未登录${actionName==='logout' && !r.revoked?'；远端撤销未确认，可在 ChatGPT 设置中断开此应用':''}`;});
   } else {
     // Content determines the popup height. Compact spacing only when the browser
     // cannot fit the content in its available screen area; text stays readable.

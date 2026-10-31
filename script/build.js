@@ -87,6 +87,7 @@ function main() {
     }
     console.log(`[build --check] OK: All ${TARGETS.length} browser builds are in sync with chrome/src/ (${lineCount} lines, ${(byteCount / 1024).toFixed(1)} KB).`);
     buildSites(true,BROWSERS);
+    for(const browser of BROWSERS)require('./build-repository-seed.cjs').buildRepositorySeed(browser,true);
     buildChangelog(true,BROWSERS);
     return;
   }
@@ -105,6 +106,7 @@ function main() {
 
   console.log(`[build] Done: Compiled ${MODULES.length} modules into ${lineCount} lines (${(byteCount / 1024).toFixed(1)} KB).`);
   buildSites(false,BROWSERS);
+  for(const browser of BROWSERS)require('./build-repository-seed.cjs').buildRepositorySeed(browser,false);
   buildChangelog(false,BROWSERS);
 }
 

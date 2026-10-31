@@ -265,7 +265,7 @@ async function main(){
     await ui.screenshot({path:path.join(output,'deepl-prompt-settings.png'),fullPage:true});
     await ui.locator('#provider').selectOption('api');assert.equal(await ui.locator('#apiKey').inputValue(),'fixture-key');assert.equal(await ui.locator('#helper').isVisible(),false);
     await ui.getByRole('tab',{name:'常规',exact:true}).click();await ui.screenshot({path:path.join(output,'general-settings.png'),fullPage:true});
-    await ui.getByRole('tab',{name:'GitHub 仓库',exact:true}).click();assert.equal(await ui.locator('#repositoryForm').isVisible(),true);assert.equal(await ui.locator('#syncHelper').count(),0);await ui.screenshot({path:path.join(output,'sync-settings.png'),fullPage:true});
+    await ui.getByRole('tab',{name:'词库仓库',exact:true}).click();assert.equal(await ui.locator('#repositoryForm').isVisible(),true);assert.equal(await ui.locator('#syncHelper').count(),0);await ui.screenshot({path:path.join(output,'sync-settings.png'),fullPage:true});
     const popup=await context.newPage();popup.on('pageerror',e=>errors.push(e.message));await popup.setViewportSize({width:360,height:600});await popup.goto('chrome-extension://'+id+'/popup/popup.html');await popup.locator('#status').filter({hasText:'已开启'}).waitFor();await popup.locator('main').screenshot({path:path.join(output,'popup.png')});
     assert.equal(await popup.locator('#wtManage').isVisible(),true);assert.equal(await popup.locator('#wtDictionaryDownload').count(),1);assert.equal(await popup.locator('#wtSiteToggle').count(),1);
     assert.deepEqual(errors,[]);

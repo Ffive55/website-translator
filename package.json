@@ -1,7 +1,7 @@
 {
   "name": "website-translator",
   "displayName": "网站翻译插件",
-  "version": "0.3.18",
+  "version": "0.3.25",
   "private": true,
   "description": "支持按需 AI 添加更新、本地词库、网站管理及本地连接程序的网站翻译插件",
   "license": "GPL-3.0-or-later",
@@ -18,6 +18,8 @@
     "upstream:resolve": "node script/sync-upstream.js --resolve",
     "test:updater": "node --test tests/upstream.test.cjs",
     "package": "node script/build.js --check && node script/package.js",
+    "package:edge-store": "node script/build.js --browser edge --check && node script/package-edge-store.js",
+    "store:screenshots": "node script/store-screenshots.cjs",
     "test": "node script/test-edge.js",
     "test:browser": "node script/test-managed-browser.cjs",
     "prepare:github": "node script/prepare-github.js",

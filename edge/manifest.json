@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "网站翻译插件",
-  "version": "0.3.18",
-  "description": "使用本地词库翻译已适配的网站界面，支持按网站独立开关与持续扩展。",
+  "name": "__MSG_extensionName__",
+  "version": "0.3.25",
+  "description": "__MSG_extensionDescription__",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
@@ -13,7 +13,6 @@
     "storage",
     "scripting",
     "activeTab",
-    "nativeMessaging",
     "alarms",
     "contextMenus",
     "unlimitedStorage"
@@ -153,5 +152,9 @@
         "https://*/*"
       ]
     }
-  ]
+  ],
+  "optional_permissions": [
+    "nativeMessaging"
+  ],
+  "default_locale": "zh_CN"
 }

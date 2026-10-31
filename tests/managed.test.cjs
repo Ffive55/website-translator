@@ -24,6 +24,16 @@ test('同步服务选择复用最新公共配置，并保留本设备 API Key',a
   await hooks.applySync([{kind:'preference',field:'aiSettings',value:old},{kind:'preference',field:'aiProfile:api',value:latest}]);
   assert.equal(w.local.wt_ai.model,'new-public-model');assert.equal(w.local.wt_ai.apiKey,'fixture-local-only');
 });
+test('同步 AI 配置恢复并清除 API Key，键与服务地址绑定且不改变订阅登录状态',async t=>{
+  require('../extension/dictionary-core');let hooks;
+  const runtime={create:value=>{hooks=value;return {start:async()=>{},changed(){},enrich:async site=>site,summary:async()=>({})};}};
+  const w=await worker(t,undefined,undefined,{WTDictionaryRuntime:runtime});
+  const ai={provider:'api',model:'synced',endpoint:'https://synced.example.com/v1/chat/completions',region:'eastasia',reasoningEffort:'high',apiKey:'fixture-synced-key'};
+  const rows=value=>[{kind:'preference',field:'aiSettings',value},{kind:'preference',field:'aiProfile:api',value}];
+  await hooks.applySync(rows(ai));assert.equal(w.local.wt_ai.apiKey,ai.apiKey);assert.equal(w.local.wt_ai.reasoningEffort,'high');
+  await hooks.applySync(rows({...ai,endpoint:'https://other.example.com/v1/chat/completions',apiKey:''}));assert.equal(w.local.wt_ai.apiKey,'');
+  await hooks.applySync(rows({...ai,apiKey:''}));assert.equal(w.local.wt_ai.apiKey,'');
+});
 test('AI 返回严格校验数量、ID、分类、占位符、脚本字段和 HTML',()=>{
   const input=[{id:'t0',sourceText:'Save {count}',context:'main/button/text',path:'/'}];
   const good={id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''};
@@ -263,9 +273,9 @@ test('合并服务后台使用原生机器翻译协议并保留各服务配置',
 
 
 
-test('本地主机授权拒绝明确显示当前扩展 ID 和重注册方法',async t=>{
+test('本地主机授权拒绝明确显示当前扩展 ID 和独立程序重注册方法',async t=>{
   const w=await worker(t);w.chrome.runtime.sendNativeMessage=async()=>{throw new Error('Access to the specified native messaging host is forbidden.');};
-  const result=await w.request('native',{action:'ping'});assert.equal(result.ok,false);assert.match(result.error,/未授权当前扩展（test）/);assert.match(result.error,/重新运行安装命令/);
+  const result=await w.request('native',{action:'ping'});assert.equal(result.ok,false);assert.match(result.error,/未授权当前扩展（test）/);assert.match(result.error,/重新运行 Install\.cmd/);
 });
 
 const translationResponse=inputs=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(inputs.map(i=>({id:i.id,category:'ui',action:'translate',translation:'译文',reason:''})))}}]}));

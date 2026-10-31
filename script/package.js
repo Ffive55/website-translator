@@ -4,8 +4,8 @@ const path = require('node:path');
 const { zipSync } = require('fflate');
 const ROOT = path.resolve(__dirname, '..');
 const OMIT = new Set(['node_modules', '.git', '.cache', '.omo', '.local-native', 'local-helper', 'test-results', 'dist']);
-const EXTENSION_FILES = ['manifest.json', 'content.js', 'locals.js', 'assets', 'options', 'popup', 'sites', 'managed'];
-const SOURCE_FILES = ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'THIRD_PARTY_NOTICES.md', 'LICENSE', 'AGENTS.md',
+const EXTENSION_FILES = ['manifest.json', 'content.js', 'locals.js', 'assets', 'options', 'popup', 'sites', 'managed', '_locales'];
+const SOURCE_FILES = ['README.md', 'PRIVACY.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'THIRD_PARTY_NOTICES.md', 'LICENSE', 'AGENTS.md', 'store',
   'package.json', 'package-lock.json', '.gitignore', '.gitattributes', '.github', 'assets', 'chrome', 'edge', 'firefox', 'extension', 'native', 'sites', 'dictionaries', 'script', 'tests', 'docs', 'upstream'];
 
 function collect(directory, entries) {
@@ -42,7 +42,7 @@ async function packageProject(root = ROOT) {
     console.log(`[package] ${name}（${Object.keys(files).length} 个文件）`);
   }
   for (const browser of ['chrome', 'edge', 'firefox']) {
-    const files = collect(path.join(root, browser), EXTENSION_FILES.filter(file=>browser!=='edge'||file!=='locals.js'));
+    const files = collect(path.join(root, browser), EXTENSION_FILES.filter(file=>(browser!=='edge'||file!=='locals.js')&&(file!=='_locales'||fs.existsSync(path.join(root,browser,file)))));
     for(const [name,data] of Object.entries({...helper,'Install.cmd':installer(browser)})){
       const target=path.join(root,browser,'local-helper',name);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,data);
       files['local-helper/'+name]=data;

@@ -74,6 +74,16 @@ async function main() {
       const otherContext=await store.setContext({...setup,repository:otherRepository});await store.edit(otherRepository,group,'zh-Hans',row('另一仓库本地'),otherContext.revision);await store.resetLocal(origin,otherRepository,'1:false');
       check(C.canonical(await store.read(repository,group,'zh-Hans'))===C.canonical(beforeOther),'移除另一仓库的网站不修改当前仓库词库');
       check(store.importData===undefined&&store.stageLegacy===undefined&&store.exportData===undefined,'旧文件导入、迁移和备份接口已删除');
+      const overwriteContext=await store.setContext(setup),overwriteRevision=overwriteContext.revision;
+      const snapshot=await store.read(repository,group,'zh-Hans'),preview=await store.preview(initial);
+      check(!!preview.reason && (await store.read(repository,group,'zh-Hans')).revision===snapshot.revision,'历史提交仅预检为无法判断，不修改本地');
+      await rejects(()=>store.install(initial,overwriteRevision,undefined,{choice:'remote',full:true,expectedRevision:snapshot.revision-1}),'整份覆盖拒绝确认后本地版本变化');
+      await store.install(initial,overwriteRevision,undefined,{choice:'remote',full:true,expectedRevision:snapshot.revision});
+      const replaced=await store.read(repository,group,'zh-Hans');
+      check(Object.keys(replaced.local).length===0 && replaced.baseline[D.entryIdentity(row('', 'First'))]===null && replaced.baseline[D.entryIdentity(row())].entry.translation==='基础译文','整份覆盖采用仓库并给被丢弃本地独有词条写删除标记');
+      const rawDB=await new Promise((resolve,reject)=>{const r=indexedDB.open(options.name);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+      const backups=await new Promise((resolve,reject)=>{const r=rawDB.transaction('meta').objectStore('meta').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});rawDB.close();
+      check(backups.some(value=>value?.state?.revision===snapshot.revision),'覆盖前保存原完整词库本机备份');
       const largeContext = await store.setContext({ repository, targetLanguage: 'zh-Hans', installations: [{ origin: 'https://github.com', generation: 1 }] });
       const large = { schemaVersion: 1, repository, commit: 'b'.repeat(40), group: 'github.com', targetLanguage: 'zh-Hans', installedOrigins: ['https://github.com'], missing: [],
         revision: await D.digest({ group: 'github.com', language: 'zh-Hans', origins: ['https://github.com'], files: [description] }), files: [{ description, raw: githubRaw, pack: JSON.parse(githubRaw) }] };
@@ -85,7 +95,7 @@ async function main() {
       const usage = await navigator.storage.estimate(); store.close();
       return { checks, count: checks.length, usage: usage.usage, quota: usage.quota, browser: navigator.userAgent };
     }, { githubRaw, description });
-    assert.equal(result.count, 19); await fs.writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2));
+    assert.equal(result.count, 23); await fs.writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2));
     console.log(JSON.stringify(result, null, 2));
   } finally { await context.close(); }
 }

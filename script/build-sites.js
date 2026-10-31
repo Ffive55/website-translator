@@ -43,18 +43,28 @@ function buildSites(check = false, browsers=['chrome','edge','firefox']) {
     else delete manifest.homepage_url;
     if (browser === 'firefox') manifest.browser_specific_settings.gecko.id = `${project.name}@local.invalid`;
     manifest.description = '使用本地词库翻译已适配的网站界面，支持按网站独立开关与持续扩展。';
+    if(browser==='edge'){
+      output(`${browser}/_locales/zh_CN/messages.json`,JSON.stringify({extensionName:{message:project.displayName},extensionDescription:{message:manifest.description}},null,2)+'\n');
+      manifest.default_locale='zh_CN';manifest.name='__MSG_extensionName__';manifest.description='__MSG_extensionDescription__';
+    }
     manifest.action.default_title = project.displayName;
     manifest.options_page = 'managed/managed.html';
     manifest.host_permissions = [...new Set([...sites.flatMap(site => site.matches), 'https://api.github.com/*'])];
     manifest.content_scripts = entries;
     manifest.web_accessible_resources=[{resources:['managed/dictionary-policy.json'],matches:['http://*/*','https://*/*']}];
-    manifest.permissions = [...new Set([...manifest.permissions, 'scripting', 'activeTab', 'nativeMessaging', 'alarms', 'contextMenus', 'unlimitedStorage'])];
+    manifest.permissions = [...new Set([...manifest.permissions.filter(p=>p!=='nativeMessaging'), 'scripting', 'activeTab', 'alarms', 'contextMenus', 'unlimitedStorage'])];
+    manifest.optional_permissions=[...new Set([...(manifest.optional_permissions || []),'nativeMessaging'])];
     manifest.optional_host_permissions = ['https://*/*', 'http://*/*'];
     if (browser === 'firefox') manifest.background = { scripts: ['sites/catalog.js','managed/tldts.js','managed/core.js','managed/providers.js','managed/batching.js','managed/background.js'] };
     else manifest.background = { service_worker: 'managed/worker.js' };
-    const managedFiles = { 'dictionary-errors.js':'dictionary-errors.js', 'dictionary-runtime.js':'dictionary-runtime.js', 'dictionary-publish.js':'dictionary-publish.js', 'dictionary-loader.js':'dictionary-loader.js', 'dictionary-core.js':'dictionary-core.js', 'dictionary-adapters.js':'dictionary-adapters.js', 'dictionary-repository.js':'dictionary-repository.js', 'dictionary-store.js':'dictionary-store.js', 'dictionary-policy.json':'dictionary-policy.json', 'github-dictionary-handlers.js':'github-dictionary-handlers.js', 'batching.js':'managed-batching.js','providers.js':'managed-providers.js', 'core.js':'managed-core.js', 'text-provenance.js':'text-provenance.js', 'content.js':'managed-content.js', 'background.js':'managed-background.js', 'managed.html':'managed.html', 'managed.css':'managed.css', 'ui.js':'managed-ui.js' };
+    const managedFiles = { 'dictionary-discovery.js':'dictionary-discovery.js', 'dictionary-errors.js':'dictionary-errors.js', 'dictionary-runtime.js':'dictionary-runtime.js', 'dictionary-publish.js':'dictionary-publish.js', 'dictionary-loader.js':'dictionary-loader.js', 'dictionary-core.js':'dictionary-core.js', 'dictionary-adapters.js':'dictionary-adapters.js', 'dictionary-repository.js':'dictionary-repository.js', 'dictionary-store.js':'dictionary-store.js', 'dictionary-policy.json':'dictionary-policy.json', 'github-dictionary-handlers.js':'github-dictionary-handlers.js', 'batching.js':'managed-batching.js','providers.js':'managed-providers.js', 'core.js':'managed-core.js', 'text-provenance.js':'text-provenance.js', 'content.js':'managed-content.js', 'background.js':'managed-background.js', 'managed.html':'managed.html', 'managed.css':'managed.css', 'ui.js':'managed-ui.js' };
+    managedFiles['dictionary-initialize.js']='dictionary-initialize.js';
+    managedFiles['dictionary-confirm.css']='dictionary-confirm.css';
     for (const [target, source] of Object.entries(managedFiles)) output(`${browser}/managed/${target}`, normalize(fs.readFileSync(path.join(ROOT,'extension',source),'utf8')));
-    output(`${browser}/managed/worker.js`, "importScripts('../sites/catalog.js','tldts.js','core.js','dictionary-core.js','dictionary-adapters.js','dictionary-errors.js','dictionary-repository.js','dictionary-store.js','dictionary-publish.js','dictionary-runtime.js','providers.js','batching.js','background.js');\n");
+    const distribution=require('./store-distribution').configuration(ROOT);
+    output(`${browser}/managed/distribution.json`,JSON.stringify(distribution.runtime,null,2)+'\n');
+    output(`${browser}/managed/privacy.html`,require('./store-distribution').privacy(ROOT,distribution));
+    output(`${browser}/managed/worker.js`, "importScripts('../sites/catalog.js','tldts.js','core.js','dictionary-core.js','dictionary-adapters.js','dictionary-errors.js','dictionary-repository.js','dictionary-initialize.js','dictionary-discovery.js','dictionary-store.js','dictionary-publish.js','dictionary-runtime.js','providers.js','batching.js','background.js');\n");
     output(`${browser}/managed/tldts.js`, normalize(fs.readFileSync(path.join(ROOT,'node_modules/tldts/dist/index.umd.min.js'),'utf8')).replace(/\/\/# sourceMappingURL=.*\n?/,''));
     output(`${browser}/managed/TLDTS-LICENSE`, normalize(fs.readFileSync(path.join(ROOT,'node_modules/tldts/LICENSE'),'utf8')));
     for(const name of ['dictionary-migration.js','stable-identity.json']){const obsolete=path.join(ROOT,browser,'managed',name);if(check&&fs.existsSync(obsolete))throw new Error('废弃运行资源尚未清理: '+name);if(!check&&fs.existsSync(obsolete))fs.unlinkSync(obsolete);}

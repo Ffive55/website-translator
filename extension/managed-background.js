@@ -43,7 +43,8 @@
       const profiles=(await chrome.storage.local.get('wt_ai_profiles')).wt_ai_profiles || {};
       const {wt_ai_local_keys:keys={}}=await chrome.storage.local.get('wt_ai_local_keys');
       for(const profile of Object.values(profiles))if(profile.apiKey)keys[C.canonical([profile.provider,profile.endpoint])]=profile.apiKey;
-      const keyFor=a=>keys[C.canonical([a.provider,a.endpoint])] || '';
+      for(const [field,a] of Object.entries(values))if((field==='aiSettings'||field.startsWith('aiProfile:'))&&Object.hasOwn(a,'apiKey'))keys[C.canonical([a.provider,a.endpoint])]=a.apiKey;
+      const keyFor=a=>Object.hasOwn(a,'apiKey')?a.apiKey:keys[C.canonical([a.provider,a.endpoint])] || '';
       await chrome.storage.local.set({wt_ai_local_keys:keys});
       for(const [field,a] of Object.entries(values))if(field.startsWith('aiProfile:')){C.assert(P.catalog[a.provider],'同步服务无效');profiles[a.provider]={...a,apiKey:keyFor(a)};}
       if(values.aiSettings){const a=values.aiSettings;C.assert(P.catalog[a.provider],'同步服务无效');const selected=values['aiProfile:'+a.provider] || a;profiles[a.provider]={...selected,apiKey:keyFor(selected)};await chrome.storage.local.set({wt_ai:profiles[a.provider]});}
@@ -119,6 +120,7 @@
     try { const origin=new URL(url).origin;return SUPPORTED_SITES.some(s=>s.id==='github' && s.matches.includes(`${origin}/*`)); } catch { return false; }
   }
   async function native(message) {
+    C.assert(await chrome.permissions.contains({permissions:['nativeMessaging']}),'请在 AI 翻译设置中授予本地通信权限；词库和 API 翻译不需要此权限');
     let result;
     try {
       // Long translation requests use a port so the native connection keeps the worker alive.
@@ -131,7 +133,7 @@
       }) : await chrome.runtime.sendNativeMessage(HOST, message);
     }
     catch (e) {
-      if(/forbidden/i.test(e.message))throw new Error(`本地程序未授权当前扩展（${chrome.runtime.id}）。请在本地连接设置中选择实际浏览器，使用当前扩展 ID 重新运行安装命令，再检查连接。`);
+      if(/forbidden/i.test(e.message))throw new Error(`本地程序未授权当前扩展（${chrome.runtime.id}）。请在 AI 翻译设置复制扩展 ID，在独立本地程序目录重新运行 Install.cmd，再检查连接。`);
       throw new Error(`无法连接本地程序：${e.message}。请在本地连接设置中安装或更新程序，并核对浏览器注册。`);
     }
     if (!result?.ok) throw B.error(result?.error || '本地操作失败',result?.kind || 'fatal',{status:result?.status,retryAfterMs:result?.retryAfterMs});

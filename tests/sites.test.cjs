@@ -200,7 +200,8 @@ test('网站注册自动发现；不同适配器不能接管重叠域名', t => 
 test('三种浏览器仅对指定域名注入对应脚本，新增站点不加载 GitHub 词库', () => {
   for (const browser of (process.env.WT_BROWSER?[process.env.WT_BROWSER]:['chrome','edge','firefox'])) {
     const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, browser, 'manifest.json'), 'utf8'));
-    assert.deepEqual(manifest.permissions, ['storage', 'scripting', 'activeTab', 'nativeMessaging', 'alarms', 'contextMenus', ...(browser==='edge'?['unlimitedStorage']:[])]);
+    assert.deepEqual(manifest.permissions, browser==='edge'?['storage','scripting','activeTab','alarms','contextMenus','unlimitedStorage']:['storage','scripting','activeTab','nativeMessaging','alarms','contextMenus']);
+    if(browser==='edge')assert.ok(manifest.optional_permissions.includes('nativeMessaging'));
     const entry = manifest.content_scripts.find(item => item.matches.includes('https://console.tailscale.com/*'));
     assert.deepEqual(entry.js, ['managed/core.js', 'managed/text-provenance.js', 'managed/content.js', ...(browser==='edge'?['managed/tldts.js','managed/dictionary-core.js','managed/dictionary-adapters.js','managed/github-dictionary-handlers.js','managed/dictionary-loader.js']:[]), 'sites/catalog.js', 'sites/preferences.js', 'sites/browser-translation-guard.js', 'sites/tailscale.js']);
     assert.equal(entry.run_at, 'document_start');
@@ -216,7 +217,7 @@ test('新增网站命令贯通三端构建和停用，不需要修改核心代�
   fs.cpSync(path.join(ROOT, 'extension'), path.join(directory, 'extension'), { recursive: true });
   fs.mkdirSync(path.join(directory, 'node_modules/tldts/dist'), { recursive: true });
   for (const file of ['LICENSE', 'dist/index.umd.min.js']) fs.copyFileSync(path.join(ROOT, 'node_modules/tldts', file), path.join(directory, 'node_modules/tldts', file));
-  for (const file of ['script/add-site.js', 'script/site-config.js', 'script/build-sites.js',
+  for (const file of ['script/add-site.js', 'script/site-config.js', 'script/build-sites.js', 'script/store-distribution.js',
     'extension/site-runtime.js', 'extension/browser-translation-guard.js', 'extension/site-preferences.js', 'sites/github/site.json',
     'package.json', 'chrome/manifest.json', 'edge/manifest.json', 'firefox/manifest.json']) {
     fs.mkdirSync(path.dirname(path.join(directory, file)), { recursive: true });

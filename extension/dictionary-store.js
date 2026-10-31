@@ -72,7 +72,16 @@
     async function pending(repository, group, language) {
       return transaction(['staging'], 'readonly', store => request(store('staging').get(keyFor(repository, group, language))));
     }
-    async function install(candidate, expectedContext, ticket) {
+    function compare(previous,candidate,incoming) {
+      const remoteBase={...(previous?.baseline || {}),...incoming};
+      for(const [id,row] of Object.entries(previous?.synthetic || {}))if(!Object.hasOwn(incoming,id))remoteBase[id]=D.staticEntry(candidate.files,row);
+      return {remoteBase,comparison:D.mergeRecords(previous?.baseline || {},previous?.local || {},remoteBase),reason:D.comparisonReason(previous,incoming,candidate.commit,candidate.files.length>0)};
+    }
+    async function preview(candidate) {
+      const {incoming}=await validateCandidate(candidate),previous=await read(candidate.repository,candidate.group,candidate.targetLanguage);
+      return {...compare(previous,candidate,incoming),expectedRevision:previous?.revision || 0};
+    }
+    async function install(candidate, expectedContext, ticket, decision={}) {
       const validated = await validateCandidate(candidate), incoming = validated.incoming;
       candidate = validated.candidate;
       const key = keyFor(candidate.repository, candidate.group, candidate.targetLanguage);
@@ -80,10 +89,18 @@
         const context = await contextIn(store, expectedContext); applicable(context, candidate);
         if (ticket) C.assert(await request(store('meta').get('download:' + key)) === ticket, '此下载已被较新的任务取代');
         const previous = await request(store('groups').get(key));
-        C.assert(!previous || previous.commit === candidate.commit || !(previous.seenCommits || []).includes(candidate.commit), '旧版本下载迟到，未覆盖已安装新版');
-        const remoteBase = { ...(previous?.baseline || {}), ...incoming };
-        for(const [id,row] of Object.entries(previous?.synthetic || {}))if(!Object.hasOwn(incoming,id))remoteBase[id]=D.staticEntry(candidate.files,row);
-        const comparison = D.mergeRecords(previous?.baseline || {}, previous?.local || {}, remoteBase);
+        if(decision.guard)decision.guard();
+        if(decision.choice)C.assert((previous?.revision || 0)===decision.expectedRevision,'确认后本地又有修改，请重新检测并确认');
+        C.assert(decision.full || !previous || previous.commit === candidate.commit || !(previous.seenCommits || []).includes(candidate.commit), '旧版本下载迟到，未覆盖已安装新版');
+        let {remoteBase,comparison}=compare(previous,candidate,incoming);
+        if(decision.full){
+          C.assert(decision.choice==='remote','整份下载覆盖方向无效');
+          remoteBase={...incoming};
+          // Explicit tombstones also mask discarded legacy operations in the UI.
+          for(const id of Object.keys({...previous?.baseline,...previous?.local}))if(!Object.hasOwn(remoteBase,id))remoteBase[id]=null;
+          comparison={merged:remoteBase,pending:{},conflicts:[],canInstall:true};
+        }else if(decision.choice)comparison=D.preferConflicts(comparison,decision.choice);
+        if(decision.choice && previous)await request(store('meta').put({savedAt:Date.now(),state:previous},'overwrite-backup:'+key));
         const stage = { key, candidate, ticket, expectedContext, expectedRevision: previous?.revision || 0, remoteBase, comparison };
         if (comparison.canInstall) return commit(store, stage, previous);
         await request(store('staging').put(stage, key)); return { installed: false, conflicts: comparison.conflicts };
@@ -132,7 +149,14 @@
       });
     }
 
-    return Object.freeze({ setContext, read, edit, editBatch, install, beginDownload, pending, resolve, resetLocal, close: () => db.close() });
+    async function backup(repository,group,language,expectedRevision) {
+      return transaction(['groups','meta'],'readwrite',async store=>{
+        const key=keyFor(repository,group,language),state=await request(store('groups').get(key));
+        C.assert((state?.revision || 0)===expectedRevision,'确认后本地又有修改，请重新检测并确认');
+        if(state)await request(store('meta').put({savedAt:Date.now(),state},'overwrite-backup:'+key));
+      });
+    }
+    return Object.freeze({ setContext, read, edit, editBatch, install, preview, backup, beginDownload, pending, resolve, resetLocal, close: () => db.close() });
   }
   const api = Object.freeze({ open });
   if (typeof module !== 'undefined') module.exports = api;

@@ -1,0 +1,8 @@
+{
+  "extensionName": {
+    "message": "网站翻译插件"
+  },
+  "extensionDescription": {
+    "message": "使用本地词库翻译已适配的网站界面，支持按网站独立开关与持续扩展。"
+  }
+}

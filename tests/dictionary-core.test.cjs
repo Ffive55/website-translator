@@ -100,7 +100,7 @@ test('三方编辑保留 userSelected、skip 与语言，显式删除可序列�
   const resolved = D.resolveConflict(result, k, 'edited', row('最终人工译文'));
   assert.equal(resolved.pending[k].entry.userSelected, true);
 });
-test('同步只导出设置白名单，禁止 AI 对象、凭据、任务和过长提示词', () => {
+test('同步只导出受审设置字段，拒绝未知凭据字段、任务和过长提示词', () => {
   assert.deepEqual(D.syncPreferences({ targetLanguage: 'ja', apiKey: 'private', wt_ai: { token: 'private' }, inputContextK: 200 }), { targetLanguage: 'ja', inputContextK: 200 });
   const record = { kind: 'preference', id: 'settings', field: 'targetLanguage', value: 'ja', counter: 1, deviceId: device };
   D.validateSyncRecord(record);
@@ -108,7 +108,8 @@ test('同步只导出设置白名单，禁止 AI 对象、凭据、任务和过�
   assert.throws(() => D.validateSyncRecord({ ...record, field: 'prompt', value: '中'.repeat(2000) }), /容量/);
   assert.throws(() => D.syncPreferences({ inputContextK: 2000 }));
   const profile={provider:'api',model:'fixture',endpoint:'https://gateway.example.com/v1/chat/completions',region:'',reasoningEffort:'auto'};D.validateSyncRecord({...record,field:'aiProfile:api',value:profile});
-  assert.throws(()=>D.validateSyncRecord({...record,field:'aiProfile:api',value:{...profile,apiKey:'private'}}));
+  assert.doesNotThrow(()=>D.validateSyncRecord({...record,field:'aiProfile:api',value:{...profile,apiKey:'fixture-synced'}}));
+  assert.throws(()=>D.validateSyncRecord({...record,field:'aiProfile:api',value:{...profile,apiKey:'bad\nheader'}}));
   assert.throws(()=>D.validateSyncRecord({...record,field:'aiProfile:deepl',value:profile}));
 });
 test('逐字段 Lamport 合并不使用电脑时间，安装删除标记压制旧离线记录及同计数重加', () => {

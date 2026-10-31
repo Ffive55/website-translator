@@ -6,9 +6,9 @@
 
 项目显示名称为“网站翻译插件”，仓库名为 `website-translator`。本项目从 `fixed-site-translator` v3.3.0 独立复制，后者是基于 MaydayV/github-chinese 的多网站翻译扩展。不得修改、移动、清理或把构建结果写回原 `fixed-site-translator` 目录。来源提交见 `docs/source-baseline.json`。
 
-当前 v0.3.18 为 GitHub 词库运行时开发预览，新增实现及验证边界见 `docs/实现与验收.md`；启动和数据修复见 `docs/v0.3.15启动与数据完整性修复.md`；迁移进度见 `docs/GitHub词库迁移实施计划.md`，统一协议见 `docs/GitHub词库协议.md`。不要把自动化协议测试当成真实订阅账号或双设备验收。
+当前 v0.3.25 增加 Edge 商城包与本地程序独立分发、隐私政策和审核资料，支持 GitHub/Gitee 词库、自动仓库发现、空仓库初始化与确认定向覆盖，新增实现及验证边界见 `docs/实现与验收.md`、`docs/v0.3.23商城发布准备.md`、`docs/v0.3.20空仓库初始化.md`、`docs/v0.3.21词库定向覆盖.md` 与 `docs/v0.3.22Gitee上传修复.md`；启动和数据修复见 `docs/v0.3.15启动与数据完整性修复.md`。不要把自动化协议测试当成真实订阅账号或双设备验收。
 
-当前 Edge 使用 GitHub 集中词库、浏览器非敏感设置和安装清单同步；不分发或加载旧 locals.js 和网站翻译数据。旧 OneDrive 交换、旧格式校验和迁移导入已删除；下文旧 OneDrive 设计仅用于历史记录，不是当前支持功能。初始词库已于 2026-10-31 发布到 main（5c4b8f57d6f655692e8b95e9fc6f001211469bb0）；每台设备独立配置私有仓库读取凭据。后续远端写入仍须用户明确要求。
+当前 Edge 使用 GitHub/Gitee 集中词库、浏览器设置、词库仓库连接令牌和安装清单同步；不分发或加载旧 locals.js。仅为空仓库初始化附带普通 JSON 的 GitHub 主站数据，网页翻译仍使用所选仓库下载的词库。旧 OneDrive 交换、旧格式校验和迁移导入已删除；下文旧 OneDrive 设计仅用于历史记录，不是当前支持功能。初始词库已于 2026-10-31 发布到 main（5c4b8f57d6f655692e8b95e9fc6f001211469bb0）；仓库选择与连接令牌随浏览器设置同步。后续远端写入仍须用户明确要求。
 
 保留 GitHub 专用引擎，通过 `sites/<id>/site.json` 和 `extension/` 扩展新网站。不要将整个上游仓库覆盖到此项目。
 
@@ -17,7 +17,7 @@
 - 自由添加和更新只在用户点击时请求 AI；已存词库本地复用。固定界面及 AI 判断适合长期展示的正文可以翻译，动态正文和受保护数据跳过。
 - 未来多语言从数据模型开始支持：目标语言使用 BCP 47 标识；词条按源文、上下文和目标语言隔离。现有中文词库只用于 `zh-Hans`，不得拿中文译文作为切换语言时的原文。
 - 同步默认目录为 `%USERPROFILE%\\OneDrive\\文档\\website-translator`。同步根目录内的目录和文件名仅使用英文、数字或稳定 ID，不使用中文；数据内容可以包含任意目标语言。每台设备独立配置路径，不把用户名写死；发现路径不存在时不能声称 OneDrive 已配置成功。
-- 本地连接程序在启用 ChatGPT 订阅或 OneDrive 文件夹同步时按需安装；API Key 模式独立运行。
+- 本地连接程序仅在启用 ChatGPT 订阅时按需安装；API Key、词库与浏览器设置同步独立运行。
 - 本机数据库不直接放入 OneDrive 共享。采用不可变变更记录、校验后的快照、删除标记和幂等合并；API Key、登录令牌和设备凭据不进入同步目录。
 - 每个目标语言独立合并、缓存和记录覆盖情况；同步到另一台设备不触发重新翻译。不得执行 AI 或同步文件提供的脚本。
 - 不为尚未创建的远端填写可用仓库、下载或问题反馈链接；上传/发布需用户明确要求。
@@ -66,7 +66,7 @@
 
 ## 当前测试范围
 
-用户指定测试阶段只更新 Edge 解压目录，不打包。`npm run build` 仅构建 Edge 并准备 `edge/local-helper/`；该目录为忽略的生成产物。安装仍由用户运行，不在开发测试中修改注册表。
+`npm run build` 仅构建 Edge 并准备忽略的 `edge/local-helper/`。`npm run package:edge-store` 生成 Edge 商城 ZIP、独立 Windows 本地程序 ZIP、源码包及审核材料，不更新 Chrome/Firefox，不自动安装或修改注册表。当前本地程序不提供公开下载。用户已自行提交 v0.3.25 商城审核，并明确授权将完整源码和说明上传到公开 Ffive55/website-translator 的 main；保留远端隐私政策历史及原工作区，使用白名单与隔离 Git 目录正常推送。未授权创建 Release、标签或再次提交商城。
 
 ## 验证与交付
 
@@ -85,3 +85,31 @@ npm run package
 ## GitHub 本地准备
 
 `npm run prepare:github` 仅在 .cache/github-ready 下导出白名单源码、逐文件哈希和清单，不改动索引或远端。当前上传准备以 Edge/Windows 为验证范围，不把旧 Chrome/Firefox 目录宣传为当前版本。CI 固定 Windows 与 Node 24.21.0，手动源码快照工作流不发布 Release。准备完成不构成推送授权。
+
+## v0.3.19 平台仓库约定
+
+词库仓库页通过 dictionary-discovery.js 只读分页发现，确认使用本机测试会话的候选 ID；不得信任 UI 提供任意仓库参数。GitHub 配置规范化后不含 provider 字段，以保留原缓存键；Gitee 必须含 provider:gitee。平台令牌隔离保存，并按用户要求随浏览器设置同步；AI 设置含 API Key 也随设置同步，ChatGPT 订阅登录会话保持设备独立；状态接口不返回令牌原文。Gitee 多文件提交须保留共享索引的 last_commit_id；请求结果不明时先核查持久化事务，不盲目重发。不得用真实仓库写入作为开发测试。
+
+## v0.3.20 初始化约定
+
+空仓库初始化仅在用户点击“初始化并连接”时执行。dictionary-initialize.js 只新增固定文件、索引最后发布、持久化本机事务；禁止覆盖已有内容、无依据重发或把请求失败当作空仓库。script/build-repository-seed.cjs 从统一 JSON 构建仅 github.com 主站的压缩种子，此种子仅用于初始化上传，不接入网页运行时回退。README 不枚举网站；保留 GPL 与固定来源记录。验证边界见 docs/v0.3.20空仓库初始化.md。
+
+## v0.3.21 定向覆盖约定
+
+用户更新/上传遇到可比较冲突时，分别确认采用 remote/local 冲突项，保留其他修改。缺少共同基线或已见历史提交回退时，明确确认整份覆盖当前分组及语言。后台保存短时确认计划并复核上下文、本地 revision、仓库提交及凭据身份；UI 只提交计划 ID，不能自行传递 force、候选包或覆盖方向。旧下载保护仅在此已确认整份操作中豁免；网络、权限、校验失败不得触发覆盖。覆盖前 IndexedDB meta 保存每组最近一份旧状态，上传保留普通 Git 提交及非强制分支更新。批量逐组检测确认，不能预先授权后续变化。不得用真实仓库写入作为开发测试。
+
+Gitee Contents API 查询缺失路径可能返回 HTTP 200 空数组，只按此精确形态或 HTTP 404 判为新建。已有文件必须校验 type、path 与 blob SHA，再查询最近提交作为 last_commit_id；目录、损坏元数据及历史查询失败不得降级为无版本覆盖。
+
+## v0.3.23 商城准备约定
+
+商城包不得包含 local-helper、原生二进制、安装脚本或凭据。nativeMessaging 位于 optional_permissions，仅在用户连接订阅时请求；后台再次检查权限。store/publishing.json 只含公开发布字段，禁止令牌。PRIVACY.md 是唯一政策正文，打包 HTML 由其生成；公开地址须匿名读取并核对正文。截图使用隔离 Edge 和演示数据，不接触个人账号。package:edge-store 生成的 sourceVersionPublished=false / certificationSubmitted=false 不能擅自改成已发布或认证；本地素材准备、真实账号验收和商城认证分别报告。
+
+## v0.3.24 商城归档限制
+
+初始化种子使用 managed/repository-seed.json 普通 JSON，不在扩展内嵌套压缩文件。构建器仅移除已知旧生成文件 repository-seed.json.gz，商城打包按扩展名和文件头拒绝归档。历史 v0.3.20 的压缩分发描述不再适用当前构建。
+
+## v0.3.25 商城语言声明
+
+Edge 默认界面语言为 zh_CN，manifest 的 name/description 必须通过 __MSG_ 引用 _locales/zh_CN/messages.json。打包不得丢失 _locales，不把目标翻译语言数量当作界面已本地化语言数量。
+
+商城当前状态以 store/submission-status.json 与 docs/Edge商城发布状态.md 为记录：2026-10-31、v0.3.25、In review、Hidden、简体中文，依据用户提供的 Partner Center 截图。后续变更须有新证据，不把 green check、提交审核或源码上传当作审核通过；准备阶段生成的报告不作为实时商城状态。

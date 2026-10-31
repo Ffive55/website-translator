@@ -5,53 +5,62 @@
   const D = typeof module !== 'undefined' ? require('./dictionary-core.js') : C.dictionary;
   const E=typeof module!=='undefined'?require('./dictionary-errors.js'):C.dictionaryErrors;
   const commitId = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
-  function configuration(value) {
-    C.assert(value && Object.keys(value).every(k => ['owner', 'repo', 'branch'].includes(k)), '词库仓库配置无效');
-    C.assert(typeof value.owner === 'string' && typeof value.repo === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9-]{0,99}$/.test(value.owner) && /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$/.test(value.repo), '词库仓库名称无效');
-    C.assert(typeof value.branch === 'string' && value.branch.length <= 200 && /^[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(value.branch) && !/\.\.|\/\/|\/$|\.lock(?:\/|$)/.test(value.branch), '词库分支无效');
-    return Object.freeze({ ...value });
-  }
-  function create({ repository, policy, getDomain, fetch: transport = globalThis.fetch, token = '', now = Date.now }) {
-    const config = configuration(repository), prefix = `https://api.github.com/repos/${config.owner}/${config.repo}`;
-    C.assert(typeof token === 'string' && token.length <= 1000 && !/[\r\n]/.test(token), '本机仓库凭据无效');
-    let cached, flight, blockedUntil=0, blockedError;
-    const manifests = new Map();
-    async function request(suffix, maximum, raw = false) {
-      if(blockedError&&now()<blockedUntil)throw blockedError;
-      let received=false;const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 30000);
+  const platform = value => { C.assert(['github','gitee'].includes(value), '不支持的词库平台'); return value; };
+  const provider = value => platform(value?.provider || 'github');
+  const host = value => platform(value) === 'gitee' ? 'https://gitee.com/api/v5' : 'https://api.github.com';
+  const permission = value => platform(value) === 'gitee' ? 'https://gitee.com/*' : 'https://api.github.com/*';
+  const configuration=value=>D.repositoryConfiguration(value);
+  function transport({ provider: selected='github', token='', fetch: send=globalThis.fetch, now=Date.now, blockNotFound=false }) {
+    platform(selected);
+    C.assert(typeof token==='string' && token.length<=1000 && !/[\r\n]/.test(token), '本机仓库凭据无效');
+    const label=selected==='gitee'?'Gitee':'GitHub';let blocked,until=0;
+    async function request(route,{maximum=2*1024*1024,raw=false,method='GET',body}={}) {
+      C.assert(typeof route==='string' && route.startsWith('/') && !route.startsWith('//'), '仓库请求路径无效');
+      if(blocked && now()<until)throw blocked;
+      let received=false;const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
       try {
-        const response = await transport(prefix + suffix, { method: 'GET', credentials: 'omit', redirect: 'error', cache: 'no-store', signal: controller.signal,
-          headers: { Accept: raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(token ? { Authorization: 'Bearer ' + token } : {}) } });
+        const response=await send(host(selected)+route,{method,credentials:'omit',redirect:'error',cache:'no-store',signal:controller.signal,
+          headers:{Accept:selected==='github'?(raw?'application/vnd.github.raw+json':'application/vnd.github+json'):(raw?'application/octet-stream':'application/json'),
+            ...(selected==='github'?{'X-GitHub-Api-Version':'2022-11-28'}:{}),...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
         received=true;
-        if (!response.ok) {
-          const error=await E.fromResponse(response,{authenticated:!!token,now:now()});
-          blockedError=error;blockedUntil=error.kind==='authorization'||error.kind==='not-found'?Infinity:error.retryAt||now()+30000;throw error;
-        }
-        C.assert(Number(response.headers.get('content-length') || 0) <= maximum && response.body, 'GitHub 响应过大或为空');
-        const reader = response.body.getReader(), chunks = []; let size = 0;
-        try {
-          while (true) { const { done, value } = await reader.read(); if (done) break; size += value.byteLength; C.assert(size <= maximum, 'GitHub 响应超过大小限制'); chunks.push(value); }
-        } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
-        const data = new Uint8Array(size); let offset = 0;
-        for (const chunk of chunks) { data.set(chunk, offset); offset += chunk.byteLength; }
-        const result = new TextDecoder('utf-8', { fatal: true }).decode(data);
-        return raw ? result : JSON.parse(result);
-      } catch(e){if(controller.signal.aborted||!received){const error=new Error(controller.signal.aborted?'GitHub 请求超时；本机词库保留，稍后自动重试':'GitHub 网络暂不可用；本机词库保留，稍后自动重试');Object.assign(error,{kind:'network',retryAt:now()+60000});blockedError=error;blockedUntil=error.retryAt;throw error;}throw e;}
-      finally { clearTimeout(timeout); }
+        if(!response.ok)throw await E.fromResponse(response,{authenticated:!!token,write:method!=='GET',now:now(),provider:selected});
+        C.assert(Number(response.headers.get('content-length')||0)<=maximum && response.body, label+' 响应过大或为空');
+        const reader=response.body.getReader(),chunks=[];let size=0;
+        try{while(true){const r=await reader.read();if(r.done)break;size+=r.value.byteLength;C.assert(size<=maximum,label+' 响应超过大小限制');chunks.push(r.value);}}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+        const data=new Uint8Array(size);let offset=0;for(const chunk of chunks){data.set(chunk,offset);offset+=chunk.length;}
+        const text=new TextDecoder('utf-8',{fatal:true}).decode(data);if(raw)return text;try{return JSON.parse(text);}catch{throw new Error(label+' 返回的 JSON 无效');}
+      }catch(error){
+        if(controller.signal.aborted || !received)error=Object.assign(new Error(label+(controller.signal.aborted?' 请求超时':' 网络暂不可用')+'；本机词库保留，稍后重试'),{kind:'network',retryAt:now()+60000});
+        if(['network','rate-limit','authorization'].includes(error.kind)||blockNotFound&&error.kind==='not-found'){blocked=error;until=['authorization','not-found'].includes(error.kind)?Infinity:error.retryAt||now()+30000;}
+        throw error;
+      }finally{clearTimeout(timer);}
     }
+    return {request,resetAuthorization(){if(['authorization','not-found'].includes(blocked?.kind)){blocked=null;until=0;}}};
+  }
+  function create({ repository, policy, getDomain, fetch: send = globalThis.fetch, token = '', now = Date.now }) {
+    const config=configuration(repository),selected=provider(config),prefix='/repos/'+config.owner+'/'+config.repo;
+    const http=transport({provider:selected,token,fetch:send,now,blockNotFound:true});
+    let cached,flight;const manifests=new Map();
+    const request=(suffix,maximum,raw=false)=>http.request(prefix+suffix,{maximum,raw});
     const file = (path, commit, maximum) => {
       C.assert(commitId(commit), '必须固定完整的远端提交');
       C.assert(path === 'dictionaries/index.json' || /^dictionaries\/[a-z0-9][a-z0-9.-]*\/(?:manifest\.json|[a-zA-Z0-9-]+\/[a-z0-9][a-z0-9.-]*\.json)$/.test(path) && !path.includes('..'), '只允许下载 dictionaries 内的协议文件');
-      return request('/contents/' + path.split('/').map(encodeURIComponent).join('/') + '?ref=' + commit, maximum, true);
+      return request((selected==='gitee'?'/raw/':'/contents/') + path.split('/').map(encodeURIComponent).join('/') + '?ref=' + commit, maximum, true);
     };
     async function readIndex(force = false) {
-      if(force&&blockedError&&['authorization','not-found'].includes(blockedError.kind)){blockedUntil=0;blockedError=null;}
+      if(force)http.resetAuthorization();
       if (force) cached = null;
       if (cached && now() - cached.checkedAt < 60000) return cached;
       if (!flight) flight = (async () => {
-        const ref = await request('/git/ref/heads/' + config.branch.split('/').map(encodeURIComponent).join('/'), 20000);
-        C.assert(ref.ref === 'refs/heads/' + config.branch && ref.object?.type === 'commit' && commitId(ref.object.sha), 'GitHub 分支没有返回有效的固定提交');
-        const commit = ref.object.sha, index = D.validateIndex(JSON.parse(await file('dictionaries/index.json', commit, D.limits.indexBytes)));
+        let commit;
+        if(selected==='gitee'){
+          const ref=await request('/branches/'+encodeURIComponent(config.branch),20000);commit=ref.commit?.sha;
+          C.assert(ref.name===config.branch && commitId(commit),'Gitee 分支没有返回有效的固定提交');
+        }else{
+          const ref=await request('/git/ref/heads/'+config.branch.split('/').map(encodeURIComponent).join('/'),20000);
+          C.assert(ref.ref==='refs/heads/'+config.branch && ref.object?.type==='commit' && commitId(ref.object.sha),'GitHub 分支没有返回有效的固定提交');commit=ref.object.sha;
+        }
+        const index=D.validateIndex(JSON.parse(await file('dictionaries/index.json',commit,D.limits.indexBytes)));
         cached = { repository: config, commit, index, checkedAt: now() }; manifests.clear(); return cached;
       })().finally(() => { flight = null; });
       return flight;
@@ -115,7 +124,7 @@
     }
     return Object.freeze({ readIndex, check, downloadGroup, manifest, catalog });
   }
-  const api = Object.freeze({ configuration, create });
+  const api = Object.freeze({ configuration, create, provider, platform, host, permission, transport });
   if (typeof module !== 'undefined') module.exports = api;
   else C.dictionaryRepository = api;
 })();

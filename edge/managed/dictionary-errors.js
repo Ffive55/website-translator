@@ -1,7 +1,7 @@
 /* GPL-3.0-or-later. Safe HTTP diagnostics; never expose response bodies or tokens. */
 (() => {
   'use strict';
-  async function fromResponse(response, { authenticated=false, write=false, now=Date.now() }={}) {
+  async function fromResponse(response, { authenticated=false, write=false, now=Date.now(), provider='github' }={}) {
     let message='';
     try{const reader=response.body?.getReader();if(reader){let size=0;const chunks=[];try{while(size<8192){const r=await reader.read();if(r.done)break;size+=r.value.length;chunks.push(r.value);}}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}if(size<=8192){const data=new Uint8Array(size);let pos=0;for(const chunk of chunks){data.set(chunk,pos);pos+=chunk.length;}message=JSON.parse(new TextDecoder().decode(data)).message || '';}}}catch{}
     const retry=response.headers.get('retry-after'),reset=Number(response.headers.get('x-ratelimit-reset'))*1000;
@@ -14,6 +14,7 @@
     const number=name=>{const value=response.headers.get(name);return value!==null&&Number.isFinite(Number(value))?Number(value):null;};
     const rateLimit={limit:number('x-ratelimit-limit'),remaining:number('x-ratelimit-remaining'),used:number('x-ratelimit-used'),resetAt:reset||null};
     if(rate)text+='；'+(authenticated?'已携带 Token':'匿名请求')+(rateLimit.limit!==null?'，配额 '+rateLimit.limit+'/小时':'')+(rateLimit.remaining!==null?'，剩余 '+rateLimit.remaining:'');
+    if(provider==='gitee')text=text.replaceAll('GitHub','Gitee').replace(/Contents (写入|读取)权限/,'仓库$1权限');
     const error=new Error(text);Object.assign(error,{status:response.status,kind,retryAt,authenticated,rateLimit,requestId:response.headers.get('x-github-request-id')||undefined});return error;
   }
   const api={fromResponse};if(typeof module!=='undefined')module.exports=api;else WTCore.dictionaryErrors=api;

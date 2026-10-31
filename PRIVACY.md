@@ -67,4 +67,3 @@ ChatGPT 订阅功能需要你单独安装 Windows x64 本地连接程序，并�
 ## 8. 政策更新
 
 当数据处理方式发生变化时，发布者会更新本政策及日期，并通过扩展更新或相关界面说明重要变化。本政策公开地址为 [GitHub 隐私政策页面](https://github.com/Ffive55/website-translator/blob/main/PRIVACY.md)。
-

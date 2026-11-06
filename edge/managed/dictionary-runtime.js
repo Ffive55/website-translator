@@ -138,7 +138,7 @@
         const stale=Object.keys(await chrome.storage.sync.get(null)).filter(k=>/^wt_install_\d+$/.test(k) && !(k in packed));if(stale.length)await chrome.storage.sync.remove(stale);
       }
       await mirror(); await status({syncError:null,syncSavedAt:Date.now()});
-      if(receive){await hooks.broadcast();await restore();}
+      if(receive)await hooks.broadcast();
     }
     async function restore() {
       const {wt_repository_status:net={}}=await local('wt_repository_status');if(net.needsAuthorization||net.networkRetryAt>Date.now())return;
@@ -201,7 +201,7 @@
       const wanted=compact&&origin?D.groupFor(origin,tldts.getDomain):null;
       for(const s of context.installations){const group=D.groupFor(s.origin,tldts.getDomain);if(groups[group] || compact&&group!==wanted)continue;const state=await stateFor(group),stage=compact?null:await store.pending(config,group,context.targetLanguage);
         const pendingOrigins={};for(const key of Object.keys(state?.local || {})){const rowOrigin=JSON.parse(key)[0];if(compact&&rowOrigin!==origin)continue;pendingOrigins[rowOrigin]=(pendingOrigins[rowOrigin]||0)+1;}
-        groups[group]={pending:compact?pendingOrigins[origin]||0:Object.keys(state?.local || {}).length,pendingOrigins,contentRevision:state?.contentRevision||null,conflicts:stage?.comparison.conflicts || [],installed:!!state?.contentRevision,missing:state?.missing||[],downloadedOrigins:context.installations.filter(s=>(!compact||s.origin===origin)&&D.groupFor(s.origin,tldts.getDomain)===group&&state?.files.some(f=>f.pack.origins.includes(s.origin))).map(s=>s.origin)};
+        groups[group]={pending:Object.keys(state?.local || {}).length,pendingOrigins,contentRevision:state?.contentRevision||null,conflicts:stage?.comparison.conflicts || [],installed:!!state?.contentRevision,missing:state?.missing||[],downloadedOrigins:context.installations.filter(s=>(!compact||s.origin===origin)&&D.groupFor(s.origin,tldts.getDomain)===group&&state?.files.some(f=>f.pack.origins.includes(s.origin))).map(s=>s.origin)};
       }
       return {ready:true,repository:config,hasToken:!!wt_repository_token,credentialPlatforms:Object.fromEntries(['github','gitee'].map(p=>[p,!!tokenFor(values,p)])),groups,check:!compact&&wt_dictionary_check?.context===context.identity?wt_dictionary_check:null,status:wt_repository_status};
     }
@@ -300,9 +300,9 @@
     }
     async function pageStatus(origin) {
       D.origin(origin);await mirror();await requireNetworkBudget();
-      C.assert(await chrome.permissions.contains({origins:['https://api.github.com/*']}),'请在 词库仓库页授予连接权限');
+      C.assert(await chrome.permissions.contains({origins:[R.permission(R.provider(config))]}),'请在 词库仓库页授予连接权限');
       const ctx=context,repo={...config},group=D.groupFor(origin,tldts.getDomain),language=ctx.targetLanguage,state=await stateFor(group),site=hooks.view().sites[origin];
-      const pin=await client.readIndex(),manifest=await client.manifest(pin,group),data=manifest?.languages[language];
+      const pin=await client.readIndex(true),manifest=await client.manifest(pin,group),data=manifest?.languages[language];
       const available=!!data?.origins.includes(origin),installed=!!site&&!site.deleted&&!!state?.files.some(f=>f.pack.origins.includes(origin));
       const origins=ctx.installations.filter(s=>D.groupFor(s.origin,tldts.getDomain)===group).map(s=>s.origin),files=data?D.selectFiles(manifest,language,origins):[];
       const revision=await D.digest({group,language,origins:[...origins].sort(),files});
@@ -407,7 +407,7 @@
       }).catch(async error=>{if(error.status||['rate-limit','network','authorization','not-found'].includes(error.kind))await networkError(error);throw error;});
     }
     let recoveryQueued=false,recoveryAgain=false,recoveryReceive=false;
-    function scheduleRecovery(receive){recoveryReceive ||= receive;if(recoveryQueued){recoveryAgain=true;return;}recoveryQueued=true;serial(async()=>{const incoming=recoveryReceive;recoveryReceive=false;await sync(incoming);if(!incoming)await restore();}).catch(e=>status({syncError:e.message})).finally(()=>{recoveryQueued=false;if(recoveryAgain){recoveryAgain=false;scheduleRecovery(recoveryReceive);}});}
+    function scheduleRecovery(receive){recoveryReceive ||= receive;if(recoveryQueued){recoveryAgain=true;return;}recoveryQueued=true;serial(async()=>{const incoming=recoveryReceive;recoveryReceive=false;await sync(incoming);}).catch(e=>status({syncError:e.message})).finally(()=>{recoveryQueued=false;if(recoveryAgain){recoveryAgain=false;scheduleRecovery(recoveryReceive);}});}
     function changed(){if(!active || applying)return;userChanged=true;invalidateCache();clearTimeout(timer);timer=setTimeout(()=>scheduleRecovery(false),500);}
     async function start() {
       starting=true;startup={phase:'正在加载本机词库',done:0,total:hooks.database().ops.length};await status({startup});await yieldUI();

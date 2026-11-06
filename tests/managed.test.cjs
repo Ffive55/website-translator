@@ -122,6 +122,7 @@ async function worker(t,fetcher,native,overrides={}){
   const event=()=>({addListener:()=>{}});
   const area=(db,name)=>({get:async keys=>{if(keys===null)return {...db};if(typeof keys==='string')return {[keys]:db[keys]};if(Array.isArray(keys))return Object.fromEntries(keys.map(k=>[k,db[k]]));return {...keys,...db};},set:async values=>{Object.assign(db,structuredClone(values));changed.forEach(fn=>fn(Object.fromEntries(Object.entries(values).map(([k,v])=>[k,{newValue:v}])),name));},remove:async keys=>[].concat(keys).forEach(k=>delete db[k]),setAccessLevel:async()=>{}});
   const chrome={runtime:{id:'test',getURL:p=>'chrome-extension://test/'+p,getPlatformInfo:async()=>({}),sendNativeMessage:async(_host,m)=>({ok:true,result:await native(m)}),onStartup:event(),onMessage:{addListener:fn=>listeners.push(fn)}},storage:{local:area(local,'local'),sync:area(synced,'sync'),onChanged:{addListener:fn=>changed.push(fn)}},permissions:{contains:async()=>true,onAdded:event(),onRemoved:event()},scripting:{getRegisteredContentScripts:async()=>[],registerContentScripts:async()=>{},executeScript:async()=>[]},tabs:{get:async()=>({id:1,url:origin+'/settings'}),query:async()=>[],sendMessage:async()=>({origin,items:[{id:'t0',sourceText:'Save {count}',context:'main/button/text',path:'/settings'}]})}};
+  const permissionListeners=[];chrome.permissions.onAdded={addListener:fn=>permissionListeners.push(fn)};chrome.permissionAdded=()=>Promise.all(permissionListeners.map(fn=>fn()));
   const alarms=new Map(),alarmListeners=[];chrome.alarms={get:async n=>alarms.get(n),create:async(n,v)=>alarms.set(n,v),clear:async n=>alarms.delete(n),onAlarm:{addListener:f=>alarmListeners.push(f)}};
   const menus=new Map(),menuListeners=[];chrome.contextMenus={create:async item=>menus.set(item.id,item),remove:async id=>menus.delete(id),onClicked:{addListener:f=>menuListeners.push(f)}};
   const context=vm.createContext({console,chrome,WTCore:C,WTBatch:require('../extension/managed-batching'),WTProviders:require('../extension/managed-providers'),tldts:require('tldts'),SUPPORTED_SITES:[],crypto:require('node:crypto').webcrypto,URL,AbortSignal,TextDecoder,structuredClone,setTimeout,clearTimeout,fetch:fetcher,setInterval:(f,m)=>{const id=setInterval(f,m);activeTimers.add(id);return id;},clearInterval:id=>{clearInterval(id);activeTimers.delete(id);},...overrides});
@@ -130,6 +131,33 @@ async function worker(t,fetcher,native,overrides={}){
   const request=(type,data={},sender={id:'test',tab:{id:2},url:'chrome-extension://test/managed/managed.html'})=>new Promise(resolve=>listeners[0]({type:'wt:'+type,...data},sender,resolve));
   await request('state');return {request,local,synced,chrome,alarms,alarmListeners,menus,menuClick:info=>menuListeners[0]({menuItemId:'wt-add-selection',frameId:0,selectionText:'Missing text',...info},{id:1,url:origin+'/settings'})};
 }
+test('权限授予在弹窗消失后接续采集，事件和回调只执行一次',async t=>{
+ const w=await worker(t);let granted=false,scans=0;
+ w.chrome.permissions.contains=async()=>granted;
+ w.chrome.tabs.sendMessage=async()=>{scans++;return {origin,items:[]};};
+ const prepared=await w.request('permission-prepare',{kind:'capture',tabId:1});assert.equal(prepared.ok,true);
+ await w.chrome.permissionAdded();assert.equal(w.local.wt_capture,undefined);
+ granted=true;await Promise.all([w.chrome.permissionAdded(),w.request('permission-resume',{id:prepared.result.id})]);
+ assert.equal(w.local.wt_capture.status,'collecting');assert.equal(scans,1);assert.equal(w.local.wt_permission_action,undefined);
+});
+
+for(const hasUpdate of [false,true])test('授权后添加翻译保留云端检查：'+hasUpdate,async t=>{
+ require('../extension/dictionary-core');let checks=0;
+ const runtime={create:()=>({start:async()=>{},active:()=>true,changed(){},enrich:async s=>s,enrichMany:async s=>s,summary:async()=>({}),handle:async()=>{checks++;return {origin,group:'example.com',available:hasUpdate,installed:hasUpdate,hasUpdate};}})};
+ const w=await worker(t,undefined,undefined,{WTDictionaryRuntime:runtime});
+ await w.request('permission-prepare',{kind:'start',tabId:1});await w.chrome.permissionAdded();
+ assert.equal(checks,1);assert.equal(Object.keys(w.local.wt_tasks||{}).length,hasUpdate?0:1);
+ await w.chrome.permissionAdded();assert.equal(checks,1);
+});
+
+for(const reason of ['cancel','expired','navigation'])test('授权接续不会执行已取消、过期或页面已改变的操作：'+reason,async t=>{
+ const w=await worker(t);const p=(await w.request('permission-prepare',{kind:'capture',tabId:1})).result;
+ if(reason==='cancel')await w.request('permission-cancel',{id:p.id});
+ if(reason==='expired')w.local.wt_permission_action.at=Date.now()-120001;
+ if(reason==='navigation')w.chrome.tabs.get=async()=>({id:1,url:origin+'/different'});
+ await w.chrome.permissionAdded();assert.equal(w.local.wt_capture,undefined);assert.equal(w.local.wt_permission_action,undefined);
+});
+
 test('后台 API 添加保存、本地凭据迁移；内容脚本不能启动 AI',async t=>{
   const w=await worker(t,async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify([{id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''}])}}]})));
   assert.equal(w.synced.readme_openai_api_key,undefined);assert.equal(w.local.wt_legacy_secrets.readme_openai_api_key,'old-secret');

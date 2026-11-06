@@ -1,6 +1,6 @@
 # GitHub 源码发布与复现
 
-当前版本 v0.3.25，公开源码仓库为 [Ffive55/website-translator](https://github.com/Ffive55/website-translator)。当前只构建和验证 Windows + Edge，不修改或覆盖来源项目 fixed-site-translator。
+当前版本 v0.3.28，公开源码仓库为 [Ffive55/website-translator](https://github.com/Ffive55/website-translator)。当前只构建和验证 Windows + Edge，不修改或覆盖来源项目 fixed-site-translator。
 
 2026-10-31：用户已将 v0.3.25 提交 Edge 商城审核，状态为 In review、简体中文、Productivity、Hidden，尚未上架；随后明确要求将完整源码和 README 等说明上传到本仓库。状态依据用户提供的 Partner Center 页面，详见 [商城发布状态](Edge商城发布状态.md)。
 
@@ -16,7 +16,7 @@ npm run build
 npm test
 ```
 
-Node.js 至少 24.15.0，CI 固定 24.21.0。构建会校验 Windows x64 Node.js 运行时并生成忽略的 edge/local-helper/，不执行安装、不改注册表。随后在 Edge 扩展管理页启用开发者模式，加载 edge/。其他浏览器目录保留来源结构，不作为 v0.3.25 当前可用包宣传。
+Node.js 至少 24.15.0，CI 固定 24.21.0。构建会校验 Windows x64 Node.js 运行时并生成忽略的 edge/local-helper/，不执行安装、不改注册表。随后在 Edge 扩展管理页启用开发者模式，加载 edge/。其他浏览器目录保留来源结构，不作为 v0.3.28 当前可用包宣传。
 
 仓库包含 extension/、native/、sites/、dictionaries/、script/、tests/、docs/、store/、上游基线和生成的 Edge 运行资源；保留 LICENSE、THIRD_PARTY_NOTICES.md、来源记录与原作者致谢。不包含 node_modules、缓存、个人浏览器数据、API Key、令牌、运行日志、原生二进制或本地生成依赖。
 
@@ -50,7 +50,7 @@ npm run prepare:github
 
 原工作区保留未提交文件及索引。使用远端 main 的独立 Git 目录，审阅与本地基线相比的远端变更，保留先前 PRIVACY.md 提交；只将审查后的白名单源码应用到候选目录，逐项暂存差异并核对树。推送是普通 main 快进，不强推，不重置原目录。
 
-提交前验证候选版本、Edge 构建、测试和生成文件一致性；推送前再次读取远端分支，存在新变化则重新审阅。推送后核对远端提交及候选文件。授权仅覆盖完整 v0.3.25 源码和相关说明，不创建 Release、标签或再次提交商城。
+提交前验证候选版本、Edge 构建、测试和生成文件一致性；推送前再次读取远端分支，存在新变化则重新审阅。推送后核对远端提交及候选文件。本次 v0.3.28 更新完整源码及相关说明，生成独立 Edge 商城 ZIP；源码提交不代表商城已上传或审核通过。
 
 ## GitHub Actions 与验收边界
 

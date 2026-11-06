@@ -2,13 +2,13 @@
 
 # 网站翻译插件
 
-website-translator 是使用本地词库并支持按需翻译的网站界面扩展。当前版本 **v0.3.25**，支持 GitHub/Gitee 词库、按需 AI 翻译和本地词条维护，当前构建和浏览器验证范围为 **Windows + Microsoft Edge**。
+website-translator 是使用本地词库并支持按需翻译的网站界面扩展。当前版本 **v0.3.28**，支持 GitHub/Gitee 词库、按需 AI 翻译和本地词条维护，当前构建和浏览器验证范围为 **Windows + Microsoft Edge**。
 
-**Edge 商城状态（2026-10-31）：v0.3.25 已提交 Microsoft Edge Add-ons 审核，状态为 In review，尚未上架。** 分类为 Productivity，语言为简体中文，当前可见性为 Hidden；审核通过后可通过直接链接分发，不会出现在商城搜索或分类浏览中。本仓库提供该版本完整源码及构建说明。状态依据用户提供的 Partner Center 页面，详见 [商城提交记录](docs/Edge商城发布状态.md)。
+**Edge 商城状态（2026-10-31）：v0.3.25 已提交 Microsoft Edge Add-ons 审核，状态为 In review，尚未上架。** 分类为 Productivity，语言为简体中文，当前可见性为 Hidden；审核通过后可通过直接链接分发，不会出现在商城搜索或分类浏览中。本仓库当前源码为 v0.3.28；上述商城记录仅对应 v0.3.25，不代表当前实时审核状态。状态依据用户提供的 Partner Center 页面，详见 [商城提交记录](docs/Edge商城发布状态.md)。
 
 本项目从 [Ffive55/fixed-site-translator](https://github.com/Ffive55/fixed-site-translator) v3.3.0 独立派生，保留 [MaydayV/github-chinese](https://github.com/MaydayV/github-chinese) 的 GitHub 引擎及 [maboloshi/github-chinese](https://github.com/maboloshi/github-chinese) 与社区的词库贡献。来源提交与文件基线见 [source-baseline.json](docs/source-baseline.json)。本项目不是上游作者、GitHub 或各网站的官方产品。
 
-源码仓库：[Ffive55/website-translator](https://github.com/Ffive55/website-translator)，当前已公开。商城提交包已构建并送审，暂未提供上架安装链接，也未创建 GitHub Release。源码保留 chrome/、edge/、firefox/ 三端工程结构，**本版本只有 edge/ 已更新并完成浏览器模拟验证**，不要直接加载旧 Chrome/Firefox 目录并当作 v0.3.25。
+源码仓库：[Ffive55/website-translator](https://github.com/Ffive55/website-translator)，当前已公开。v0.3.28 商城提交包已构建，尚未提交该版本审核；暂未提供上架安装链接，也未创建 GitHub Release。源码保留 chrome/、edge/、firefox/ 三端工程结构，**本版本只有 edge/ 已更新并完成浏览器模拟验证**，不要直接加载旧 Chrome/Firefox 目录并当作 v0.3.28。
 
 当前 Edge 已接通本机词库、GitHub/Gitee 下载、主域名检查/全部更新、直接上传及 Git 原子提交、浏览器设置与网址清单恢复。插件保留执行引擎，词库从所选仓库 dictionaries 目录下载。初始词库已发布到 main（提交 5c4b8f57d6f655692e8b95e9fc6f001211469bb0）。使用时在词库仓库页选择平台、测试令牌并选择检测到的仓库，再搜索下载或检查更新。离线已有本地词库继续可用。详见 [实施进度](docs/GitHub词库迁移实施计划.md) 和 [统一协议](docs/GitHub词库协议.md)。
 
@@ -23,6 +23,8 @@ v0.3.17 将词库搜索下载放到网站管理底部，上传移至主域名行
 v0.3.18 弹窗保持原有宽度，使用自适应高度及简短任务摘要，底部按钮完整可见；改为读取当前网址的轻量状态并按本机变更刷新。旧 OneDrive 自动保存与原生目录写入接口已移除，旧文件格式校验、迁移转换、备份导入和相关恢复入口已一并删除；现有本机词库及正常 GitHub 同步继续使用。
 
 v0.3.20 的仓库测试支持已有词库和真正空仓库。选择空仓库后点击“初始化并连接”，自动上传 GitHub 主站简体中文词库、协议索引和许可证，校验后连接。中断后可重新测试继续；已有 README 的仓库不算空仓库。详见 [空仓库初始化](docs/v0.3.20空仓库初始化.md)。
+
+v0.3.26–v0.3.28 修复词库启动等待，并将云词库检查改为点击“添加 / 更新”时执行。本地存在待上传词条时仍可继续翻译；新网站允许权限后，由后台自动接续刚才选择的添加翻译或采集操作。云端更新、冲突及检查失败仍需按提示处理。
 
 ## 能做什么
 

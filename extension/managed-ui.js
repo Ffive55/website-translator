@@ -129,18 +129,26 @@
       });download.disabled=dictionaryDownloads.has(row.group);download.setAttribute('aria-label','下载 '+row.group+' 词库');item.append(text,download);box.append(item);
     }
   }
-  let popupCheckKey=null,popupRemote=null,popupBusy=false;
+  let popupCheckKey=null,popupRemote=null,popupBusy=false,lastPermissionResult=null;
+  async function continueAfterPermission(kind,tab,origins){
+    if(!chrome.permissions.contains || await chrome.permissions.contains({origins}))return null;
+    const intent=await request('permission-prepare',{kind,tabId:tab.id});
+    try{
+      if(!await chrome.permissions.request({origins:intent.origins}))throw new Error('未授予权限，本次操作已取消');
+    }catch(error){await request('permission-cancel',{id:intent.id});throw error;}
+    return {message:await request('permission-resume',{id:intent.id})};
+  }
   function popupGroup(state,origin){return state.sites?.[origin]?.group || (popupRemote?.origin===origin?popupRemote.group:null);}
   function renderPopupDictionary(state,origin){
     const toggle=$('wtSiteToggle');if(!toggle)return;
-    const site=state.sites?.[origin],info=state.dictionary,group=popupGroup(state,origin),local=info?.groups?.[group],pending=local?.pendingOrigins?.[origin] || 0;
+    const site=state.sites?.[origin],info=state.dictionary,group=popupGroup(state,origin),local=info?.groups?.[group],pending=local?.pending || 0;
     toggle.hidden=!origin;toggle.textContent=site&&!site.deleted&&site.enabled===false?'启用当前网页':'停用当前网页';toggle.disabled=popupBusy||!info?.ready;
     const remote=popupRemote?.origin===origin?popupRemote:null;
     $('wtDictionaryDownload').hidden=!origin||!remote?.available||remote.installed;
     $('wtDictionaryUpdate').hidden=!origin||!remote?.hasUpdate;
     $('wtDictionaryUpload').hidden=!origin||!pending;
     for(const id of ['wtDictionaryDownload','wtDictionaryUpdate','wtDictionaryUpload'])$(id).disabled=popupBusy;
-    let text=!origin?'':!info?.ready?'本机词库准备中':remote?.error?'词库检测暂不可用':!remote?'正在检测词库…':!remote.available?'当前语言暂无词库':!remote.installed?'GitHub 有词库，可下载':remote.hasUpdate?'GitHub 词库有更新':'词库已是最新';
+    let text=!origin?'':!info?.ready?'本机词库准备中':remote?.error?'词库检测暂不可用':!remote?'点击添加 / 更新检查云词库':!remote.available?'当前语言暂无词库':!remote.installed?'云端有词库，可下载':remote.hasUpdate?'云词库有更新':'词库已是最新';
     if(pending)text+=' · '+pending+' 项待上传';$('wtDictionaryStatus').textContent=text;$('wtDictionaryStatus').title=remote?.error || text;
   }
   function checkPopupDictionary(state,origin){
@@ -148,10 +156,8 @@
     const local=state.dictionary.groups[popupGroup(state,origin)],key=JSON.stringify([origin,state.dictionary.repository,state.wt_preferences?.targetLanguage || 'zh-Hans',state.dictionary.hasToken,local?.contentRevision]);
     if(popupCheckKey===key||popupBusy)return;
     popupCheckKey=key;popupRemote=null;renderPopupDictionary(state,origin);
-    // A popup polls local task progress, but remote metadata is checked only once
-    // per page/language/local revision; the repository client shares its 60s cache.
-    request('dictionary-action',{action:'page-status',origin}).then(result=>{if(popupCheckKey!==key)return;popupRemote=result;renderPopupDictionary(current,origin);}).catch(error=>{if(popupCheckKey!==key)return;popupRemote={origin,error:error.message};renderPopupDictionary(current,origin);});
   }
+
   async function popupDictionaryAction(kind){
     if(popupBusy)return '词库操作进行中，请稍候';
     const [tab]=await chrome.tabs.query({active:true,currentWindow:true}),u=new URL(tab?.url || 'about:blank');if(!['http:','https:'].includes(u.protocol))throw new Error('请打开普通网页');
@@ -286,6 +292,12 @@
       if (forms) { const a=state.wt_ai || {};if(!dirtyForms.has('aiForm'))loadProvider(WTProviders.catalog[a.provider]?a.provider:'api',a);if(!dirtyForms.has('promptForm'))$('prompt').value=state.wt_prompt || a.prompt || state.defaultPrompt || ''; if(!dirtyForms.has('generalForm')){const language=state.wt_preferences?.targetLanguage || 'zh-Hans';if(![...$('targetLanguage').options].some(o=>o.value===language)){const o=document.createElement('option');o.value=language;o.textContent=language;$('targetLanguage').append(o);}$('targetLanguage').value=language;$('requestTimeoutMinutes').value=state.wt_preferences?.requestTimeoutMinutes ?? 3;for(const [key,value] of Object.entries(collectionDefaults))$(key).value=state.wt_preferences?.[key] ?? value;$('globalEnabled').checked=state.globalEnabled!==false;}formsLoaded=true; }
     } else if ($('wtProgress')) {
       $('wtSite').textContent=origin || '请打开普通网页';$('wtSite').title=origin || '';
+      const {wt_permission_result:permissionResult}=await chrome.storage.local.get('wt_permission_result');
+      const freshPermissionResult=permissionResult?.origin===origin && Date.now()-permissionResult.at<120000 && permissionResult.id!==lastPermissionResult;
+      if(freshPermissionResult){
+        lastPermissionResult=permissionResult.id;
+        if(permissionResult.message)showMessage(permissionResult.message);
+      }
       let pending=$('wtPending');if(!pending){pending=document.createElement('p');pending.id='wtPending';pending.className='usage-note';$('wtProgress').after(pending);}
       const count=state.manualPending || 0;
       pending.textContent='当前语言手动待翻译：'+count+' 项';
@@ -301,6 +313,7 @@
       $('wtCapture').textContent=collecting?'完成并翻译':'开始采集';$('wtCancel').hidden=!collecting;$('wtStart').hidden=collecting;$('wtStart').disabled=collecting;
       $('enable_extension').checked=state.globalEnabled!==false;$('status').textContent=state.globalEnabled!==false?'已开启':'已关闭';$('status').classList.toggle('is-on',state.globalEnabled!==false);
       $('status').classList.toggle('is-off',state.globalEnabled===false);checkPopupDictionary(state,origin);
+      if(freshPermissionResult && permissionResult.remote){popupRemote=permissionResult.remote;renderPopupDictionary(state,origin);}
     }
   }
   if ($('siteList')) {
@@ -404,14 +417,36 @@
       if(!['http:','https:'].includes(u.protocol))throw new Error('请打开普通网页');
       const domain=tldts.getDomain(u.hostname,{allowPrivateDomains:true});
       const origins=domain?['https://*.'+domain+'/*','http://*.'+domain+'/*']:[u.protocol+'//'+u.hostname+'/*'];
+      const resumed=await continueAfterPermission('capture',tab,origins);if(resumed)return resumed;
       if(!await chrome.permissions.request({origins}))throw new Error('未授予采集域名权限');
       await request('capture-start',{tabId:tab.id});
     },$('wtCapture'));
     $('wtManage').onclick=()=>chrome.tabs.create({url:chrome.runtime.getURL('managed/managed.html')});
     $('wtStart').onclick=()=>action(async()=>{
+      if(popupBusy)return '词库操作进行中，请稍候';
       const [tab]=await chrome.tabs.query({active:true,currentWindow:true}); const u=new URL(tab.url);
-      if(!await chrome.permissions.request({origins:[`${u.protocol}//${u.hostname}/*`]})) throw new Error('未授予网站权限');
-      await request('start',{tabId:tab.id});
+      if(!['http:','https:'].includes(u.protocol))throw new Error('请打开普通网页');
+      const resumed=await continueAfterPermission('start',tab,[`${u.protocol}//${u.hostname}/*`,repositoryPermission()]);if(resumed)return resumed;
+      if(!await chrome.permissions.request({origins:[`${u.protocol}//${u.hostname}/*`,repositoryPermission()]}))throw new Error('未授予网站或词库连接权限');
+      popupBusy=true;popupRemote=null;renderPopupDictionary(current,u.origin);
+      try{
+        $('wtDictionaryStatus').textContent='正在检查云词库…';
+        const remote=await request('dictionary-action',{action:'page-status',origin:u.origin});
+        await refresh(false);
+        const [activeTab]=await chrome.tabs.query({active:true,currentWindow:true});
+        if(activeTab?.id!==tab.id || activeTab.url!==tab.url)throw new Error('当前页面已改变，请重新点击添加 / 更新');
+        popupRemote=remote;renderPopupDictionary(current,u.origin);
+        if(remote.available&&!remote.installed){
+          const origins=(remote.origins || [u.origin]).map(origin=>{const site=new URL(origin);return site.protocol+'//'+site.hostname+'/*';});
+          if(!await chrome.permissions.request({origins}))throw new Error('未授予词库网站权限，请点击下载重试');
+          const result=await finishTransfer(await request('dictionary-action',{action:'download-group',group:remote.group}));
+          popupCheckKey=null;popupRemote=null;return result;
+        }
+        if(remote.hasUpdate)return '云词库有更新，请选择更新或上传后再添加翻译';
+        await request('start',{tabId:tab.id});
+        return '已检查云词库，开始采集当前页并翻译';
+      }catch(error){popupRemote={origin:u.origin,error:error.message};throw error;}
+      finally{popupBusy=false;renderPopupDictionary(current,u.origin);}
     },$('wtStart'));
     setInterval(()=>refresh(false).catch(()=>{}),10000);
   }
@@ -421,7 +456,7 @@
   chrome.storage.onChanged.addListener((changes,area)=>{
     if(!$('siteList')&&area==='sync'&&changes.enable_extension){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refresh(false).catch(()=>{}),120);return;}
     if(area!=='local')return;
-    if(!$('siteList')){if(['wt_tasks','wt_capture','wt_manual_queue','wt_view','wt_preferences','wt_repository','wt_repository_status','wt_dictionary_check','wt_selection_status'].some(key=>changes[key])){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refresh(false).catch(()=>{}),120);}return;}
+    if(!$('siteList')){if(['wt_tasks','wt_capture','wt_manual_queue','wt_view','wt_preferences','wt_repository','wt_repository_status','wt_dictionary_check','wt_selection_status','wt_permission_result'].some(key=>changes[key])){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refresh(false).catch(()=>{}),120);}return;}
     if(changes.wt_view || changes.wt_preferences || changes.wt_repository || changes.wt_repository_status || changes.wt_dictionary_check)refresh(false).catch(()=>{});
     else if(changes.wt_tasks || changes.wt_task_inputs || changes.wt_manual_queue)request('state').then(state=>{current=state;renderTasks(state.wt_tasks);renderQueue(state);}).catch(()=>{});
   });

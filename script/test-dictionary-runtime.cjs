@@ -101,8 +101,9 @@ globalThis.fetch=async(url,options={})=>{
   const wait=async predicate=>{for(let i=0;i<200;i++){const s=await rpc('state');if(predicate(s))return s;await new Promise(r=>setTimeout(r,50));}throw Error('等待词库状态超时');};
   await rpc('state');await command({action:'configure',repository:{owner:'Ffive55',repo:'website-translator',branch:'main'},token:'fixture-only'});
   check((await rpc('state')).dictionary.ready,'实际后台加载当前本机词库服务');
-  let popup=await openPopup();await popup.locator('#wtDictionaryDownload').waitFor({state:'visible'});check(true,'弹窗按当前网页检测 GitHub 词库，未下载时显示下载按钮');
-  await popup.locator('#wtDictionaryDownload').click();await popup.waitForFunction(()=>document.querySelector('#message').textContent.startsWith('已下载 example.com'));
+  let popup=await openPopup();await popup.waitForFunction(()=>document.querySelector('#wtDictionaryStatus').textContent.includes('点击添加'));
+  check(await popup.locator('#wtDictionaryDownload').isHidden(),'打开弹窗不自动检测云词库');
+  await popup.locator('#wtStart').click();await popup.waitForFunction(()=>document.querySelector('#message').textContent.startsWith('已下载 example.com'));
   let state=await rpc('state');check(state.dictionary.groups[group].installed,'实际安装入口下载并安装已选网址');
   await context.route(origin+'/**',r=>r.fulfill({contentType:'text/html',body:'<html lang="en"><body><main><button>Save</button><input value="private-input"><pre>private-code</pre></main></body></html>'}));
   const page=await context.newPage();await page.goto(origin+'/');await page.waitForFunction(()=>document.querySelector('button').textContent==='远端基础');check(true,'实际内容脚本从已下载词库翻译，不调用 AI');
@@ -145,7 +146,7 @@ globalThis.fetch=async(url,options={})=>{
   await command({action:'check'});await ui.reload();await ui.locator('#tab-websites').click();
   await ui.locator('#dictionaryAll').waitFor({state:'visible'});check(await ui.locator('.group-actions').getByRole('button',{name:'更新',exact:true}).count()===1,'有新版时显示全部更新，单独更新只位于对应主域名分组行');
   await ui.screenshot({path:path.join(output,'updates.png'),fullPage:true});
-  popup=await openPopup();await popup.locator('#wtDictionaryUpdate').waitFor({state:'visible'});check(await popup.locator('#wtDictionaryUpload').isVisible(),'弹窗同时识别远端更新与本地修改，显示更新和上传两个入口');
+  popup=await openPopup();await popup.locator('#wtStart').click();await popup.locator('#wtDictionaryUpdate').waitFor({state:'visible'});check(await popup.locator('#wtDictionaryUpload').isVisible(),'弹窗同时识别远端更新与本地修改，显示更新和上传两个入口');
   await popup.locator('main').screenshot({path:path.join(output,'popup-dictionary.png')});
   const writesBefore=await worker.evaluate(()=>__remote.writes.length);await popup.locator('#wtDictionaryUpload').click();await popup.locator('dialog').waitFor();
   await popup.locator('dialog').screenshot({path:path.join(output,'upload-confirm.png')});
@@ -193,6 +194,8 @@ globalThis.fetch=async(url,options={})=>{
   check((await rpc('state')).dictionary.repository.provider===undefined,'Gitee 测试完成仍保持原 GitHub 仓库和缓存');
   check(await ui.locator('#repositoryChoices option').count()===3&&(await ui.locator('#repositoryTestStatus').textContent()).includes('1 个空仓库'),'真实设置页同时列出已有词库和空仓库，无手动仓库或分支输入');
   const choice=await ui.locator('#repositoryChoices option').nth(1).getAttribute('value');await ui.locator('#repositoryChoices').selectOption(choice);await ui.locator('#repositoryConfirm').click();
+  await wait(s=>s.dictionary.repository.provider==='gitee');
+  await command({action:'restore'});
   state=await wait(s=>s.dictionary.repository.provider==='gitee'&&(s.dictionary.groups[group]?.installed||s.dictionary.groups[group]?.conflicts.length));
   if(state.dictionary.groups[group].conflicts.length){
     check(!state.dictionary.groups[group].installed,'平台切换遇到同键不同译文时保留双方冲突，不静默覆盖');
@@ -236,11 +239,11 @@ globalThis.fetch=async(url,options={})=>{
     for(let i=0;i<200;i++){if((await secondRPC('state')).dictionary.ready)break;await new Promise(resolve=>setTimeout(resolve,50));}
     await secondWorker.evaluate(values=>chrome.storage.sync.set(values),latestSync);
     // Repository and both provider tokens restore from the synchronized records; no manual configuration.
-    let restored;for(let i=0;i<100;i++){restored=await secondRPC('state');if(restored.dictionary.groups?.[group]?.installed&&Object.values(restored.sites[origin]?.entries||{}).some(e=>e.translation==='远端新版'))break;await new Promise(r=>setTimeout(r,100));}
+    let restored;for(let i=0;i<100;i++){restored=await secondRPC('state');if(restored.dictionary.ready&&restored.dictionary.hasToken){await secondRPC('dictionary-action',{action:'restore'});restored=await secondRPC('state');if(restored.dictionary.groups?.[group]?.installed)break;}await new Promise(r=>setTimeout(r,100));}
     if(!restored.dictionary.groups?.[group]?.installed)console.log('RECOVERY',JSON.stringify({dictionary:restored.dictionary,sites:Object.keys(restored.sites)}));
     check(await secondWorker.evaluate(async()=>{const {wt_ai}=await chrome.storage.local.get('wt_ai');return wt_ai?.apiKey==='fixture-ai-synced'&&wt_ai.model==='synced-fixture-model'&&wt_ai.reasoningEffort==='high';}),'第二隔离设备恢复 AI 服务、模型、思考强度和 API Key，不调用 AI');
     check(restored.dictionary.hasToken&&restored.dictionary.credentialPlatforms.gitee,'第二隔离设备自动恢复仓库选择与两平台令牌，无需重新输入');
-    check(restored.dictionary.groups?.[group]?.installed&&restored.sites[origin]?.enabled===false,'第二个隔离设备从同步清单自动恢复词库，停用状态保留');
+    check(restored.dictionary.groups?.[group]?.installed&&restored.sites[origin]?.enabled===false,'第二个隔离设备显式恢复词库，停用状态保留');
     check(Object.values(restored.sites[origin].entries).some(e=>e.translation==='远端新版')&&!Object.values(restored.sites[origin].entries).some(e=>e.translation==='仅本机保留'),'新设备仅恢复已上传词条，未上传修改留在原设备');
     check((await secondWorker.evaluate(()=>__remote.writes.length))===0,'新设备恢复只读取 GitHub，不触发上传或 AI');
     await secondRPC('change',{siteId:origin,kind:'entry',payload:{...row('第二设备本机词条').entry,sourceText:'Device local',origin:'manual'}});

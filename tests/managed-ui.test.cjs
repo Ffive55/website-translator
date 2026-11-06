@@ -206,40 +206,53 @@ function popupUI(t,handler){
   const w=dom.window,d=w.document,origin='https://example.com',group='example.com',calls=[],intervals=[];
   const state={sites:{[origin]:{id:origin,origin,group,enabled:true,entries:{},conflicts:{},excludedPaths:[]}},wt_preferences:{targetLanguage:'zh-Hans'},wt_tasks:{},globalEnabled:true,dictionary:{ready:true,repository:{owner:'fixture',repo:'fixture',branch:'main'},hasToken:true,groups:{[group]:{pending:0,pendingOrigins:{},contentRevision:'first'}},status:{}}};
   const tab={url:origin+'/settings',id:1};w.setInterval=fn=>{intervals.push(fn);return intervals.length;};
-  w.chrome={runtime:{id:'fixture',getURL:p=>'chrome-extension://fixture/'+p,sendMessage:async m=>{calls.push(m);return {ok:true,result:['wt:state','wt:popup-state'].includes(m.type)?state:await handler(m,state,origin)};}},tabs:{query:async()=>[tab],create:async()=>{}},permissions:{request:async()=>true},storage:{sync:{set:async()=>{throw Error('网站开关不得改总开关');}},onChanged:{addListener(){}}}};
+  w.chrome={runtime:{id:'fixture',getURL:p=>'chrome-extension://fixture/'+p,sendMessage:async m=>{calls.push(m);return {ok:true,result:['wt:state','wt:popup-state'].includes(m.type)?state:await handler(m,state,origin)};}},tabs:{query:async()=>[tab],create:async()=>{}},permissions:{request:async()=>true},storage:{local:{get:async()=>({})},sync:{set:async()=>{throw Error('网站开关不得改总开关');}},onChanged:{addListener(){}}}};
   w.eval(read('managed-ui.js'));return {w,d,state,calls,tab,poll:()=>intervals[0]()};
 }
 
-test('弹窗检测远端未下载词库，点击下载不调用 AI；本地进度轮询复用检测结果',async t=>{
-  let installed=false;const {d,calls,poll}=popupUI(t,async(m,s,origin)=>{
-    if(m.action==='page-status')return {origin,group:'example.com',available:true,installed,hasUpdate:false};
-    if(m.action==='download-group'){installed=true;s.dictionary.groups['example.com'].contentRevision='downloaded';return '已更新 example.com';}
-    return true;
-  });await tick();assert.equal(d.querySelector('#wtDictionaryDownload').hidden,false);assert.equal(d.querySelector('#wtDictionaryUpdate').hidden,true);
-  poll();await tick();poll();await tick();assert.equal(calls.filter(m=>m.action==='page-status').length,1);
-  d.querySelector('#wtDictionaryDownload').click();await tick();assert.equal(calls.some(m=>m.type==='wt:install'),false);assert.ok(calls.some(m=>m.action==='download-group'&&m.group==='example.com'));assert.equal(d.querySelector('#wtDictionaryDownload').hidden,true);
-  assert.equal(calls.some(m=>m.type==='wt:start'||m.type==='wt:capture-start'),false);
+
+for(const scenario of [
+ {name:'云端有词库自动下载',available:true,installed:false,download:true},
+ {name:'云端无词库采集翻译',available:false,installed:false,ai:true},
+ {name:'本地云端一致采集翻译',available:true,installed:true,ai:true},
+ {name:'云端更新停留供用户选择',available:true,installed:true,hasUpdate:true},
+ {name:'本地修改仍可采集翻译并显示上传',available:true,installed:true,pending:2,ai:true},
+ {name:'云端无词库且本地待上传仍可翻译',available:false,installed:false,pending:1085,ai:true},
+ {name:'双方修改同时显示更新上传',available:true,installed:true,hasUpdate:true,pending:2},
+ {name:'网络失败不调用AI',error:true}
+])test('添加更新：'+scenario.name,async t=>{
+ const {d,state,calls,poll}=popupUI(t,async(m,s,origin)=>{
+  if(m.action==='page-status'){if(scenario.error)throw Error('云端连接失败');return {origin,group:'example.com',origins:[origin],...scenario};}
+  if(m.action==='download-group')return '已下载';return true;
+ });state.dictionary.groups['example.com'].pending=scenario.pending||0;
+ await tick();poll();await tick();assert.equal(calls.some(m=>m.action==='page-status'),false,'打开和轮询只读本地');
+ d.querySelector('#wtStart').click();await tick();await tick();
+ assert.equal(calls.filter(m=>m.action==='page-status').length,1);
+ assert.equal(calls.some(m=>m.type==='wt:start'),!!scenario.ai);
+ assert.equal(calls.some(m=>m.action==='download-group'),!!scenario.download);
+ assert.equal(d.querySelector('#wtDictionaryUpdate').hidden,!scenario.hasUpdate);
+ assert.equal(d.querySelector('#wtDictionaryUpload').hidden,!scenario.pending);
+ assert.equal(state.dictionary.groups['example.com'].pending,scenario.pending||0,'启动翻译不清除待上传修改');
+ assert.equal(calls.some(m=>m.action==='upload'),false,'添加更新不自动上传');
+ poll();await tick();assert.equal(calls.filter(m=>m.action==='page-status').length,1);
 });
 
-test('弹窗同时显示远端更新和本地待上传，直接上传，并单独启停当前网址',async t=>{
-  const {d,state,calls,poll}=popupUI(t,async(m,s,origin)=>{
-    if(m.action==='page-status')return {origin,group:'example.com',available:true,installed:true,hasUpdate:true};
-    if(m.action==='upload'){s.dictionary.groups['example.com'].pendingOrigins={};return '已上传 example.com';}
-    if(m.type==='wt:change')s.sites[origin].enabled=m.payload.value;
-    return true;
-  });state.dictionary.groups['example.com'].pendingOrigins={'https://example.com':2};state.globalEnabled=false;await tick();poll();await tick();
-  assert.equal(d.querySelector('#wtDictionaryUpdate').hidden,false);assert.equal(d.querySelector('#wtDictionaryUpload').hidden,false);assert.match(d.querySelector('#wtDictionaryStatus').textContent,/2 项待上传/);
-  d.querySelector('#wtDictionaryUpload').click();await tick();assert.ok(calls.some(m=>m.action==='upload'));assert.equal(calls.some(m=>m.action==='preview'),false);assert.equal(d.querySelector('#wtDictionaryUpload').hidden,true);
-  d.querySelector('#wtSiteToggle').click();await tick();assert.equal(state.sites['https://example.com'].enabled,false);assert.equal(d.querySelector('#wtSiteToggle').textContent,'启用当前网页');assert.equal(state.globalEnabled,false);
-  d.querySelector('#wtSiteToggle').click();await tick();assert.equal(state.sites['https://example.com'].enabled,true);assert.equal(d.querySelector('#wtSiteToggle').textContent,'停用当前网页');assert.equal(state.globalEnabled,false);
-  assert.ok(calls.filter(m=>m.type==='wt:change').every(m=>m.siteId==='https://example.com'&&m.kind==='setting'&&m.payload.key==='enabled'));
+for(const kind of ['start','capture'])test('首次授权交给后台接续：'+kind,async t=>{
+ const {w,d,calls}=popupUI(t,async m=>m.type==='wt:permission-prepare'?{id:'intent',origins:['https://example.com/*']}:'已接续');
+ w.chrome.permissions.contains=async()=>false;
+ w.tldts=require('tldts');
+ await tick();d.querySelector(kind==='start'?'#wtStart':'#wtCapture').click();await tick();await tick();
+ assert.equal(calls.filter(m=>m.type==='wt:permission-prepare'&&m.kind===kind).length,1);
+ assert.equal(calls.filter(m=>m.type==='wt:permission-resume').length,1);
+ assert.equal(calls.some(m=>['wt:start','wt:capture-start'].includes(m.type)),false);
 });
 
-test('弹窗切换网页忽略迟到检测，内部页面不检测；离线仍显示本机待上传',async t=>{
-  let release;const {d,state,tab,poll,calls}=popupUI(t,async(m,s,origin)=>{
-    if(m.action==='page-status'&&m.origin===origin)return new Promise(resolve=>release=()=>resolve({origin,group:'example.com',available:true,installed:false,hasUpdate:false}));
-    if(m.action==='page-status')throw Error('GitHub 暂不可用');return true;
-  });await tick();tab.url='https://other.test/';state.sites['https://other.test']={id:'https://other.test',origin:'https://other.test',group:'other.test',enabled:true};state.dictionary.groups['other.test']={pendingOrigins:{'https://other.test':1},contentRevision:'other'};poll();await tick();release();await tick();
-  assert.equal(d.querySelector('#wtDictionaryDownload').hidden,true);assert.equal(d.querySelector('#wtDictionaryUpload').hidden,false);assert.match(d.querySelector('#wtDictionaryStatus').title,/GitHub 暂不可用/);
-  const before=calls.filter(m=>m.action==='page-status').length;tab.url='edge://extensions/';poll();await tick();assert.equal(calls.filter(m=>m.action==='page-status').length,before);assert.equal(d.querySelector('#wtSiteToggle').hidden,true);assert.equal(d.querySelector('#wtDictionaryUpload').hidden,true);
+test('弹窗更新上传复用覆盖确认且不会自动执行AI',async t=>{
+ const {d,state,calls}=popupUI(t,async(m,s,origin)=>{
+  if(m.action==='page-status')return {origin,group:'example.com',available:true,installed:true,hasUpdate:true};
+  if(m.action==='upload')return {requiresConfirmation:true,id:'confirm',group:'example.com',language:'zh-Hans',direction:'upload',reason:'双方有修改',conflicts:1};
+  return '已上传';
+ });state.dictionary.groups['example.com'].pending=1;await tick();d.querySelector('#wtStart').click();await tick();d.querySelector('#wtDictionaryUpload').click();await tick();
+ assert.ok(d.querySelector('dialog'));assert.equal(calls.some(m=>m.action==='transfer-confirm'),false);
+ d.querySelector('dialog button.primary').click();await tick();assert.ok(calls.some(m=>m.action==='transfer-confirm'));assert.equal(calls.some(m=>m.type==='wt:start'),false);
 });

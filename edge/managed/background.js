@@ -495,7 +495,41 @@
     return {tasks:jobs.length};
   }
 
-  chrome.permissions.onAdded.addListener(() => ready.then(registrations));
+  async function resumePermissionAction(id) {
+    await ready;await dictionaryReady;
+    const intent=await locked(async()=>{
+      const {wt_permission_action:p}=await chrome.storage.local.get('wt_permission_action');
+      if(!p || id&&p.id!==id)return null;
+      if(Date.now()-p.at>120000){await chrome.storage.local.remove('wt_permission_action');return null;}
+      if(!await chrome.permissions.contains({origins:p.origins}))return null;
+      await chrome.storage.local.remove('wt_permission_action');return p;
+    });
+    if(!intent)return '授权操作已接续或已取消';
+    let message,remote;
+    try{
+      const tab=await chrome.tabs.get(intent.tabId);
+      C.assert(tab.url===intent.url,'原网页已改变，请在当前网页重新操作');
+      C.assert((await preferences()).targetLanguage===intent.language,'目标语言已改变，请重新操作');
+      C.assert(C.canonical((await chrome.storage.local.get('wt_repository')).wt_repository||null)===intent.repository,'词库仓库已改变，请重新操作');
+      const sender={id:chrome.runtime.id,url:chrome.runtime.getURL('popup/popup.html')};
+      if(intent.kind==='capture'){
+        await handleMessage({type:'wt:capture-start',tabId:intent.tabId},sender);message='已授权，开始采集';
+      }else{
+        remote=await dictionaryRuntime.handle({action:'page-status',origin:new URL(intent.url).origin});
+        C.assert((await chrome.tabs.get(intent.tabId)).url===intent.url,'原网页已改变，请重新操作');
+        if(remote.available&&!remote.installed){
+          const origins=(remote.origins||[remote.origin]).map(origin=>{const u=new URL(origin);return `${u.protocol}//${u.hostname}/*`;});
+          message=await chrome.permissions.contains({origins})?await dictionaryRuntime.handle({action:'download-group',group:remote.group}):'已授权，云端词库还涉及其他网站，请点击下载授予权限';
+          if(typeof message!=='string')message='词库存在冲突，请在词库管理中处理';
+        }
+        else if(remote.hasUpdate)message='云词库有更新，请选择更新或上传后再添加翻译';
+        else {await handleMessage({type:'wt:start',tabId:intent.tabId},sender);message='已授权，开始采集当前页并翻译';}
+      }
+    }catch(error){message=error.message;}
+    await chrome.storage.local.set({wt_permission_result:{id:intent.id,origin:new URL(intent.url).origin,at:Date.now(),message,remote}});
+    return message;
+  }
+  chrome.permissions.onAdded.addListener(() => ready.then(async()=>{await registrations();await resumePermissionAction();}).catch(()=>{}));
   chrome.permissions.onRemoved.addListener(() => ready.then(registrations));
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'sync') return;
@@ -508,16 +542,32 @@
   });
   chrome.runtime.onMessage.addListener((message, sender, reply) => {
     if (!message?.type?.startsWith('wt:') || message.type === 'wt:apply' || message.type === 'wt:collect') return false;
-    (async () => {
+    handleMessage(message,sender).then(result => reply({ ok: true, result }), e => reply({ ok: false, error: e.message }));
+    return true;
+  });
+  async function handleMessage(message,sender) {
       await ready;
       const trustedUI = sender.id === chrome.runtime.id && sender.url?.startsWith(chrome.runtime.getURL(''));
       if (!trustedUI && sender.tab) {
         C.assert(['wt:page','wt:capture-data','wt:dictionary'].includes(message.type), '页面没有此操作权限');
+        if(['wt:dictionary','wt:page'].includes(message.type))await dictionaryReady;
         if(message.type==='wt:dictionary')return dictionaryRuntime?.adapter(sender.url);
         if(message.type==='wt:page') return pageState(sender.url,sender.tab.id);
         return locked(async()=>{try{return await captureData(message,sender);}catch(error){await captureError(message.captureId,sender.tab.id,error.message);throw error;}});
       }
       C.assert(trustedUI, '仅允许扩展界面操作');
+      if(message.type==='wt:permission-prepare'){
+        C.assert(['start','capture'].includes(message.kind),'授权操作无效');
+        const tab=await chrome.tabs.get(message.tabId),u=new URL(tab.url);
+        C.assert(['http:','https:'].includes(u.protocol),'请打开普通网页');
+        const host=tldts.getDomain(u.hostname,{allowPrivateDomains:true});
+        const repo=(await chrome.storage.local.get('wt_repository')).wt_repository;
+        const origins=message.kind==='capture'?(host?[`https://*.${host}/*`,`http://*.${host}/*`]:[`${u.protocol}//${u.hostname}/*`]):[`${u.protocol}//${u.hostname}/*`,repo?.provider==='gitee'?'https://gitee.com/*':'https://api.github.com/*'];
+        const intent={id:crypto.randomUUID(),kind:message.kind,tabId:tab.id,url:tab.url,origins,repository:C.canonical(repo||null),language:(await preferences()).targetLanguage,at:Date.now()};
+        await chrome.storage.local.set({wt_permission_action:intent});return intent;
+      }
+      if(message.type==='wt:permission-resume')return resumePermissionAction(message.id);
+      if(message.type==='wt:permission-cancel')return locked(async()=>{const {wt_permission_action:p}=await chrome.storage.local.get('wt_permission_action');if(p?.id===message.id)await chrome.storage.local.remove('wt_permission_action');return true;});
       if(!['wt:state','wt:popup-state','wt:dictionary-action'].includes(message.type))await dictionaryReady;
       if(['wt:install','wt:start','wt:capture-start','wt:capture-finish','wt:retry-task','wt:change','wt:group-change'].includes(message.type))C.assert(!dictionaryRuntime||dictionaryRuntime.active(),'本机词库初始化尚未完成，请在设置查看进度');
       if(message.type==='wt:install'){
@@ -610,7 +660,5 @@
       if (message.type === 'wt:sync') throw new Error('文件夹同步已退出，请在网站管理上传词库');
       if (message.type === 'wt:native') { C.assert(['status','logout','models','ping'].includes(message.action), '连接操作无效'); const result=await native({action:message.action});if(message.action==='models')await chrome.storage.local.set({wt_subscription_models:result});return result; }
       throw new Error('未知操作');
-    })().then(result => reply({ ok: true, result }), e => reply({ ok: false, error: e.message }));
-    return true;
-  });
+  }
 })();

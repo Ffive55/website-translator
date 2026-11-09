@@ -1,7 +1,7 @@
 {
   "name": "website-translator",
   "displayName": "网站翻译插件",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "private": true,
   "description": "支持按需 AI 添加更新、本地词库、网站管理及本地连接程序的网站翻译插件",
   "license": "GPL-3.0-or-later",

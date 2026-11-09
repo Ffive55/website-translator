@@ -339,6 +339,7 @@
   observer.observe(document, { subtree: true, childList: true, characterData: true });
   function update(next) {
     if(next.captureId!==state?.captureId){lastCapture='';captureRetries=0;resetTransient();}
+    if(next.captureId)lastCapture='';
     const old = state?.site; state = next;
     if (old?.builtinId && (old.enabled !== next.site?.enabled || old.deleted !== next.site?.deleted || old.targetLanguage !== next.site?.targetLanguage || JSON.stringify(old.excludedPaths) !== JSON.stringify(next.site?.excludedPaths))) { location.reload(); return; }
     apply();

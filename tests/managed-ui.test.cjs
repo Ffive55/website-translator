@@ -256,3 +256,12 @@ test('弹窗更新上传复用覆盖确认且不会自动执行AI',async t=>{
  assert.ok(d.querySelector('dialog'));assert.equal(calls.some(m=>m.action==='transfer-confirm'),false);
  d.querySelector('dialog button.primary').click();await tick();assert.ok(calls.some(m=>m.action==='transfer-confirm'));assert.equal(calls.some(m=>m.type==='wt:start'),false);
 });
+
+test('持续翻译弹窗显示所属主域名、结束后仅取消可操作',async t=>{
+ const {d,state,poll,calls}=popupUI(t,async(m,s)=>{if(m.type==='wt:capture-finish'){s.wt_capture.status='draining';return true;}if(m.type==='wt:capture-cancel'){delete s.wt_capture;return true;}return {};});
+ await tick();assert.equal(d.querySelector('#wtCapture').textContent,'开始翻译');
+ state.wt_capture={status:'collecting',group:'original.example.org',pageCount:2,itemCount:12,translated:8};await poll();await tick();
+ assert.equal(d.querySelector('#wtCapture').textContent,'结束翻译');assert.equal(d.querySelector('#wtCancel').textContent,'取消翻译');assert.match(d.querySelector('#wtProgress').textContent,/original.example.org/);
+ d.querySelector('#wtCapture').click();await tick();await tick();assert.equal(d.querySelector('#wtCapture').disabled,true);assert.equal(d.querySelector('#wtCancel').disabled,false);
+ d.querySelector('#wtCancel').click();await tick();assert.ok(calls.some(m=>m.type==='wt:capture-cancel'));assert.equal(d.querySelector('#wtCapture').textContent,'开始翻译');
+});

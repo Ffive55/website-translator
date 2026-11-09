@@ -13,7 +13,7 @@ async function main(){
       const {messages}=JSON.parse(data),payload=JSON.parse(messages[1].content);
       apiBatches.push(payload);
       activeApi++;peakApi=Math.max(peakApi,activeApi);
-      if(payload.inputs.some(i=>i.sourceText.startsWith('Long option')))await new Promise(r=>setTimeout(r,100));
+      if(payload.inputs.some(i=>i.sourceText.startsWith('Long option')))await new Promise(r=>setTimeout(r,600));
       const rows=payload.inputs.map(i=>({id:i.id,category:'ui',action:'translate',translation:payload.targetLanguage==='ja'?'保存する':'保存更改',reason:''}));
       res.setHeader('Content-Type','application/json');res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(rows)}}]}));activeApi--;
     }else{res.setHeader('Content-Type','text/html');res.end('<!doctype html><html lang="en"><body><main><button>Save changes</button><pre>private-code</pre><input value="private-input"></main></body></html>');}
@@ -130,7 +130,7 @@ async function main(){
     assert.equal((await rpc('capture-start',{tabId})).ok,true);
     assert.ok((await rpc('state')).result.wt_capture.pages.includes(origin+'/capture'),'切换过 SPA 路由后开始采集，应立即持久化当前页');
     await waitState(state=>state.wt_capture?.items.length>0);
-    const beforeCapture=requests;
+    await rpc('config',{preferences:{translationIntervalSeconds:300,batchCaptureItems:3000}});const beforeCapture=requests;
     await page.evaluate(()=>{const dialog=document.createElement('dialog');dialog.open=true;dialog.innerHTML='<form><label>Email address</label><input placeholder="First name" value="private-name"><input type="email" placeholder="Enter your email address" value="private@example.com"><input type="password" placeholder="Create a password" value="private-password"></form>';document.body.append(dialog);});
     await waitState(state=>state.wt_capture.items.some(i=>i.sourceText==='Create a password'));
     await page.evaluate(()=>{history.pushState({},'','/capture-spa');const p=document.createElement('p');p.textContent='Routing options';document.querySelector('main').append(p);});
@@ -155,6 +155,7 @@ async function main(){
     assert.equal(collected.filter(i=>i.sourceText==='Save changes').length,1,'同上下文按钮跨五个页面只提交一次');
     await page.goto(origin+'/capture');await page.evaluate(()=>{const input=document.createElement('input');input.placeholder='First name';input.value='private-name';const form=document.createElement('form');form.append(input);const dialog=document.createElement('dialog');dialog.open=true;dialog.append(form);document.body.append(dialog);});
     await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='保存更改');assert.equal(await page.locator('[placeholder]').inputValue(),'private-name');assert.equal(requests,beforeCapture+1);
+    await waitState(state=>state.wt_capture.status==='completed');
     await rpc('config',{preferences:{targetLanguage:'ja'}});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='First name');
     await rpc('config',{preferences:{targetLanguage:'zh-Hans'}});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='保存更改');
     await rpc('group-change',{group:new URL(origin).hostname,action:'enabled',enabled:false});await page.waitForFunction(()=>document.querySelector('[placeholder]')?.placeholder==='First name');
@@ -192,13 +193,28 @@ async function main(){
     const beforeShort=requests,shortTask=await rpc('start',{tabId});assert.equal(shortTask.ok,true);await waitState(state=>state.wt_tasks[shortTask.result.id]?.status==='completed');assert.equal(requests-beforeShort,1);assert.equal(apiBatches.at(-1).inputs.length,160,'短标签不能再按20条拆请求');
     await page.goto(origin+'/speed-long');
     const renderLong=offset=>page.evaluate(offset=>{document.body.replaceChildren();const main=document.createElement('main');for(let i=offset;i<offset+20;i++){const b=document.createElement('button');b.textContent='Long option'+i+' 界面说明'.repeat(600);main.append(b);}document.body.append(main);},offset);
-    await renderLong(0);assert.equal((await rpc('capture-start',{tabId})).ok,true);
-    for(let part=1;part<3;part++){await page.evaluate(part=>history.pushState({},'','/speed-long-'+part),part);await renderLong(part*20);await waitState(state=>state.wt_capture.items.length>=(part+1)*20);}
     const knownTasks=new Set(Object.keys((await rpc('state')).result.wt_tasks)),beforeLong=requests;
+    await renderLong(0);assert.equal((await rpc('capture-start',{tabId})).ok,true);
+    for(let part=1;part<3;part++){await page.evaluate(part=>history.pushState({},'','/speed-long-'+part),part);await renderLong(part*20);await waitState(state=>state.wt_capture.items.length+(state.wt_capture.completed || 0)>=(part+1)*20);}
+
     assert.equal((await rpc('capture-finish')).ok,true);
-    const longState=await waitState(state=>Object.values(state.wt_tasks).some(t=>!knownTasks.has(t.id) && t.status==='completed'));
-    const longTask=Object.values(longState.wt_tasks).find(t=>!knownTasks.has(t.id));assert.equal(longTask.total,60);assert.ok(requests-beforeLong>1);assert.equal(peakApi,2,'多批翻译实际网络请求应有两个并发');
+    const longState=await waitState(state=>state.wt_capture.status==='completed');
+    assert.equal(longState.wt_capture.completed,60);assert.ok(requests-beforeLong>1);assert.equal(peakApi,2,'多批翻译实际网络请求应有两个并发');
     console.log('[batching]',JSON.stringify({shortItems:160,shortRequests:1,longItems:60,longRequests:requests-beforeLong,peakConcurrentRequests:peakApi}));
+    // Continuous collection runs in the worker while the popup is closed.
+    await rpc('config',{preferences:{translationIntervalSeconds:1,batchCaptureItems:2}});
+    await page.goto(origin+'/continuous-live');
+    await page.evaluate(()=>{document.body.innerHTML='<main><button>Continuous alpha</button><button>Continuous beta</button><button>Continuous gamma</button></main>';});
+    const continuousBefore=requests;
+    assert.equal((await rpc('capture-start',{tabId})).ok,true);
+    await waitState(state=>state.wt_capture.completed===3);
+    assert.equal(requests-continuousBefore,2);
+    await page.evaluate(()=>{const b=document.createElement('button');b.textContent='Continuous delta';document.querySelector('main').append(b);});
+    await waitState(state=>state.wt_capture.completed===4);
+    assert.equal((await rpc('capture-finish')).ok,true);await waitState(state=>state.wt_capture.status==='completed');
+    assert.equal((await rpc('state')).result.wt_capture.translated,4);
+    await rpc('config',{preferences:{translationIntervalSeconds:10,batchCaptureItems:500}});
+    console.log('[continuous]',JSON.stringify({batchLimit:2,intervalSeconds:1,translated:4,popupClosed:true}));
     await ui.getByRole('tab',{name:'常规',exact:true}).click();assert.equal(await ui.locator('#autoExpandSeconds').inputValue(),'12');await ui.locator('#autoExpandSeconds').fill('7');await ui.locator('#requestTimeoutMinutes').fill('8');await ui.getByRole('button',{name:'保存常规设置',exact:true}).click();
     await waitState(state=>state.wt_preferences.requestTimeoutMinutes===8);await ui.reload();await ui.waitForFunction(()=>document.querySelector('#requestTimeoutMinutes').value==='8');assert.equal(await ui.locator('#requestTimeoutMinutes').inputValue(),'8');
     assert.equal(await ui.locator('#autoExpandSeconds').inputValue(),'7');assert.equal((await rpc('state')).result.wt_preferences.autoExpandSeconds,7);

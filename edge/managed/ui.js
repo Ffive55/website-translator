@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const collectionDefaults={pageCaptureItems:500,pageCaptureChars:80000,sessionCaptureItems:3000,sessionCaptureChars:400000,inputContextK:200,autoExpandSeconds:12};
+  const collectionDefaults={batchCaptureItems:500,translationIntervalSeconds:10,pageCaptureItems:500,pageCaptureChars:80000,sessionCaptureItems:3000,sessionCaptureChars:400000,inputContextK:200,autoExpandSeconds:12};
   let current,refreshFlight,refreshAgain=false,formsLoaded=false;const dirtyForms=new Set();
   document.addEventListener('input',event=>{const id=event.target.closest('form')?.id;if(id)dirtyForms.add(id);});
   document.addEventListener('change',event=>{const id=event.target.closest('form')?.id;if(id)dirtyForms.add(id);});
@@ -57,7 +57,7 @@
   }
   const expandedGroups=new Set(),expandedSites=new Set();
   const request = async (type, data = {}) => { let timer;const r=await Promise.race([chrome.runtime.sendMessage({type:`wt:${type}`,...data}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('后台仍在启动或处理中，设置入口可继续使用；请稍后重试')),['state','popup-state'].includes(type)?8000:180000);})]).finally(()=>clearTimeout(timer)); if (!r?.ok) throw new Error(r?.error || '后台没有响应'); return r.result; };
-  const statusNames = { running:'进行中', completed:'完成', interrupted:'中断', partial:'部分完成', failed:'失败' };
+  const statusNames = { cancelled:'已取消',running:'进行中', completed:'完成', interrupted:'中断', partial:'部分完成', failed:'失败' };
   const button = (label, fn) => { const b = document.createElement('button'); b.textContent = label; b.onclick = () => action(fn, b); return b; };
   let messageTimer,messageVersion=0;
   function clearMessage(){clearTimeout(messageTimer);messageVersion++;const el=$('message');if(el){el.hidden=true;el.textContent='';}}
@@ -67,7 +67,7 @@
     el.dataset.kind=error?'error':'success';el.setAttribute('role',error?'alert':'status');el.setAttribute('aria-live',error?'assertive':'polite');el.textContent=message;el.title=message;el.hidden=false;
     messageTimer=setTimeout(()=>{if(messageVersion===version)clearMessage();},error?8000:3000);
   }
-  async function action(fn, b) { if (b) b.disabled = true;clearMessage();try { const msg = await fn();await refresh(false);if($('message'))showMessage(typeof msg === 'string' ? msg : msg?.message || '已保存',!!msg?.error); } catch(e) { await refresh(false).catch(()=>{});showMessage(e.message,true); } finally { if(b) b.disabled = false; } }
+  async function action(fn, b) { if (b) b.disabled = true;clearMessage();try { const msg = await fn();await refresh(false);if($('message'))showMessage(typeof msg === 'string' ? msg : msg?.message || '已保存',!!msg?.error); } catch(e) { await refresh(false).catch(()=>{});showMessage(e.message,true); } finally { if(b) b.disabled = b.id==='wtCapture' && current?.wt_capture?.status==='draining'; } }
   let dictionaryUploading=false,catalogResult=null;const dictionaryDownloads=new Set();
   function uploadButtons(){for(const b of document.querySelectorAll('[data-dictionary-upload]'))b.disabled=dictionaryUploading;}
   let transferDialogBusy=false;
@@ -305,12 +305,12 @@
       if(recentSelection)pending.textContent+=' · '+state.wt_selection_status.message;
       pending.hidden=!count&&!recentSelection;pending.title=pending.textContent;
       const task=Object.values(state.wt_tasks || {}).filter(t=>t.siteId===origin).sort((a,b)=>b.updatedAt-a.updatedAt)[0];
-      const c=state.wt_capture,collecting=c?.status==='collecting';
-      $('wtProgress').textContent=collecting ? '正在采集 '+c.group+' · '+c.pageCount+' 页 / '+c.itemCount+' 项'+(c.lastError?' · 采集遇到问题':'')+(c.truncated?' · 已达上限':'') : task ? `${statusNames[task.status] || task.status} · ${task.completed}/${task.total} 项 · 翻译 ${task.translated} · 复用 ${task.reused || 0}${['failed','partial','interrupted'].includes(task.status)?' · 详情见翻译记录':''}` : '添加当前页面，或先采集多个页面再翻译。';
+      const c=state.wt_capture,collecting=['collecting','draining'].includes(c?.status);
+      $('wtProgress').textContent=collecting ? (c.status==='draining'?'正在完成剩余翻译 ':'正在采集并翻译 ')+c.group+' · '+c.pageCount+' 页 / 待处理 '+c.itemCount+' 项 · 已翻译 '+(c.translated || 0)+' 项'+(c.lastError?' · 采集遇到问题':'')+(c.truncated?' · 待处理已满，正在翻译':'') : task ? `${statusNames[task.status] || task.status} · ${task.completed}/${task.total} 项 · 翻译 ${task.translated} · 复用 ${task.reused || 0}${['failed','partial','interrupted'].includes(task.status)?' · 详情见翻译记录':''}` : (c?.status==='interrupted'?c.lastError:'添加当前页面，或开始同站持续翻译。');
       $('wtProgress').title=collecting?(c.lastError || $('wtProgress').textContent):task?taskText(task):$('wtProgress').textContent;
       $('wtSaveStatus').textContent=state.dictionary?.starting ? ((state.dictionary.status?.startup?.phase||'正在加载本机词库')+'，设置可立即打开') : !state.dictionary?.ready?state.dictionary?.status?.error || '':state.dictionary?.status?.syncError || '';
       $('wtSaveStatus').hidden=!$('wtSaveStatus').textContent;$('wtSaveStatus').title=$('wtSaveStatus').textContent;
-      $('wtCapture').textContent=collecting?'完成并翻译':'开始采集';$('wtCancel').hidden=!collecting;$('wtStart').hidden=collecting;$('wtStart').disabled=collecting;
+      $('wtCapture').textContent=c?.status==='draining'?'正在完成…':collecting?'结束翻译':'开始翻译';$('wtCapture').disabled=c?.status==='draining';$('wtCancel').textContent='取消翻译';$('wtCancel').hidden=!collecting;$('wtStart').hidden=collecting;$('wtStart').disabled=collecting;
       $('enable_extension').checked=state.globalEnabled!==false;$('status').textContent=state.globalEnabled!==false?'已开启':'已关闭';$('status').classList.toggle('is-on',state.globalEnabled!==false);
       $('status').classList.toggle('is-off',state.globalEnabled===false);checkPopupDictionary(state,origin);
       if(freshPermissionResult && permissionResult.remote){popupRemote=permissionResult.remote;renderPopupDictionary(state,origin);}

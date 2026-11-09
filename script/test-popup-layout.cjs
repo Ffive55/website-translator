@@ -4,7 +4,7 @@ const fs=require('node:fs/promises'),path=require('node:path'),assert=require('n
 const ROOT=path.resolve(__dirname,'..');
 async function nativePopups(output,checks){
   const extension=path.join(output,'native-extension');await fs.cp(path.join(ROOT,'edge'),extension,{recursive:true,filter:p=>!p.includes(path.sep+'local-helper')});
-  for(const scenario of ['completed','collecting','error']){
+  for(const scenario of ['completed','collecting','draining','error']){
   const context=await chromium.launchPersistentContext(path.join(output,'native-profile-'+scenario+'-'+Date.now()),{channel:'msedge',headless:true,args:['--disable-extensions-except='+extension,'--load-extension='+extension]});
   try{
     let worker=context.serviceWorkers()[0];if(!worker)worker=await context.waitForEvent('serviceworker',{timeout:15000});
@@ -14,9 +14,9 @@ async function nativePopups(output,checks){
     let nativeTarget,nativeSession;
       await worker.evaluate(async scenario=>{
         const origin='https://openrouter.ai',group='openrouter.ai',long='详细任务记录和错误说明 '.repeat(100);
-        const state={sites:{[origin]:{id:origin,origin,group,enabled:true}},wt_preferences:{targetLanguage:'zh-Hans'},globalEnabled:true,manualPending:scenario==='completed'?0:5,wt_tasks:{job:{id:'job',siteId:origin,status:scenario==='error'?'failed':'completed',targetLanguage:'zh-Hans',total:61,completed:61,translated:55,reused:24,message:long,updatedAt:Date.now()}},dictionary:{ready:true,repository:{owner:'fixture',repo:'fixture',branch:'main'},hasToken:true,status:scenario==='error'?{syncError:long}:{},groups:{[group]:{pendingOrigins:{[origin]:61},contentRevision:'fixture'}}}};
-        if(scenario==='collecting')state.wt_capture={status:'collecting',group,pageCount:12,itemCount:3000,truncated:true,lastError:long};
-        await chrome.storage.local.set({__popupLayoutState:state});
+        const state={sites:{[origin]:{id:origin,origin,group,enabled:true}},wt_preferences:{targetLanguage:'zh-Hans'},globalEnabled:true,manualPending:scenario==='completed'?0:5,wt_tasks:{job:{id:'job',siteId:origin,status:scenario==='error'?'failed':'completed',targetLanguage:'zh-Hans',total:61,completed:61,translated:55,reused:24,message:long,updatedAt:Date.now()}},dictionary:{ready:true,repository:{owner:'fixture',repo:'fixture',branch:'main'},hasToken:true,status:scenario==='error'?{syncError:long}:{},groups:{[group]:{pending:61,pendingOrigins:{[origin]:61},contentRevision:'fixture'}}}};
+        if(['collecting','draining'].includes(scenario))state.wt_capture={status:scenario,group,pageCount:12,itemCount:3000,truncated:true,lastError:long};
+        await chrome.storage.local.set({__popupLayoutState:state,wt_permission_result:{id:'layout',origin,at:Date.now(),remote:{origin,group,available:true,installed:true,hasUpdate:true}}});
       },scenario);
       if(!nativeTarget){await worker.evaluate(()=>chrome.action.openPopup());nativeTarget=(await cdp.send('Target.getTargets')).targetInfos.find(target=>target.url.endsWith('/popup/popup.html'));assert.ok(nativeTarget,'真实工具栏弹窗应创建浏览器目标');nativeSession=(await cdp.send('Target.attachToTarget',{targetId:nativeTarget.targetId,flatten:false})).sessionId;}
       const sessionId=nativeSession;
@@ -33,7 +33,7 @@ async function main(){
   const css=await fs.readFile(path.join(ROOT,'edge/popup/popup.css'),'utf8'),ui=await fs.readFile(path.join(ROOT,'edge/managed/ui.js'),'utf8');
   const browser=await chromium.launch({channel:'msedge',headless:true}),checks=[];
   try{
-    for(const height of [600,540,480])for(const scenario of ['completed','collecting','error','starting']){
+    for(const height of [600,540,480])for(const scenario of ['completed','collecting','draining','error','starting']){
       const page=await browser.newPage({viewport:{width:360,height}});
       try{
         await page.setContent(html);await page.addStyleTag({content:css});
@@ -41,10 +41,10 @@ async function main(){
           const origin='https://openrouter.ai',group='openrouter.ai',long='长任务详细记录与错误原因 '.repeat(100);
           const state={sites:{[origin]:{id:origin,origin,group,enabled:true}},wt_preferences:{targetLanguage:'zh-Hans'},globalEnabled:true,manualPending:scenario==='completed'?0:5,
             wt_tasks:{task:{id:'task',siteId:origin,targetLanguage:'zh-Hans',status:scenario==='error'?'failed':'completed',completed:61,total:61,translated:55,reused:24,deduplicated:0,batchTotal:1,batchCompleted:1,retries:0,contextBudget:240000,requestTimeoutMinutes:10,message:long,updatedAt:1}},
-            dictionary:{ready:scenario!=='starting',starting:scenario==='starting',repository:{owner:'fixture',repo:'fixture',branch:'main'},hasToken:true,status:scenario==='error'?{error:long}:{},groups:{[group]:{pendingOrigins:{[origin]:61},contentRevision:'fixture'}}}};
-          if(scenario==='collecting')state.wt_capture={status:'collecting',group,pageCount:12,itemCount:3000,lastError:long,truncated:true};
+            dictionary:{ready:scenario!=='starting',starting:scenario==='starting',repository:{owner:'fixture',repo:'fixture',branch:'main'},hasToken:true,status:scenario==='error'?{error:long}:{},groups:{[group]:{pending:61,pendingOrigins:{[origin]:61},contentRevision:'fixture'}}}};
+          if(['collecting','draining'].includes(scenario))state.wt_capture={status:scenario,group,pageCount:12,itemCount:3000,lastError:long,truncated:true};
           window.__calls=[];window.__state=state;
-          window.chrome={runtime:{id:'fixture',getURL:p=>'chrome-extension://fixture/'+p,sendMessage:async message=>{__calls.push(message);return {ok:true,result:message.type==='wt:popup-state'?state:{origin,group,available:true,installed:true,hasUpdate:true}};}},tabs:{query:async()=>[{id:1,url:origin+'/rankings'}],create:async()=>{}},permissions:{request:async()=>true},storage:{sync:{set:async()=>{}},onChanged:{addListener:fn=>window.__changed=fn}}};
+          window.chrome={runtime:{id:'fixture',getURL:p=>'chrome-extension://fixture/'+p,sendMessage:async message=>{__calls.push(message);return {ok:true,result:message.type==='wt:popup-state'?state:{origin,group,available:true,installed:true,hasUpdate:true}};}},tabs:{query:async()=>[{id:1,url:origin+'/rankings'}],create:async()=>{}},permissions:{request:async()=>true},storage:{local:{get:async()=>({wt_permission_result:{id:'layout',origin,at:Date.now(),remote:{origin,group,available:true,installed:true,hasUpdate:true}}})},sync:{set:async()=>{}},onChanged:{addListener:fn=>window.__changed=fn}}};
         },{scenario});
         await page.addScriptTag({content:ui});await page.waitForFunction(()=>document.querySelector('#status').textContent==='已开启');
         if(scenario!=='starting')await page.locator('#wtDictionaryUpdate').waitFor({state:'visible'});

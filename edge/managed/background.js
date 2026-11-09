@@ -3,6 +3,8 @@
   'use strict';
   const C = WTCore, P=WTProviders, B=WTBatch, HOST = 'local.website_translator';
   const requestSlot=B.limiter();
+  const captureControllers=new Map();
+  let captureClock, captureTickBusy=false, captureHeartbeat=0;
   let queue = Promise.resolve(), database, committed;
   const locked = fn => { const next = queue.then(fn); queue = next.catch(() => {}); return next; };
   let cachedView,viewOps,viewLength,versionOps,versionLength,versionIndex;
@@ -98,6 +100,8 @@
     }
     const tasks = stored.wt_tasks || {};
     for (const task of Object.values(tasks)) if (task.status === 'running') { task.status = 'interrupted'; task.message = '后台已重启，已保存批次保留；在翻译记录中重试剩余内容。'; }
+    const {wt_capture:c}=await chrome.storage.local.get('wt_capture');
+    if(c && ['collecting','draining'].includes(c.status)){c.status='interrupted';c.lastError='后台已重启，采集已停止；已保存结果保留，未完成批次可在翻译记录重试。';await chrome.storage.local.set({wt_capture:c});}
     await chrome.storage.local.set({ wt_tasks: tasks });
     await save();
     await registrations();
@@ -119,20 +123,23 @@
   function isGithubOrigin(url) {
     try { const origin=new URL(url).origin;return SUPPORTED_SITES.some(s=>s.id==='github' && s.matches.includes(`${origin}/*`)); } catch { return false; }
   }
-  async function native(message) {
+  async function native(message,signal) {
     C.assert(await chrome.permissions.contains({permissions:['nativeMessaging']}),'请在 AI 翻译设置中授予本地通信权限；词库和 API 翻译不需要此权限');
     let result;
     try {
       // Long translation requests use a port so the native connection keeps the worker alive.
       result=message.action==='translate' && chrome.runtime.connectNative ? await new Promise((resolve,reject)=>{
         const port=chrome.runtime.connectNative(HOST);let settled=false;
-        const finish=(error,value)=>{if(settled)return;settled=true;port.disconnect();error?reject(error):resolve(value);};
+        const abort=()=>finish(B.error('翻译已取消','cancel'));
+        const finish=(error,value)=>{if(settled)return;settled=true;signal?.removeEventListener('abort',abort);port.disconnect();error?reject(error):resolve(value);};
         port.onMessage.addListener(value=>finish(null,value));
         port.onDisconnect.addListener(()=>{const error=chrome.runtime.lastError;finish(new Error(error?.message || '本地翻译连接已断开'));});
+        signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted){abort();return;}
         port.postMessage(message);
       }) : await chrome.runtime.sendNativeMessage(HOST, message);
     }
     catch (e) {
+      if(signal?.aborted)throw B.error('翻译已取消','cancel');
       if(/forbidden/i.test(e.message))throw new Error(`本地程序未授权当前扩展（${chrome.runtime.id}）。请在 AI 翻译设置复制扩展 ID，在独立本地程序目录重新运行 Install.cmd，再检查连接。`);
       throw new Error(`无法连接本地程序：${e.message}。请在本地连接设置中安装或更新程序，并核对浏览器注册。`);
     }
@@ -173,7 +180,7 @@
       }
     }
     const { enable_extension = true } = await chrome.storage.sync.get('enable_extension');
-    return { site, captureLimits:C.captureLimits(wt_preferences), autoExpandSeconds:C.autoExpandSeconds(wt_preferences.autoExpandSeconds), globalEnabled: enable_extension, captureId:enable_extension!==false ? captureId : null };
+    return { site, captureLimits:C.captureLimits(captureId?wt_capture.settings || wt_preferences:wt_preferences), autoExpandSeconds:C.autoExpandSeconds(wt_preferences.autoExpandSeconds), globalEnabled: enable_extension, captureId:enable_extension!==false ? captureId : null };
   }
   async function broadcast() {
     for (const tab of await chrome.tabs.query({})) {
@@ -238,11 +245,11 @@
       await chrome.storage.local.set({ wt_tasks: recent });
     });
   }
-  async function fetchData(url,headers,body,timeoutMs=B.limits.timeoutMs) {
+  async function fetchData(url,headers,body,timeoutMs=B.limits.timeoutMs,cancelSignal) {
     let response;
-    const signal=AbortSignal.timeout(timeoutMs);
+    const signal=cancelSignal?AbortSignal.any([cancelSignal,AbortSignal.timeout(timeoutMs)]):AbortSignal.timeout(timeoutMs);
     try {response=await fetch(url,{method:'POST',redirect:'error',signal,headers,body:JSON.stringify(body)});}
-    catch(error){throw B.error(error.name==='TimeoutError'?`翻译请求超时（单次上限 ${timeoutMs/60000} 分钟）`:'翻译网络连接失败','retry');}
+    catch(error){if(cancelSignal?.aborted)throw B.error('翻译已取消','cancel');throw B.error(error.name==='TimeoutError'?`翻译请求超时（单次上限 ${timeoutMs/60000} 分钟）`:'翻译网络连接失败','retry');}
     if(!response.ok){
       const code=response.status;let kind=code===413?'split':[408,429,500,502,503,504].includes(code)?'retry':'fatal';
       if([400,422].includes(code)){const data=await response.json().catch(()=>({}));if(/context|token.*limit|too.long|length|maximum.*(input|output)/i.test(JSON.stringify(data.error || {}).slice(0,2000)))kind='split';}
@@ -251,7 +258,7 @@
     }
     const reader=response.body.getReader();let size=0,chunks='';const decoder=new TextDecoder();
     try {while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>B.limits.maxEnvelopeBytes){await reader.cancel();throw B.error('API 响应超过大小限制','split');}chunks+=decoder.decode(value,{stream:true});}}
-    catch(error){if(error.kind)throw error;throw B.error(signal.reason?.name==='TimeoutError'?`翻译响应读取超时（单次上限 ${timeoutMs/60000} 分钟）`:'翻译响应连接中断','retry');}
+    catch(error){if(cancelSignal?.aborted)throw B.error('翻译已取消','cancel');if(error.kind)throw error;throw B.error(signal.reason?.name==='TimeoutError'?`翻译响应读取超时（单次上限 ${timeoutMs/60000} 分钟）`:'翻译响应连接中断','retry');}
     try{return JSON.parse(chunks+decoder.decode());}catch{throw B.error('翻译响应 JSON 不完整','split');}
   }
   async function translate(inputs,targetLanguage,glossary,configuration) {
@@ -263,7 +270,7 @@
     C.assert(provider,'请先配置翻译服务');
     const payload={targetLanguage,inputs:inputs.map(({id,sourceText,context,path,userSelected})=>({id,sourceText,context,path,...(userSelected?{userSelected:true}:{})})),glossary};
     if(provider.kind!=='mt' || provider.model)C.assert(a.model,'请先填写模型');
-    if(a.provider==='chatgpt')return request(()=>native({action:'translate',model:a.model,payload,prompt:wt_prompt,reasoningEffort:a.reasoningEffort || 'auto',timeoutMinutes,inputContextK}));
+    if(a.provider==='chatgpt')return request(()=>native({action:'translate',model:a.model,payload,prompt:wt_prompt,reasoningEffort:a.reasoningEffort || 'auto',timeoutMinutes,inputContextK},config.signal));
     C.assert(a.apiKey,'请先设置 API Key');
     const url=new URL(P.normalizeEndpoint(a.provider,a.endpoint));
     C.assert(url.protocol==='https:' || (url.protocol==='http:' && ['localhost','127.0.0.1'].includes(url.hostname)),'API 地址需要 HTTPS 或本机 HTTP');
@@ -271,7 +278,7 @@
     if(provider.kind==='mt') {
       const safe=inputs.filter(item=>item.userSelected===true || P.isUI(item)),translated=new Map();
       if(safe.length){const outgoing=P.machineRequest({...a,endpoint:url.href},safe,targetLanguage);
-        const result=P.machineResult(a.provider,await request(()=>fetchData(outgoing.url,outgoing.headers,outgoing.body,timeoutMs)));
+        const result=P.machineResult(a.provider,await request(()=>fetchData(outgoing.url,outgoing.headers,outgoing.body,timeoutMs,config.signal)));
         if(!Array.isArray(result) || result.length!==safe.length || !result.every(v=>typeof v==='string' && v.length))throw B.error('翻译服务返回数量或文本无效','split');
         safe.forEach((item,n)=>translated.set(item.id,result[n]));
       }
@@ -282,18 +289,20 @@
     if(['deepseek','kimi','zhipu'].includes(a.provider))body.thinking={type:'disabled'};
     if(a.provider==='minimax')body.reasoning_split=true;
     if(a.provider==='zhipu')body.do_sample=false;
-    const data=await request(()=>fetchData(url,{'Content-Type':'application/json',Authorization:'Bearer '+a.apiKey},body,timeoutMs));
+    const data=await request(()=>fetchData(url,{'Content-Type':'application/json',Authorization:'Bearer '+a.apiKey},body,timeoutMs,config.signal));
     if(data.choices?.[0]?.finish_reason==='length')throw B.error('模型输出被截断','split');
     return data.choices?.[0]?.message?.content;
   }
   async function activeTask(task) {
+    if(task.captureId){const {wt_capture:c}=await chrome.storage.local.get('wt_capture');if(!c || c.id!==task.captureId || !['collecting','draining'].includes(c.status))throw B.error('翻译会话已停止','cancel');}
     if(dictionaryRuntime&&!dictionaryRuntime.active())throw B.error('本机词库尚未就绪，任务已暂停','cancel');
     const site=view().sites[task.siteId];
     if(!site || site.deleted || !site.enabled || site.generation!==task.generation || (await preferences()).targetLanguage!==task.targetLanguage || (await chrome.storage.sync.get('enable_extension')).enable_extension===false)throw B.error('网站或目标语言状态已改变，任务已停止','cancel');
     return dictionaryRuntime?await dictionaryRuntime.enrich(site):site;
   }
   async function storePending(task,items,truncated) {
-    const {wt_task_inputs={}}=await chrome.storage.local.get('wt_task_inputs');
+    const {wt_task_inputs={},wt_capture:c}=await chrome.storage.local.get(['wt_task_inputs','wt_capture']);
+    if(task.captureId && (!c || c.id!==task.captureId))items=[];
     if(items.length)wt_task_inputs[task.id]={origin:task.siteId,items,truncated:!!truncated};else delete wt_task_inputs[task.id];
     await chrome.storage.local.set({wt_task_inputs});
   }
@@ -310,7 +319,7 @@
       C.assert(!scan?.error,scan?.error || '页面扫描失败');
       C.assert(scan?.origin === task.siteId, '页面已跳转，请重试');
       const site = await activeTask(task);
-      const queued=(await manualQueue()).filter(row=>row.siteId===task.siteId && row.generation===task.generation && row.targetLanguage===task.targetLanguage && !site.excludedPaths.some(p=>row.path.startsWith(p)) && (!task.retryOnly || scan.items.some(item=>item.queueId===row.id)));
+      const queued=(await manualQueue()).filter(row=>(!task.captureId || scan.items.some(i=>i.queueId===row.id)) && row.siteId===task.siteId && row.generation===task.generation && row.targetLanguage===task.targetLanguage && !site.excludedPaths.some(p=>row.path.startsWith(p)) && (!task.retryOnly || scan.items.some(item=>item.queueId===row.id)));
       const selected=queued.map(({id,sourceText,context,path})=>({id,queueId:id,sourceText,context,path,userSelected:true}));
       const selectedKeys=new Set(selected.map(item=>C.entryKey({...item,targetLanguage:task.targetLanguage})));
       // Snapshot the selected queue first; later additions wait for the next explicit update.
@@ -332,6 +341,7 @@
       await taskSet(task);
       const glossary = Object.values(site.entries).filter(e => e.targetLanguage === task.targetLanguage && e.origin === 'manual' && e.action === 'translate').slice(0,50).map(e => ({ sourceText: e.sourceText, translation: e.translation }));
       const configuration=await chrome.storage.local.get(['wt_ai','wt_prompt']);
+      configuration.signal=captureControllers.get(task.captureId)?.signal;
       configuration.timeoutMinutes=task.requestTimeoutMinutes;configuration.inputContextK=task.inputContextK;
       configuration.ensureActive=()=>activeTask(task);
       const provider=configuration.wt_ai?.provider;
@@ -392,7 +402,9 @@
       await broadcast();
 
     } catch (e) { task.status = task.completed ? 'partial' : 'failed'; task.message = e.message; }
-    finally { clearInterval(heartbeat); await taskSet(task); }
+    finally { clearInterval(heartbeat);
+      if(task.captureId){const {wt_capture:c}=await chrome.storage.local.get('wt_capture');if(!c || c.id!==task.captureId){task.status='cancelled';task.message='已取消，已保存译文保留，未完成内容已丢弃';await locked(()=>storePending(task,[],false));}}
+      await taskSet(task); }
   }
   async function preferences() { const {wt_preferences={}}=await chrome.storage.local.get('wt_preferences');return {inputContextK:B.inputContextK(wt_preferences.inputContextK),...C.captureLimits(wt_preferences),autoExpandSeconds:C.autoExpandSeconds(wt_preferences.autoExpandSeconds),targetLanguage:wt_preferences.targetLanguage || 'zh-Hans',requestTimeoutMinutes:B.timeoutMinutes(wt_preferences.requestTimeoutMinutes)}; }
   async function startCapture(tabId) {
@@ -405,13 +417,16 @@
     let captureId;
     await locked(async()=>{
       const {wt_capture}=await chrome.storage.local.get('wt_capture');
-      C.assert(!wt_capture || wt_capture.status!=='collecting','请先完成或取消当前采集');
+      C.assert(!wt_capture || !['collecting','draining'].includes(wt_capture.status),'请先结束或取消当前翻译');
       let site=siteFor(u.href);
       if(!site || site.deleted){append(u.origin,(site?.generation || 0)+1,'create',{origin:u.origin,name:u.hostname,group:domain,builtinId:site?.builtinId || null});await save();site=siteFor(u.href);}
       C.assert(site.enabled,'请先启用此网站');
       captureId=crypto.randomUUID();
-      await chrome.storage.local.set({wt_capture:{id:captureId,status:'collecting',group:domain,matches,tabIds:[tabId],pages:[],items:[],truncated:false,startedAt:Date.now()}});
+      const settings=await preferences();
+      await chrome.storage.local.set({wt_capture:{id:captureId,status:'collecting',group:domain,matches,tabIds:[tabId],pages:[],items:[],settings,targetLanguage:settings.targetLanguage,completed:0,translated:0,truncated:false,startedAt:Date.now()}});
     });
+    captureControllers.set(captureId,new AbortController());
+    startCaptureClock();
     // Confirm the initial page was persisted instead of only showing a started session.
     try {
       await registrations();
@@ -436,10 +451,10 @@
     const site=siteFor(u.href);
     if(site?.deleted || site?.enabled===false || site?.excludedPaths.some(p=>capturedPath.startsWith(p)))return false;
     if((await chrome.storage.sync.get('enable_extension')).enable_extension===false)return false;
-    const prefs=await preferences(),limits=C.captureLimits(prefs),targetLanguage=prefs.targetLanguage;
+    const prefs=c.settings || await preferences(),limits=C.captureLimits(prefs),targetLanguage=prefs.targetLanguage;
     const keyOf=i=>C.canonical([i.origin,C.sharedUI(i)?null:i.path,i.context,i.sourceText]);
     const known=i=>{const entries=view().sites[i.origin]?.entries || {},target={...i,targetLanguage};return entries[C.entryKey(target)] || C.reusableEntry(entries,target);};
-    c.items=c.items.filter(i=>!known(i));
+    c.items=c.items.filter(i=>i.inFlight || i.userSelected || !known(i));
     const keys=new Map(c.items.map(i=>[keyOf(i),i]));
     let size=c.items.reduce((n,i)=>n+i.sourceText.length,0);
     for(const item of scan.items) {
@@ -448,7 +463,7 @@
       const key=keyOf(candidate),existing=keys.get(key);
       if(existing){if(existing.path!==item.path && !(existing.paths || []).includes(item.path)){if(c.items.reduce((n,i)=>n+(i.paths?.length || 0),0)>=20000){c.truncated=true;continue;}(existing.paths ||= []).push(item.path);}continue;}
       if(c.items.length>=limits.sessionCaptureItems || size+item.sourceText.length>limits.sessionCaptureChars){c.truncated=true;break;}
-      c.items.push(candidate);keys.set(key,candidate);size+=item.sourceText.length;
+      candidate.queuedAt=Date.now();c.items.push(candidate);keys.set(key,candidate);size+=item.sourceText.length;
     }
     const page=u.origin+capturedPath;if(!c.pages.includes(page) && c.pages.length<500)c.pages.push(page);
     c.truncated ||= !!scan.truncated;
@@ -460,40 +475,63 @@
     if(c?.id!==captureId || c.status!=='collecting' || !c.tabIds.includes(tabId))return;
     c.lastError=String(error).slice(0,300);await chrome.storage.local.set({wt_capture:c});
   }
-  async function finishCapture() {
-    const {wt_capture:initial}=await chrome.storage.local.get('wt_capture');
-    C.assert(initial?.status==='collecting','没有正在进行的采集');
-    // Flush live pages before sealing the session; closed pages remain in the local draft.
-    for(const tabId of initial.tabIds) {
-      const tab=await chrome.tabs.get(tabId).catch(()=>null);if(!tab || !/^https?:/.test(tab.url || '') || group(tab.url)!==initial.group)continue;
-      const scan=await chrome.tabs.sendMessage(tabId,{type:'wt:collect'}).catch(()=>null);
-      if(scan)await locked(()=>captureData({captureId:initial.id,scan},{tab,url:tab.url}));
-    }
-    const jobs=await locked(async()=>{
-      C.assert((await chrome.storage.sync.get('enable_extension')).enable_extension!==false,'请先开启插件');
-      const {wt_capture:c,wt_tasks={},wt_task_inputs={}}=await chrome.storage.local.get(['wt_capture','wt_tasks','wt_task_inputs']);
-      C.assert(c?.id===initial.id && c.status==='collecting','采集状态已变化');
-      const targetLanguage=(await preferences()).targetLanguage;
-      const queuedOrigins=(await manualQueue()).filter(row=>row.targetLanguage===targetLanguage && c.pages.some(page=>new URL(page).origin===row.siteId)).map(row=>row.siteId);
-      const origins=[...new Set([...c.items.map(i=>i.origin),...queuedOrigins])];C.assert(origins.length,'尚未采集到可翻译内容');
-      C.assert(!Object.values(wt_tasks).some(t=>origins.includes(t.siteId) && t.status==='running'),'采集的网站已有任务，请稍后完成');
-      const jobs=[];
-      for(const origin of origins) {
-        let site=siteFor(origin);
-        if(site && (site.deleted || !site.enabled))continue;
-        if(!site){append(origin,1,'create',{origin,name:new URL(origin).hostname,group:group(origin),builtinId:null});site=siteFor(origin);}
-        const task={id:crypto.randomUUID(),siteId:origin,generation:site.generation,targetLanguage,status:'running',total:0,completed:0,translated:0,updatedAt:Date.now()};
-        wt_tasks[task.id]=task;
-        jobs.push({task,scan:{origin,items:c.items.filter(i=>i.origin===origin).flatMap(i=>[i.path,...(i.paths || [])].map(path=>({...i,path}))).filter(i=>!site.excludedPaths.some(p=>i.path.startsWith(p))).map((i,n)=>({id:`t${n}`,sourceText:i.sourceText,context:i.context,path:i.path})),truncated:c.truncated}});
-      }
-      C.assert(jobs.length,'采集的网站已停用或删除');await save();
-      for(const job of jobs)wt_task_inputs[job.task.id]=job.scan;
-      await chrome.storage.local.set({wt_tasks,wt_task_inputs,wt_capture:{...c,status:'submitted',items:[],submittedAt:Date.now()}});return jobs;
-    });
-    await registrations();await broadcast();
-    Promise.all(jobs.map(job=>runTask(job.task,null,job.scan))).catch(()=>{});
-    return {tasks:jobs.length};
+  function startCaptureClock(){
+    if(captureClock)return;
+    captureClock=setInterval(()=>{if(Date.now()-captureHeartbeat>20000){captureHeartbeat=Date.now();chrome.runtime.getPlatformInfo().catch(()=>{});}captureTick().catch(async error=>{await locked(async()=>{const {wt_capture:c}=await chrome.storage.local.get('wt_capture');if(c && ['collecting','draining'].includes(c.status)){c.status='interrupted';c.lastError=error.message;await chrome.storage.local.set({wt_capture:c});}});});},250);
   }
+  async function captureTick(){
+    if(captureTickBusy)return;
+    captureTickBusy=true;
+    try{
+      const job=await locked(async()=>{
+        const {wt_capture:c,wt_tasks={}}=await chrome.storage.local.get(['wt_capture','wt_tasks']);
+        if(!c || !['collecting','draining'].includes(c.status)){clearInterval(captureClock);captureClock=null;return;}
+        if(Object.values(wt_tasks).filter(t=>t.captureId===c.id && t.status==='running').length>=B.limits.concurrency)return;
+        if(!c.items.length){if(c.status==='draining'){c.status='completed';captureControllers.delete(c.id);await chrome.storage.local.set({wt_capture:c});await registrations();}return;}
+        const waiting=c.items.filter(i=>!i.inFlight);if(!waiting.length)return;
+        const prefs=c.settings,origin=waiting[0].origin;
+        if(Object.values(wt_tasks).some(t=>t.siteId===origin && t.status==='running' && t.captureId!==c.id))return;
+        let site=siteFor(origin);
+        if(!site){append(origin,1,'create',{origin,name:new URL(origin).hostname,group:c.group,builtinId:null});await save();site=siteFor(origin);}
+        if(dictionaryRuntime)site=await dictionaryRuntime.enrich(site);
+        const {wt_prompt,wt_ai}=await chrome.storage.local.get(['wt_prompt','wt_ai']);
+        const glossary=Object.values(site.entries).filter(e=>e.targetLanguage===c.targetLanguage && e.origin==='manual' && e.action==='translate').slice(0,50).map(e=>({sourceText:e.sourceText,translation:e.translation}));
+        const candidates=waiting.filter(i=>i.origin===origin).slice(0,prefs.batchCaptureItems).map((i,n)=>({...i,id:'t'+n}));
+        const batches=B.plan(candidates,{contextTokens:prefs.inputContextK*1000,provider:wt_ai?.provider,prompt:C.buildPrompt(wt_prompt),glossary,targetLanguage:c.targetLanguage});
+        const batch=batches[0];
+        const due=Date.now()-(waiting[0].queuedAt || c.startedAt)>=prefs.translationIntervalSeconds*1000;
+        if(c.status==='collecting' && !due && candidates.length<prefs.batchCaptureItems && batches.length===1 && !c.truncated)return;
+        const taskId=crypto.randomUUID();
+        const selected=new Set(batch.map(i=>C.canonical([i.origin,i.path,i.context,i.sourceText])));
+        for(const i of c.items)if(selected.has(C.canonical([i.origin,i.path,i.context,i.sourceText])))i.inFlight=taskId;
+        const task={id:taskId,captureId:c.id,siteId:origin,generation:site.generation,targetLanguage:c.targetLanguage,inputContextK:prefs.inputContextK,requestTimeoutMinutes:prefs.requestTimeoutMinutes,status:'running',total:0,completed:0,translated:0,updatedAt:Date.now()};
+        const scan={origin,items:batch.flatMap(i=>[i.path,...(i.paths || [])].map(path=>({sourceText:i.sourceText,context:i.context,path,...(i.queueId?{queueId:i.queueId,userSelected:true}:{})}))).map((i,n)=>({...i,id:'t'+n}))};
+        const {wt_task_inputs={}}=await chrome.storage.local.get('wt_task_inputs');wt_task_inputs[task.id]=scan;wt_tasks[task.id]=task;
+        await chrome.storage.local.set({wt_capture:c,wt_tasks,wt_task_inputs});return {task,scan};
+      });
+      if(!job)return;
+      runTask(job.task,null,job.scan).then(async()=>{
+      await locked(async()=>{const {wt_capture:c}=await chrome.storage.local.get('wt_capture');if(c?.id!==job.task.captureId)return;
+        c.items=c.items.filter(i=>i.inFlight!==job.task.id);c.completed+=job.task.completed;c.translated+=job.task.translated;c.truncated=false;
+        if(c.status==='draining' && !c.items.length){c.status='completed';captureControllers.delete(c.id);}
+        if(job.task.status!=='completed'){c.status='interrupted';c.lastError=job.task.message;}
+        await chrome.storage.local.set({wt_capture:c});});
+      await broadcast();
+      }).catch(()=>{});
+    }finally{captureTickBusy=false;}
+  }
+  async function finishCapture(){
+    await locked(async()=>{const {wt_capture:c}=await chrome.storage.local.get('wt_capture');C.assert(c?.status==='collecting','没有正在采集的翻译会话');for(const row of await manualQueue())if(row.targetLanguage===c.targetLanguage && c.pages.some(p=>new URL(p).origin===row.siteId) && !c.items.some(i=>i.queueId===row.id)){const site=siteFor(row.siteId);if(site?.enabled && !site.deleted && site.generation===row.generation && !site.excludedPaths.some(p=>row.path.startsWith(p)))c.items.unshift({origin:row.siteId,sourceText:row.sourceText,context:row.context,path:row.path,queueId:row.id,userSelected:true,queuedAt:Date.now()});}
+      c.status='draining';await chrome.storage.local.set({wt_capture:c});});
+    await registrations();await broadcast();await captureTick();await captureTick();return true;
+  }
+  async function cancelCapture(){
+    await locked(async()=>{const {wt_capture:c,wt_task_inputs={},wt_tasks={}}=await chrome.storage.local.get(['wt_capture','wt_task_inputs','wt_tasks']);
+      if(c){captureControllers.get(c.id)?.abort();captureControllers.delete(c.id);for(const task of Object.values(wt_tasks))if(task.captureId===c.id){delete wt_task_inputs[task.id];if(task.status==='running'){task.status='cancelled';task.message='已取消，已保存译文保留';}}}
+      await chrome.storage.local.remove('wt_capture');await chrome.storage.local.set({wt_task_inputs,wt_tasks});});
+    clearInterval(captureClock);captureClock=null;await registrations();await broadcast();return true;
+  }
+
 
   async function resumePermissionAction(id) {
     await ready;await dictionaryReady;
@@ -513,7 +551,7 @@
       C.assert(C.canonical((await chrome.storage.local.get('wt_repository')).wt_repository||null)===intent.repository,'词库仓库已改变，请重新操作');
       const sender={id:chrome.runtime.id,url:chrome.runtime.getURL('popup/popup.html')};
       if(intent.kind==='capture'){
-        await handleMessage({type:'wt:capture-start',tabId:intent.tabId},sender);message='已授权，开始采集';
+        await handleMessage({type:'wt:capture-start',tabId:intent.tabId},sender);message='已授权，开始翻译';
       }else{
         remote=await dictionaryRuntime.handle({action:'page-status',origin:new URL(intent.url).origin});
         C.assert((await chrome.tabs.get(intent.tabId)).url===intent.url,'原网页已改变，请重新操作');
@@ -582,7 +620,7 @@
         const task=Object.values(wt_tasks).filter(t=>t.siteId===origin).sort((a,b)=>b.updatedAt-a.updatedAt)[0];
         return {sites:site?{[origin]:{id:site.id,origin:site.origin,group:site.group,generation:site.generation,enabled:site.enabled,deleted:site.deleted}}:{},
           wt_preferences:{targetLanguage},wt_tasks:task?{[task.id]:task}:{},manualPending:(await manualQueue()).filter(row=>row.siteId===origin&&row.targetLanguage===targetLanguage).length,
-          wt_capture:wt_capture?{status:wt_capture.status,group:wt_capture.group,pageCount:wt_capture.pages?.length || 0,itemCount:wt_capture.items?.length || 0,lastError:wt_capture.lastError,truncated:wt_capture.truncated}:null,
+          wt_capture:wt_capture?{completed:wt_capture.completed || 0,translated:wt_capture.translated || 0,status:wt_capture.status,group:wt_capture.group,pageCount:wt_capture.pages?.length || 0,itemCount:wt_capture.items?.length || 0,lastError:wt_capture.lastError,truncated:wt_capture.truncated}:null,
           wt_selection_status:wt_selection_status?.siteId===origin?wt_selection_status:null,
           dictionary:dictionaryRuntime?await dictionaryRuntime.summary({origin,compact:true}):null,globalEnabled:(await chrome.storage.sync.get('enable_extension')).enable_extension!==false};
       }
@@ -607,12 +645,12 @@
         await locked(async()=>{const {wt_tasks={},wt_task_inputs={}}=await chrome.storage.local.get(['wt_tasks','wt_task_inputs']);const old=wt_tasks[message.taskId];
           C.assert(old && ['failed','partial','interrupted'].includes(old.status) && wt_task_inputs[old.id]?.items.length,'没有可重试的剩余内容');await activeTask(old);
           C.assert(!Object.values(wt_tasks).some(t=>t.siteId===old.siteId && t.status==='running'),'此网站已有进行中的任务');
-          scan=wt_task_inputs[old.id];task={...old,retryOnly:true,inputContextK:(await preferences()).inputContextK,requestTimeoutMinutes:(await preferences()).requestTimeoutMinutes,status:'running',completed:0,translated:0,total:0,failed:0,message:'正在重试未完成内容',canRetry:false};wt_tasks[task.id]=task;await chrome.storage.local.set({wt_tasks});});
+          scan=wt_task_inputs[old.id];task={...old,captureId:undefined,retryOnly:true,inputContextK:(await preferences()).inputContextK,requestTimeoutMinutes:(await preferences()).requestTimeoutMinutes,status:'running',completed:0,translated:0,total:0,failed:0,message:'正在重试未完成内容',canRetry:false};wt_tasks[task.id]=task;await chrome.storage.local.set({wt_tasks});});
         runTask(task,null,scan);return task;
       }
       if(message.type==='wt:capture-start')return startCapture(message.tabId);
       if(message.type==='wt:capture-finish')return finishCapture();
-      if(message.type==='wt:capture-cancel'){await locked(()=>chrome.storage.local.remove('wt_capture'));await registrations();await broadcast();return true;}
+      if(message.type==='wt:capture-cancel')return cancelCapture();
       if(message.type==='wt:group-change') {
         C.assert(['enabled','delete'].includes(message.action),'分组操作无效');
         await locked(async()=>{for(const s of Object.values(view().sites))if(!s.deleted && s.group===message.group)append(s.id,s.generation,message.action==='delete'?'delete':'setting',message.action==='delete'?{}:{key:'enabled',value:!!message.enabled});await save();});
@@ -651,7 +689,7 @@
         }
         if(message.prompt!==undefined)await chrome.storage.local.set({wt_prompt:C.validatePrompt(message.prompt)});
         if(message.preferences) {
-          await locked(async()=>{const old=await preferences();const targetLanguage=C.language(message.preferences.targetLanguage ?? old.targetLanguage),requestTimeoutMinutes=B.timeoutMinutes(message.preferences.requestTimeoutMinutes ?? old.requestTimeoutMinutes);const inputContextK=B.inputContextK(message.preferences.inputContextK ?? old.inputContextK),captureLimits=C.captureLimits({...old,...message.preferences}),autoExpandSeconds=C.autoExpandSeconds(message.preferences.autoExpandSeconds===undefined?old.autoExpandSeconds:message.preferences.autoExpandSeconds);const {wt_capture}=await chrome.storage.local.get('wt_capture');C.assert(wt_capture?.status!=='collecting' || targetLanguage===old.targetLanguage,'请先完成或取消采集后再切换目标语言');await chrome.storage.local.set({wt_preferences:{...old,...captureLimits,targetLanguage,requestTimeoutMinutes,inputContextK,autoExpandSeconds}});});
+          await locked(async()=>{const old=await preferences();const targetLanguage=C.language(message.preferences.targetLanguage ?? old.targetLanguage),requestTimeoutMinutes=B.timeoutMinutes(message.preferences.requestTimeoutMinutes ?? old.requestTimeoutMinutes);const inputContextK=B.inputContextK(message.preferences.inputContextK ?? old.inputContextK),captureLimits=C.captureLimits({...old,...message.preferences}),autoExpandSeconds=C.autoExpandSeconds(message.preferences.autoExpandSeconds===undefined?old.autoExpandSeconds:message.preferences.autoExpandSeconds);const {wt_capture}=await chrome.storage.local.get('wt_capture');C.assert(!['collecting','draining'].includes(wt_capture?.status) || targetLanguage===old.targetLanguage,'请先完成或取消采集后再切换目标语言');await chrome.storage.local.set({wt_preferences:{...old,...captureLimits,targetLanguage,requestTimeoutMinutes,inputContextK,autoExpandSeconds}});});
           await broadcast();
         }
         dictionaryRuntime?.changed(); return true;

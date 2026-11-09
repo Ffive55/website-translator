@@ -10,8 +10,8 @@
   const language = value => { assert(text(value, 64), '目标语言无效'); return Intl.getCanonicalLocales(value)[0]; };
   const canonical = value => JSON.stringify(value, (_, v) => v && typeof v === 'object' && !Array.isArray(v)
     ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
-  const captureDefaults=Object.freeze({pageCaptureItems:500,pageCaptureChars:80000,sessionCaptureItems:3000,sessionCaptureChars:400000});
-  const captureMaximums=Object.freeze({pageCaptureItems:5000,pageCaptureChars:400000,sessionCaptureItems:10000,sessionCaptureChars:2000000});
+  const captureDefaults=Object.freeze({batchCaptureItems:500,translationIntervalSeconds:10,pageCaptureItems:500,pageCaptureChars:80000,sessionCaptureItems:3000,sessionCaptureChars:400000});
+  const captureMaximums=Object.freeze({batchCaptureItems:3000,translationIntervalSeconds:300,pageCaptureItems:5000,pageCaptureChars:400000,sessionCaptureItems:10000,sessionCaptureChars:2000000});
   function autoExpandSeconds(value=12){assert(Number.isInteger(value) && value>=1 && value<=120,'自动展开时间上限必须为 1–120 的整数秒');return value;}
   function captureLimits(value={}){return Object.fromEntries(Object.entries(captureDefaults).map(([key,defaultValue])=>{const n=value[key]===undefined?defaultValue:value[key];assert(Number.isInteger(n) && n>=1 && n<=captureMaximums[key],'采集上限 '+key+' 必须为 1–'+captureMaximums[key]+' 的整数');return [key,n];}));}
   const uuid = s => typeof s === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(s);

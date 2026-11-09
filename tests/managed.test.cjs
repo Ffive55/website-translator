@@ -125,7 +125,7 @@ async function worker(t,fetcher,native,overrides={}){
   const permissionListeners=[];chrome.permissions.onAdded={addListener:fn=>permissionListeners.push(fn)};chrome.permissionAdded=()=>Promise.all(permissionListeners.map(fn=>fn()));
   const alarms=new Map(),alarmListeners=[];chrome.alarms={get:async n=>alarms.get(n),create:async(n,v)=>alarms.set(n,v),clear:async n=>alarms.delete(n),onAlarm:{addListener:f=>alarmListeners.push(f)}};
   const menus=new Map(),menuListeners=[];chrome.contextMenus={create:async item=>menus.set(item.id,item),remove:async id=>menus.delete(id),onClicked:{addListener:f=>menuListeners.push(f)}};
-  const context=vm.createContext({console,chrome,WTCore:C,WTBatch:require('../extension/managed-batching'),WTProviders:require('../extension/managed-providers'),tldts:require('tldts'),SUPPORTED_SITES:[],crypto:require('node:crypto').webcrypto,URL,AbortSignal,TextDecoder,structuredClone,setTimeout,clearTimeout,fetch:fetcher,setInterval:(f,m)=>{const id=setInterval(f,m);activeTimers.add(id);return id;},clearInterval:id=>{clearInterval(id);activeTimers.delete(id);},...overrides});
+  const context=vm.createContext({console,chrome,WTCore:C,WTBatch:require('../extension/managed-batching'),WTProviders:require('../extension/managed-providers'),tldts:require('tldts'),SUPPORTED_SITES:[],crypto:require('node:crypto').webcrypto,URL,AbortSignal,AbortController,TextDecoder,structuredClone,setTimeout,clearTimeout,fetch:fetcher,setInterval:(f,m)=>{const id=setInterval(f,m);activeTimers.add(id);return id;},clearInterval:id=>{clearInterval(id);activeTimers.delete(id);},...overrides});
   vm.runInContext(source('managed-background.js'),context);
   t.after(()=>activeTimers.forEach(clearInterval));
   const request=(type,data={},sender={id:'test',tab:{id:2},url:'chrome-extension://test/managed/managed.html'})=>new Promise(resolve=>listeners[0]({type:'wt:'+type,...data},sender,resolve));
@@ -534,4 +534,71 @@ test('采集设置校验、后台过滤已有词条并在会话额度前合并�
   await send('/three',[['Overflow','main/p/text']]);assert.equal(w.local.wt_capture.truncated,true);assert.equal(w.local.wt_capture.items.length,2);
   const state=await w.request('page',{}, {id:'test',url:origin+'/settings',tab:{id:1}});assert.equal(state.result.captureLimits.pageCaptureItems,1000);
   await w.request('capture-finish');await until(()=>Object.values(w.local.wt_tasks).some(task=>task.status==='completed'));const saved=Object.values((await w.request('state')).result.sites[origin].entries);assert.deepEqual(saved.filter(e=>e.sourceText==='Shared').map(e=>e.path).sort(),['/one','/two']);assert.equal(Object.values(w.local.wt_tasks)[0].contextBudget,10000);
+});
+
+test('持续翻译默认 10 秒、新设置校验且同步白名单保留',async t=>{
+ const w=await worker(t);const p=(await w.request('state')).result.wt_preferences;
+ assert.equal(p.translationIntervalSeconds,10);assert.equal(p.batchCaptureItems,500);
+ for(const preferences of [{translationIntervalSeconds:0},{translationIntervalSeconds:301},{batchCaptureItems:3001},{batchCaptureItems:1.5}])assert.equal((await w.request('config',{preferences})).ok,false);
+ require('../extension/dictionary-core');assert.deepEqual(C.dictionary.syncPreferences({translationIntervalSeconds:20,batchCaptureItems:40}),{translationIntervalSeconds:20,batchCaptureItems:40});
+});
+
+test('持续翻译按时间提交，空闲不请求，运行中固定提交间隔',async t=>{
+ let calls=0;const w=await worker(t,async(_u,o)=>{calls++;return continuousResponse(JSON.parse(JSON.parse(o.body).messages[1].content).inputs);});
+ await configureFixture(w);await w.request('config',{preferences:{translationIntervalSeconds:1}});
+ await w.request('capture-start',{tabId:1});await w.request('config',{preferences:{translationIntervalSeconds:300}});
+ await pause(350);assert.equal(calls,0);await until(()=>calls===1);await until(()=>w.local.wt_capture.completed===1);
+ assert.equal(w.local.wt_capture.status,'collecting');await pause(1200);assert.equal(calls,1);await w.request('capture-cancel');
+});
+
+test('每批条数触发并在请求进行中继续采集；结束拒绝新增且排空剩余',async t=>{
+ const releases=[],sent=[];const w=await worker(t,async(_u,o)=>{const inputs=JSON.parse(JSON.parse(o.body).messages[1].content).inputs;sent.push(inputs);await new Promise(r=>releases.push(r));return continuousResponse(inputs);});
+ await configureFixture(w);await w.request('config',{preferences:{batchCaptureItems:1,translationIntervalSeconds:300}});await w.request('capture-start',{tabId:1});
+ const captureId=w.local.wt_capture.id,sender={id:'test',url:origin+'/settings',tab:{id:1},frameId:0};
+ const scan=text=>({origin,path:'/settings',items:[{sourceText:text,context:'nav/button/text',path:'/settings'}]});
+ await until(()=>sent.length===1);
+ await w.request('capture-data',{captureId,scan:scan('Second action')},sender);await until(()=>sent.length===2);
+ await w.request('capture-data',{captureId,scan:scan('Third action')},sender);
+ await w.request('capture-data',{captureId,scan:scan('Second action')},sender);
+ assert.equal(w.local.wt_capture.items.length,3);assert.ok(sent.every(b=>b.length===1));
+ await w.request('capture-finish');assert.equal(w.local.wt_capture.status,'draining');
+ assert.equal((await w.request('capture-data',{captureId,scan:scan('Too late')},sender)).result,false);
+ releases.splice(0).forEach(r=>r());await until(()=>sent.length===3);releases.splice(0).forEach(r=>r());
+ await until(()=>w.local.wt_capture.status==='completed');assert.equal(w.local.wt_capture.translated,3);assert.equal(sent.flat().some(i=>i.sourceText==='Too late'),false);
+});
+
+test('取消中止请求且拒绝迟到结果，保留已完成译文、清除所有未完成草稿',async t=>{
+ let calls=0,release,signal;const w=await worker(t,async(_u,o)=>{const inputs=JSON.parse(JSON.parse(o.body).messages[1].content).inputs;calls++;if(calls===2){signal=o.signal;await new Promise(r=>release=r);}return continuousResponse(inputs);});
+ await configureFixture(w);await w.request('config',{preferences:{batchCaptureItems:1}});await w.request('capture-start',{tabId:1});await until(()=>w.local.wt_capture.completed===1);
+ const captureId=w.local.wt_capture.id;await w.request('capture-data',{captureId,scan:{origin,path:'/settings',items:[{sourceText:'Unfinished',context:'nav/button/text',path:'/settings'}]}},{id:'test',url:origin+'/settings',tab:{id:1}});
+ await until(()=>!!release);await w.request('capture-cancel');assert.equal(signal.aborted,true);release();
+ await until(()=>Object.values(w.local.wt_tasks).every(t=>t.status!=='running'));await pause(50);
+ const state=(await w.request('state')).result;assert.equal(Object.keys(state.sites[origin].entries).length,1);assert.equal(Object.keys(w.local.wt_task_inputs).length,0);assert.equal(w.local.wt_capture,undefined);assert.equal(calls,2);
+});
+
+test('同一主域名允许子页，跳转到其它网站不得加入会话',async t=>{
+ const w=await worker(t);await w.request('capture-start',{tabId:1});const captureId=w.local.wt_capture.id;
+ const other='https://elsewhere.test';const sender={id:'test',url:other+'/settings',tab:{id:1},frameId:0};
+ assert.equal((await w.request('page',{},sender)).result.captureId,null);
+ assert.equal((await w.request('capture-data',{captureId,scan:{origin:other,path:'/settings',items:[{sourceText:'Do not collect',context:'nav/button/text',path:'/settings'}]}},sender)).ok,false);
+ assert.ok(w.local.wt_capture.items.every(i=>i.origin===origin));await w.request('capture-cancel');
+});
+
+test('输入预算提前触发，所有发出的请求符合预算且无需等待提交间隔',async t=>{
+ const sent=[];const w=await worker(t,async(_u,o)=>{const body=JSON.parse(o.body),payload=JSON.parse(body.messages[1].content);sent.push(payload.inputs);assert.ok(require('../extension/managed-batching').estimate(payload.inputs,{prompt:body.messages[0].content,glossary:payload.glossary,targetLanguage:payload.targetLanguage})<=30000);return continuousResponse(payload.inputs);});
+ await configureFixture(w);await w.request('config',{preferences:{inputContextK:30,translationIntervalSeconds:300,batchCaptureItems:500}});
+ w.chrome.tabs.sendMessage=async()=>({origin,path:'/settings',items:longInputs().slice(0,12)});
+ await w.request('capture-start',{tabId:1});await until(()=>sent.length>0);assert.equal(w.local.wt_capture.status,'collecting');await w.request('capture-finish');await until(()=>w.local.wt_capture.status==='completed');assert.ok(sent.length>1);
+});
+
+function continuousResponse(inputs){return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(inputs.map(i=>({id:i.id,category:"ui",action:"translate",translation:"译文 "+(i.sourceText.match(/\{[^}]+\}/g)||[]).join(" "),reason:""})))}}]}));}
+
+test('结束后仍可取消订阅翻译：断开本地端口，迟到返回不落库',async t=>{
+ const w=await worker(t);let onMessage,disconnected=false;
+ w.chrome.runtime.connectNative=()=>({onMessage:{addListener:f=>onMessage=f},onDisconnect:{addListener(){}},postMessage(){},disconnect(){disconnected=true;}});
+ await w.request('config',{ai:{provider:'chatgpt',model:'fixture-model'},preferences:{batchCaptureItems:1}});
+ await w.request('capture-start',{tabId:1});await until(()=>!!onMessage);
+ await w.request('capture-finish');assert.equal(w.local.wt_capture.status,'draining');await w.request('capture-cancel');assert.equal(disconnected,true);
+ onMessage({ok:true,result:JSON.stringify([{id:'t0',category:'ui',action:'translate',translation:'保存 {count}',reason:''}])});
+ await until(()=>Object.values(w.local.wt_tasks).every(t=>t.status==='cancelled'));assert.equal(Object.keys((await w.request('state')).result.sites[origin].entries).length,0);assert.equal(Object.keys(w.local.wt_task_inputs).length,0);
 });
